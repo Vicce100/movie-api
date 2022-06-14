@@ -16,7 +16,12 @@
   },
   "plugins": ["prettier", "import", "@typescript-eslint"],
   "rules": {
-    "import/extensions": ["error", "never", { "js": "always" }],
+    "import/extensions": [
+      "error",
+      "never",
+      { "js": "always" },
+      { "ts": "always" }
+    ],
     "prettier/prettier": [
       "error",
       {

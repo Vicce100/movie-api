@@ -17,11 +17,10 @@ const corsOptions = {
 
   // blacklist
   origin: (origin: any, callback: any) => {
-    if (!blacklist.length) return true;
-    if (blacklist.indexOf(origin) === -1 || origin) {
-      callback(null, true);
-    } else {
+    if (blacklist.indexOf(origin) !== -1) {
       callback(new Error('Not allowed by CORS'));
+    } else {
+      callback(null, true);
     }
   },
   optionsSuccessStatus: 200,
