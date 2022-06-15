@@ -5,14 +5,14 @@ import dotenv from 'dotenv';
 
 import User from '../schemas/UserSchema.js';
 import { generateAccessToken } from '../utilities/index.js';
-import { UserType } from '../utilities/types.js';
-import api from '../utilities/api/index.js';
-import { v4 as uuidV4 } from 'uuid';
+import { AuthRequestType, UserType } from '../utilities/types.js';
+import db from '../utilities/db/index.js';
+// import { v4 as uuidV4 } from 'uuid';
 
 dotenv.config();
 
 export const signUp = async (
-  req: Request<{}, any, any, any, Record<string, any>>,
+  req: Request,
   res: Response<any, Record<string, any>>,
   next: NextFunction
 ) => {
@@ -27,11 +27,11 @@ export const signUp = async (
   if (!password || !firstName || !lastName || !email)
     return res
       .status(400)
-      .json(api.returnErrorData('no empty data in field', 400));
+      .json(db.returnErrorData('no empty data in field', 400));
   if (await User.findOne({ email }))
     return res
       .status(400)
-      .json(api.returnErrorData('username already taken', 404));
+      .json(db.returnErrorData('username already taken', 404));
 
   try {
     await new User({
@@ -44,23 +44,21 @@ export const signUp = async (
   } catch (error: any) {
     return res
       .status(500)
-      .json(api.returnErrorData('server error while creating user', 500));
+      .json(db.returnErrorData('server error while creating user', 500));
   }
 };
 
 export const login = async (
   req: Request<{}, any, any, any, Record<string, any>>,
   res: Response<any, Record<string, any>>
-  // next: NextFunction
 ) => {
   if (!process.env.SECRET_REFRESH_TOKEN) return;
-  const { email, password }: { email: string; password: string } = req.body;
-  const user = await api.findUserByEmail<UserType>(email);
+  const user = await db.findUserByEmail<UserType>(req.body.email);
   if (!user)
-    return res.status(404).json(api.returnErrorData('cannot find user', 404));
+    return res.status(404).json(db.returnErrorData('cannot find user', 404));
 
   try {
-    if (await bcrypt.compare(password, user.password)) {
+    if (await bcrypt.compare(req.body.password, user.password)) {
       const refreshToken = jwt.sign(
         JSON.parse(JSON.stringify(user)),
         process.env.SECRET_REFRESH_TOKEN
@@ -69,7 +67,7 @@ export const login = async (
       const date = new Date();
       date.setTime(date.getTime() + 36500 * 24 * 60 * 60 * 1000);
 
-      await api.updateRefreshToken(user._id, refreshToken);
+      await db.updateRefreshToken(user._id, refreshToken);
       res.cookie('SSID', generateAccessToken(user), {
         sameSite: 'strict', // lax, none
         path: '/',
@@ -77,10 +75,10 @@ export const login = async (
         httpOnly: true,
         secure: true,
       });
-      return res.status(200).json(api.returnCurrentUser(user));
+      return res.status(200).json(db.returnCurrentUser(user));
     }
     return res.status(403).json({
-      ...api.returnErrorData('Wrong Password. Please try again', 403),
+      ...db.returnErrorData('Wrong Password. Please try again', 403),
       currentUser: null,
     });
   } catch (err) {
@@ -89,12 +87,11 @@ export const login = async (
 };
 
 export const logout = async (
-  req: any,
+  req: AuthRequestType,
   res: Response<any, Record<string, any>>
-  // next: NextFunction
 ) => {
-  const { _id: userId } = <UserType>req.user;
-  await api.removeRefreshToken(userId);
+  const { _id: userId } = req.user;
+  await db.removeRefreshToken(userId);
   return res.clearCookie('SSID').status(200).json({ currentUser: null });
 };
 
@@ -106,18 +103,18 @@ export const refreshToken = async (
   if (refreshToken === null)
     return res
       .status(401)
-      .json(api.returnErrorData('no refreshToken provided', 401));
+      .json(db.returnErrorData('no refreshToken provided', 401));
 
-  const tempUser = await api.findUserByRefreshToken(refreshToken);
+  const tempUser = await db.findUserByRefreshToken(refreshToken);
   if (tempUser === null)
     return res
       .status(403)
-      .json(api.returnErrorData('no refreshToken exist', 401));
+      .json(db.returnErrorData('no refreshToken exist', 401));
 
   if (process.env.SECRET_REFRESH_TOKEN) {
     jwt.verify(refreshToken, process.env.SECRET_REFRESH_TOKEN, (err, user) => {
       if (err)
-        return res.sendStatus(403).json(api.returnErrorData(err.message, 403));
+        return res.sendStatus(403).json(db.returnErrorData(err.message, 403));
 
       const accessToken = generateAccessToken(tempUser);
       res.cookie('SSID', accessToken, {
@@ -133,34 +130,34 @@ export const refreshToken = async (
 };
 
 export const deleteUser = async (
-  req: any,
+  req: AuthRequestType,
   res: Response<any, Record<string, any>>
 ) => {
   const { email, password, userId } = req.body;
-  if (req.user.id === userId) {
-    const tempUser = await api.findUserByEmail<UserType>(email);
+  if (req.user._id === userId) {
+    const tempUser = await db.findUserByEmail<UserType>(email);
     if (tempUser === null)
-      return res.status(404).json(api.returnErrorData('Cannot find user', 404));
+      return res.status(404).json(db.returnErrorData('Cannot find user', 404));
 
     if (await bcrypt.compare(password, tempUser.password)) {
       try {
         // const remove user = await User.deleteOne({_id: req.params.UserId})
-        const removedUser = await api.removeUser<UserType>(userId);
-        return res.json({ removedUser });
+        const removedUser = await db.removeUser<UserType>(userId);
+        return res.status(204).json({ removedUser });
       } catch (error: any) {
         return res.status(500).json({ message: error.message });
       }
     }
-    return res.status(401).json(api.returnErrorData('wrong password', 401));
+    return res.status(401).json(db.returnErrorData('wrong password', 401));
   } else {
     return res
       .status(403)
-      .json(api.returnErrorData('trying to delete wrong user', 403));
+      .json(db.returnErrorData('trying to delete wrong user', 403));
   }
 };
 
 export const addProfile = async (
-  req: any,
+  req: AuthRequestType,
   res: Response<any, Record<string, any>>
 ) => {
   const { profileName, avatarURL }: { profileName: string; avatarURL: string } =
@@ -168,11 +165,11 @@ export const addProfile = async (
   if (!profileName || !avatarURL) {
     return res
       .status(400)
-      .json(api.returnErrorData('no empty data in field', 400));
+      .json(db.returnErrorData('no empty data in field', 400));
   }
   try {
     await User.updateOne(
-      { id: req.user.id },
+      { id: req.user._id },
       {
         $push: {
           profiles: {
@@ -182,9 +179,27 @@ export const addProfile = async (
         },
       }
     );
+    res.status(204).json({ message: 'profile added' });
   } catch (error) {
     return res
       .status(500)
-      .json(api.returnErrorData('server error while creating user', 500));
+      .json(db.returnErrorData('server error while creating user', 500));
+  }
+};
+
+export const getCurrentUser = async (
+  req: any,
+  res: Response<any, Record<string, any>>
+) => {
+  try {
+    const user = await db.findUserById<UserType>(req.user._id);
+    if (!user)
+      return res.status(404).json(db.returnErrorData('cannot find user', 404));
+
+    return res.status(200).json(db.returnCurrentUser(user));
+  } catch (error: any) {
+    return res
+      .status(500)
+      .json(db.returnErrorData('internal server error', 500));
   }
 };

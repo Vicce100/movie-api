@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { AvatarSchemaType } from '../utilities/types';
+import { AvatarSchemaType } from '../utilities/types.js';
 
 const avatarSchema = new mongoose.Schema({
   category: [{ type: String, require: true }],

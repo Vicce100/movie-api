@@ -18,9 +18,9 @@
   "rules": {
     "import/extensions": [
       "error",
-      "never",
-      { "js": "always" },
-      { "ts": "always" }
+      "ignorePackages",
+      { "js": "never" },
+      { "ts": "never" }
     ],
     "prettier/prettier": [
       "error",

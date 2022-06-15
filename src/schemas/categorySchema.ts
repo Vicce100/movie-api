@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { CategorySchemaType } from '../utilities/types';
+import { CategorySchemaType } from '../utilities/types.js';
 
 export const categorySchema = new mongoose.Schema({
   name: { type: String, require: true, unique: true },

@@ -1,7 +1,7 @@
 import mongoose from 'mongoose'; // only allows commonjs unless using default import
 import dayjs from 'dayjs';
 import { v4 as uuidV4 } from 'uuid';
-import { UserType } from '../utilities/types';
+import { UserType } from '../utilities/types.js';
 
 const reqString = { type: String, require: true };
 const uniqueString = { ...reqString, unique: true };

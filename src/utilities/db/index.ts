@@ -1,7 +1,13 @@
 import { Model } from 'mongoose';
 import { StringDecoder } from 'string_decoder';
-import { CurrentUserType, ProfileType, UserType } from '../types';
+import {
+  CategorySchemaType,
+  CurrentUserType,
+  ProfileType,
+  UserType,
+} from '../types.js';
 import UserModel from '../../schemas/UserSchema.js';
+import category from '../../schemas/categorySchema.js';
 
 // ----------------------- local ----------------------- //
 
@@ -36,7 +42,7 @@ const updateRefreshToken = (userId: string, refreshToken: string | null) =>
   );
 
 const removeRefreshToken = async (userId: string) =>
-  UserModel.findOne<UserType>({ _id: userId }).then((user) =>
+  UserModel.findOne<UserType>({ _id: userId }).then((user: UserType | null) =>
     UserModel.updateOne(
       { _id: userId },
       { $unset: { refreshToken: user?.refreshToken || '' } }
@@ -45,6 +51,14 @@ const removeRefreshToken = async (userId: string) =>
 
 const addProfileToUser = (userId: StringDecoder, data: ProfileType) =>
   UserModel.updateOne({ _id: userId }, { $push: { profiles: data } });
+
+const getSingleCategoryBaId = async (
+  categoryId: string
+): Promise<CategorySchemaType | null> =>
+  await category.findOne({ _id: categoryId });
+
+const getAllCategories = async (): Promise<CategorySchemaType[] | null> =>
+  await category.find();
 
 const returnErrorData = (message: string, status: string | number) => ({
   message,
@@ -61,7 +75,7 @@ const returnCurrentUser = (
     refreshToken: user.refreshToken,
     firstName: user.firstName,
     lastName: user.lastName,
-    profiles: user.profiles,
+    profiles: user?.profiles || undefined,
     role: user.role,
     userStatus: user.userStatus,
   },
@@ -78,4 +92,6 @@ export default {
   updatePassword,
   updateRefreshToken,
   removeRefreshToken,
+  getSingleCategoryBaId,
+  getAllCategories,
 };

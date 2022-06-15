@@ -10,12 +10,13 @@ import {
   addMultipleCategories,
   addSingleAvatar,
   addSingleCategory,
+  sendMultipleCategories,
+  sendSingleCategory,
 } from '../controller/index.js';
 
 const router = express.Router();
 
-// router.use(authenticateToken);
-router.use(multerErrorHandler);
+router.use(authenticateToken);
 
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, 'uploads/images/public/'),
@@ -24,27 +25,25 @@ const storage = multer.diskStorage({
 
 const upload = multer({ fileFilter, storage });
 
-router.post(
-  '/category/upload/single',
-  upload.single('categoryImage'),
-  addSingleCategory
-);
+router.post('/category/upload/single', addSingleCategory);
 
-router.post(
-  '/category/upload/multiple',
-  upload.array('categoryImage'),
-  addMultipleCategories
-);
+router.post('/category/upload/multiple', addMultipleCategories);
+
+router.get('category/:categoryId', sendSingleCategory);
+
+router.get('category/all', sendMultipleCategories);
 
 router.post(
   '/avatar/upload/single',
   upload.single('avatarImage'),
+  multerErrorHandler,
   addSingleAvatar
 );
 
 router.post(
   '/avatar/upload/multiple',
   upload.array('avatarImage'),
+  multerErrorHandler,
   addMultipleAvatars
 );
 

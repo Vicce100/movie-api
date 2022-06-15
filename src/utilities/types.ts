@@ -1,3 +1,5 @@
+import { Request } from 'express';
+
 export const jpeg = 'image/jpeg';
 export const jpg = 'image/jpg';
 export const png = 'image/png';
@@ -21,29 +23,37 @@ export const MulterErrorCode: {
   LIMIT_UNEXPECTED_FILE: 'LIMIT_UNEXPECTED_FILE',
 };
 
-type UsersRolesType = 'admin' | 'user';
-type UserStatusType = 'active' | 'disabled';
-
-export type CategorySchemaType = {
-  _id: string;
-  name: string;
-  url: string;
+export const userRoles = {
+  superAdmin: 'superAdmin',
+  admin: 'admin',
+  user: 'user',
 };
 
-export type AvatarSchemaType = {
+type UsersRolesType = 'admin' | 'user' | 'superAdmin';
+type UserStatusType = 'active' | 'disabled';
+
+export interface CategorySchemaType {
+  _id: string;
+  name: string;
+  // url: string;
+}
+
+export interface AvatarSchemaType {
   _id: string;
   category: string;
   name: string;
   url: string;
-};
+}
 
-export type ProfileType = {
-  id: string;
-  profileName: string;
-  avatarURL: string;
-}[];
+export type ProfileType =
+  | {
+      id: string;
+      profileName: string;
+      avatarURL: string;
+    }[]
+  | undefined;
 
-export type UserType = {
+export interface UserType {
   _id: string;
   email: string;
   refreshToken: string;
@@ -51,10 +61,10 @@ export type UserType = {
   createdAt: string;
   firstName: string;
   lastName: string;
-  profiles: ProfileType;
+  profiles?: ProfileType; // never
   role: UsersRolesType;
   userStatus: UserStatusType;
-};
+}
 
 export type CurrentUserType = {
   id: string;
@@ -67,3 +77,7 @@ export type CurrentUserType = {
   role: UsersRolesType;
   userStatus: UserStatusType;
 };
+
+export interface AuthRequestType extends Omit<Request, 'user'> {
+  user: UserType;
+}
