@@ -53,7 +53,7 @@ export const login = async (
   res: Response<any, Record<string, any>>
 ) => {
   if (!process.env.SECRET_REFRESH_TOKEN) return;
-  const user = await db.findUserByEmail<UserType>(req.body.email);
+  const user = await db.findUserByEmail(req.body.email);
   if (!user)
     return res.status(404).json(db.returnErrorData('cannot find user', 404));
 
@@ -68,14 +68,20 @@ export const login = async (
       date.setTime(date.getTime() + 36500 * 24 * 60 * 60 * 1000);
 
       await db.updateRefreshToken(user._id, refreshToken);
-      res.cookie('SSID', generateAccessToken(user), {
+      const latestUser = await db.findUserByRefreshToken(refreshToken);
+      if (!latestUser)
+        return res
+          .status(404)
+          .json(db.returnErrorData('cannot find user', 404));
+
+      res.cookie('SSID', generateAccessToken(latestUser), {
         sameSite: 'strict', // lax, none
         path: '/',
         expires: date,
         httpOnly: true,
         secure: true,
       });
-      return res.status(200).json(db.returnCurrentUser(user));
+      return res.status(200).json(db.returnCurrentUser(latestUser));
     }
     return res.status(403).json({
       ...db.returnErrorData('Wrong Password. Please try again', 403),
@@ -87,12 +93,16 @@ export const login = async (
 };
 
 export const logout = async (
-  req: AuthRequestType,
+  req: any, // AuthRequestType
   res: Response<any, Record<string, any>>
 ) => {
-  const { _id: userId } = req.user;
-  await db.removeRefreshToken(userId);
-  return res.clearCookie('SSID').status(200).json({ currentUser: null });
+  try {
+    await db.updateRefreshToken(req.user._id, '');
+    res.clearCookie('SSID');
+    return res.status(200).json({ currentUser: null });
+  } catch (error) {
+    return res.status(500).json({ error, message: 'logout failed' });
+  }
 };
 
 export const refreshToken = async (
@@ -111,38 +121,40 @@ export const refreshToken = async (
       .status(403)
       .json(db.returnErrorData('no refreshToken exist', 401));
 
+  const date = new Date();
+  date.setTime(date.getTime() + 36500 * 24 * 60 * 60 * 1000);
+
   if (process.env.SECRET_REFRESH_TOKEN) {
     jwt.verify(refreshToken, process.env.SECRET_REFRESH_TOKEN, (err, user) => {
       if (err)
         return res.sendStatus(403).json(db.returnErrorData(err.message, 403));
 
-      const accessToken = generateAccessToken(tempUser);
-      res.cookie('SSID', accessToken, {
+      res.cookie('SSID', generateAccessToken(tempUser), {
         sameSite: 'strict', // lax, none
         path: '/',
-        expires: new Date(new Date().getFullYear() + 100),
+        expires: date,
         httpOnly: true,
         secure: true,
       });
-      return res.json({ accessToken });
+      return res.status(200).json(db.returnCurrentUser(tempUser));
     });
   } else return res.status(500).json('internal server error');
 };
 
 export const deleteUser = async (
-  req: AuthRequestType,
+  req: any, // AuthRequestType
   res: Response<any, Record<string, any>>
 ) => {
   const { email, password, userId } = req.body;
   if (req.user._id === userId) {
-    const tempUser = await db.findUserByEmail<UserType>(email);
+    const tempUser = await db.findUserByEmail(email);
     if (tempUser === null)
       return res.status(404).json(db.returnErrorData('Cannot find user', 404));
 
     if (await bcrypt.compare(password, tempUser.password)) {
       try {
         // const remove user = await User.deleteOne({_id: req.params.UserId})
-        const removedUser = await db.removeUser<UserType>(userId);
+        const removedUser = db.removeUser(userId);
         return res.status(204).json({ removedUser });
       } catch (error: any) {
         return res.status(500).json({ message: error.message });
@@ -157,7 +169,7 @@ export const deleteUser = async (
 };
 
 export const addProfile = async (
-  req: AuthRequestType,
+  req: any, // AuthRequestType
   res: Response<any, Record<string, any>>
 ) => {
   const { profileName, avatarURL }: { profileName: string; avatarURL: string } =
@@ -188,11 +200,11 @@ export const addProfile = async (
 };
 
 export const getCurrentUser = async (
-  req: any,
+  req: any, // AuthRequestType
   res: Response<any, Record<string, any>>
 ) => {
   try {
-    const user = await db.findUserById<UserType>(req.user._id);
+    const user = await db.findUserById(req.user._id);
     if (!user)
       return res.status(404).json(db.returnErrorData('cannot find user', 404));
 

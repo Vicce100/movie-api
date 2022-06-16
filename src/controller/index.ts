@@ -49,7 +49,7 @@ export const sendSingleCategory = async (req: Request, res: Response) => {
 export const sendMultipleCategories = async (_req: Request, res: Response) => {
   try {
     const data = await db.getAllCategories();
-    res.send(200).json(data);
+    res.json(data);
   } catch (error) {
     res.status(400).json(error);
   }
@@ -57,9 +57,13 @@ export const sendMultipleCategories = async (_req: Request, res: Response) => {
 
 export const addSingleAvatar = (req: Request, res: Response) => {
   const { file } = req;
-  const { name, category }: { name: string; category: string[] } = req.body;
+  const { name, category }: { name: string; category: string[] | string } =
+    req.body;
   if (!file) return res.status(400).send('No file or wrong file was uploaded!');
-  new avatar({ category, name, url: file.path }).save(
+  let tempCategory: string[] | null = null;
+  if (Array.isArray(category))
+    tempCategory = category.map((tempCategory) => tempCategory);
+  new avatar({ category: tempCategory || category, name, url: file.path }).save(
     (
       err: CallbackError,
       avatar: Document<unknown, any, AvatarSchemaType> &

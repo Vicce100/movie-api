@@ -40,6 +40,7 @@ const imageCheck = () => {
   fs.mkdirSync(`${images}/public`);
 };
 
+// setup folder structure for image and video files
 const checkAssetsFolder = () => {
   if (!fs.existsSync(uploads)) {
     fs.mkdirSync(uploads);

@@ -1,17 +1,12 @@
 import { Model } from 'mongoose';
 import { StringDecoder } from 'string_decoder';
-import {
-  CategorySchemaType,
-  CurrentUserType,
-  ProfileType,
-  UserType,
-} from '../types.js';
+import { CurrentUserType, ProfileType, UserType } from '../types.js';
 import UserModel from '../../schemas/UserSchema.js';
 import category from '../../schemas/categorySchema.js';
 
 // ----------------------- local ----------------------- //
 
-const setFieldWithId = async <T>(
+const setFieldWithId = <T>(
   dataPoint: Model<T>,
   userId: string,
   valueToUpdate: unknown
@@ -19,18 +14,15 @@ const setFieldWithId = async <T>(
 
 // ----------------------- local ----------------------- //
 
-const findUserByEmail = async <T>(value: string | number): Promise<T | null> =>
+const findUserByEmail = (value: string | number) =>
   UserModel.findOne({ email: value });
 
-const findUserById = async <T>(id: string): Promise<T | null> =>
-  UserModel.findById(id);
+const findUserById = (id: string) => UserModel.findById(id);
 
-const findUserByRefreshToken = async (
-  refreshToken: string
-): Promise<UserType | null> => await UserModel.findOne({ refreshToken });
+const findUserByRefreshToken = (refreshToken: string) =>
+  UserModel.findOne({ refreshToken });
 
-const removeUser = async <T>(userId: string): Promise<T | null> =>
-  UserModel.remove({ _id: userId });
+const removeUser = (userId: string) => UserModel.remove({ _id: userId });
 
 const updatePassword = (userId: string, valueToUpdate: string | null) =>
   setFieldWithId(UserModel, userId, valueToUpdate);
@@ -41,7 +33,7 @@ const updateRefreshToken = (userId: string, refreshToken: string | null) =>
     { $set: { refreshToken: refreshToken } }
   );
 
-const removeRefreshToken = async (userId: string) =>
+const removeRefreshToken = (userId: string) =>
   UserModel.findOne<UserType>({ _id: userId }).then((user: UserType | null) =>
     UserModel.updateOne(
       { _id: userId },
@@ -52,13 +44,10 @@ const removeRefreshToken = async (userId: string) =>
 const addProfileToUser = (userId: StringDecoder, data: ProfileType) =>
   UserModel.updateOne({ _id: userId }, { $push: { profiles: data } });
 
-const getSingleCategoryBaId = async (
-  categoryId: string
-): Promise<CategorySchemaType | null> =>
-  await category.findOne({ _id: categoryId });
+const getSingleCategoryBaId = (categoryId: string) =>
+  category.findOne({ _id: categoryId });
 
-const getAllCategories = async (): Promise<CategorySchemaType[] | null> =>
-  await category.find();
+const getAllCategories = () => category.find();
 
 const returnErrorData = (message: string, status: string | number) => ({
   message,

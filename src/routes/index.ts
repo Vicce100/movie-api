@@ -29,9 +29,9 @@ router.post('/category/upload/single', addSingleCategory);
 
 router.post('/category/upload/multiple', addMultipleCategories);
 
-router.get('category/:categoryId', sendSingleCategory);
+router.get('/category/:categoryId', sendSingleCategory);
 
-router.get('category/all', sendMultipleCategories);
+router.get('/category/get/multiple', sendMultipleCategories);
 
 router.post(
   '/avatar/upload/single',
