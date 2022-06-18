@@ -9,10 +9,7 @@ export const addSingleCategory = (req: Request, res: Response) => {
   new category({ name: req.body.category }).save(
     (
       err: CallbackError,
-      category: Document<unknown, any, CategorySchemaType> &
-        CategorySchemaType & {
-          _id: string;
-        }
+      category: Document<unknown, any, CategorySchemaType> & CategorySchemaType
     ) => {
       if (err) return res.status(400).send(err);
       res.status(201).json(category);
@@ -26,12 +23,8 @@ export const addMultipleCategories = (req: Request, res: Response) => {
       (
         err: CallbackError,
         _category: Document<unknown, any, CategorySchemaType> &
-          CategorySchemaType & {
-            _id: string;
-          }
-      ) => {
-        if (err) return res.status(400).send(err);
-      }
+          CategorySchemaType
+      ) => (err ? res.status(400).send(err) : null)
     );
   });
   res.status(201).json(`category's added successfully`);
@@ -63,13 +56,15 @@ export const addSingleAvatar = (req: Request, res: Response) => {
   let tempCategory: string[] | null = null;
   if (Array.isArray(category))
     tempCategory = category.map((tempCategory) => tempCategory);
-  new avatar({ category: tempCategory || category, name, url: file.path }).save(
+  else tempCategory = [category];
+  new avatar({
+    category: tempCategory,
+    name,
+    url: file.path.replaceAll(' ', ''),
+  }).save(
     (
       err: CallbackError,
-      avatar: Document<unknown, any, AvatarSchemaType> &
-        AvatarSchemaType & {
-          _id: string;
-        }
+      avatar: Document<unknown, any, AvatarSchemaType> & AvatarSchemaType
     ) => {
       if (err) return res.status(400).send(err);
       res.status(201).json(avatar);
@@ -80,27 +75,25 @@ export const addSingleAvatar = (req: Request, res: Response) => {
 export const addMultipleAvatars = (req: Request, res: Response) => {
   if (!Array.isArray(req.files))
     return res.status(400).send('No file or wrong file was uploaded!');
-  const { avatar } = req.body;
+  const { name, categories }: { name: string[]; categories: string[] } =
+    req.body;
 
   const message = 'number of files dose not match number of names';
-  if (req.files.length !== avatar.length)
+  if (req.files.length !== name.length)
     return res.status(400).json(db.returnErrorData(message, 400));
 
   req.files.forEach((file, index) => {
     new avatar({
-      category: avatar[index].avatarCategory,
-      name: avatar[index].avatarName,
+      name: name[index],
       url: file.path,
+      category: categories.filter(
+        (category) => category === `${index}/${category}`
+      ),
     }).save(
       (
         err: CallbackError,
-        _avatar: Document<unknown, any, AvatarSchemaType> &
-          AvatarSchemaType & {
-            _id: string;
-          }
-      ) => {
-        if (err) return res.status(400).send(err);
-      }
+        _avatar: Document<unknown, any, AvatarSchemaType> & AvatarSchemaType
+      ) => (err ? res.status(400).send(err) : null)
     );
   });
   res.status(201).json(`avatars added successfully`);

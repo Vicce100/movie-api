@@ -13,8 +13,9 @@ dotenv.config();
 const router = express.Router();
 
 const storage = multer.diskStorage({
-  destination: (_req, file, cb) => cb(null, 'uploads/'),
-  filename: (_req, file, cb) => cb(null, Date.now() + file.originalname),
+  destination: (_req, _file, cb) => cb(null, 'uploads/videos/public/'),
+  filename: (_req, file, cb) =>
+    cb(null, `${Date.now()}-${file.originalname.replaceAll(' ', '')}`),
 });
 
 const upload = multer({ storage, fileFilter });

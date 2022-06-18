@@ -18,7 +18,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cors(corsOptions));
 
-app.use('/uploads', express.static('uploads/images/public'));
+app.use('/uploads', express.static('uploads'));
 app.use('/video', videRoutes);
 app.use('/user', userRoutes);
 app.use(indexRouter);
@@ -33,22 +33,30 @@ mongoose
 
 const uploads = './uploads';
 const images = `${uploads}/images`;
+const videos = `${uploads}/videos`;
 
 const imageCheck = () => {
   fs.mkdirSync(images);
   fs.mkdirSync(`${images}/private`);
   fs.mkdirSync(`${images}/public`);
 };
+const videoCheck = () => {
+  fs.mkdirSync(videos);
+  fs.mkdirSync(`${videos}/private`);
+  fs.mkdirSync(`${videos}/public`);
+};
 
 // setup folder structure for image and video files
 const checkAssetsFolder = () => {
   if (!fs.existsSync(uploads)) {
     fs.mkdirSync(uploads);
-    fs.mkdirSync(`${uploads}/videos`);
+    videoCheck();
     return imageCheck();
   }
-  if (!fs.existsSync(`${uploads}/videos`)) fs.mkdirSync(`${uploads}/videos`);
-  if (!fs.existsSync(images)) return imageCheck();
+  if (!fs.existsSync(videos)) videoCheck();
+  if (!fs.existsSync(`${videos}/private`)) fs.mkdirSync(`${videos}/private`);
+  if (!fs.existsSync(`${videos}/public`)) fs.mkdirSync(`${videos}/public`);
+  if (!fs.existsSync(images)) imageCheck();
   if (!fs.existsSync(`${images}/private`)) fs.mkdirSync(`${images}/private`);
   if (!fs.existsSync(`${images}/public`)) fs.mkdirSync(`${images}/public`);
 };

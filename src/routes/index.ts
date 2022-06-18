@@ -20,7 +20,8 @@ router.use(authenticateToken);
 
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, 'uploads/images/public/'),
-  filename: (_req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`),
+  filename: (_req, file, cb) =>
+    cb(null, `${Date.now()}-${file.originalname.replaceAll(' ', '')}`),
 });
 
 const upload = multer({ fileFilter, storage });
