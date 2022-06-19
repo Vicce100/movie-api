@@ -8,7 +8,7 @@ import {
   addProfile,
   getCurrentUser,
 } from '../controller/user.js';
-import { authenticateToken } from '../utilities/middleware.js';
+import { isAuthenticate } from '../utilities/middleware.js';
 
 const router = express.Router();
 
@@ -16,14 +16,14 @@ router.post('/create', signUp, login);
 
 router.post('/login', login);
 
-router.delete('/logout', authenticateToken, logout);
+router.delete('/logout', isAuthenticate, logout);
 
 router.post('/refreshToken', refreshToken);
 
-router.delete('/delete', authenticateToken, deleteUser);
+router.delete('/delete', isAuthenticate, deleteUser);
 
-router.post('/addProfile', authenticateToken, addProfile);
+router.post('/addProfile', isAuthenticate, addProfile);
 
-router.get('/getCurrentUser', authenticateToken, getCurrentUser);
+router.get('/getCurrentUser', isAuthenticate, getCurrentUser);
 
 export default router;

@@ -16,7 +16,7 @@ import db from './db/index.js';
 
 dotenv.config();
 
-export const authenticateToken = (
+export const isAuthenticate = (
   req: any, // AuthRequestType
   res: Response<any, Record<string, any>>,
   next: NextFunction
@@ -46,7 +46,7 @@ export const authenticateToken = (
   }
 };
 
-export const adminUser = (
+export const isAdmin = (
   req: any,
   res: Response<any, Record<string, any>>,
   next: NextFunction
@@ -78,7 +78,7 @@ export const adminUser = (
   }
 };
 
-export const superAdminUser = (
+export const isSuperAdmin = (
   req: any,
   res: Response<any, Record<string, any>>,
   next: NextFunction

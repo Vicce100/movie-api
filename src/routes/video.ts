@@ -3,7 +3,7 @@ import fs from 'fs';
 import dotenv from 'dotenv';
 import multer from 'multer';
 import {
-  authenticateToken,
+  isAuthenticate,
   fileFilterVideos as fileFilter,
 } from '../utilities/middleware.js';
 import { mp4 } from '../utilities/types.js';
@@ -20,7 +20,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage, fileFilter });
 
-router.get('/', authenticateToken, (req, res) => {
+router.get('/', isAuthenticate, (req, res) => {
   const { range } = req.headers;
   if (!range) return res.status(404).send('Missing Requires Range header! ');
 
