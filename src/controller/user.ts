@@ -5,9 +5,8 @@ import dotenv from 'dotenv';
 
 import User from '../schemas/UserSchema.js';
 import { generateAccessToken } from '../utilities/index.js';
-import { AuthRequestType, UserType } from '../utilities/types.js';
+// import { AuthRequestType, UserType } from '../utilities/types.js';
 import db from '../utilities/db/index.js';
-import { v4 as uuidV4 } from 'uuid';
 
 dotenv.config();
 
@@ -185,7 +184,6 @@ export const addProfile = async (
       {
         $push: {
           profiles: {
-            id: uuidV4(),
             profileName: profileName,
             avatarURL: avatarURL,
           },

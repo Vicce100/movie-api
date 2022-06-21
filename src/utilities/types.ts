@@ -52,7 +52,7 @@ export interface AvatarSchemaType {
 
 export type ProfileType =
   | {
-      id: string;
+      _id: string;
       profileName: string;
       avatarURL: string;
     }[]

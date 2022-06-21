@@ -73,6 +73,7 @@ const returnAvatar = (
     id: data?._id,
     name: data?.name,
     url: `${url}/${data?.url}`,
+    urlPath: data?.url,
     category: data?.category,
   };
 };
@@ -92,7 +93,12 @@ const returnCurrentUser = (
     refreshToken: user.refreshToken,
     firstName: user.firstName,
     lastName: user.lastName,
-    profiles: user?.profiles || undefined,
+    profiles:
+      user?.profiles?.map(({ _id, profileName, avatarURL }) => ({
+        _id,
+        profileName,
+        avatarURL: `${url}/${avatarURL}`,
+      })) || undefined,
     role: user.role,
     userStatus: user.userStatus,
   },
