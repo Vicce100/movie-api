@@ -60,7 +60,7 @@ export const addSingleAvatar = (req: Request, res: Response) => {
   new avatar({
     category: tempCategory,
     name,
-    url: file.path.replaceAll(' ', ''),
+    url: file.path.replaceAll(' ', '-'),
   }).save(
     (
       err: CallbackError,
@@ -85,10 +85,10 @@ export const addMultipleAvatars = (req: Request, res: Response) => {
   req.files.forEach((file, index) => {
     new avatar({
       name: name[index],
-      url: file.path,
-      category: categories.filter(
-        (category) => category === `${index}/${category}`
-      ),
+      url: file.path.replaceAll(' ', '-'),
+      category: categories
+        .filter((category) => category === `${index}/${category.split('/')[1]}`)
+        .map((category) => category.split('/')[1]),
     }).save(
       (
         err: CallbackError,
@@ -97,4 +97,22 @@ export const addMultipleAvatars = (req: Request, res: Response) => {
     );
   });
   res.status(201).json(`avatars added successfully`);
+};
+
+export const sendSingleAvatar = async (req: Request, res: Response) => {
+  try {
+    const data = await db.getSingleAvatarById(req.params.categoryId);
+    res.status(200).json(db.returnAvatar(data));
+  } catch (error) {
+    res.status(400).send(error);
+  }
+};
+
+export const sendMultipleAvatars = async (_req: Request, res: Response) => {
+  try {
+    const data = await db.getAllAvatars();
+    res.json(data.map((d) => db.returnAvatar(d)));
+  } catch (error) {
+    res.status(400).json(error);
+  }
 };

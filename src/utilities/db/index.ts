@@ -1,8 +1,15 @@
-import { Model } from 'mongoose';
+import { Document, Model } from 'mongoose';
 import { StringDecoder } from 'string_decoder';
-import { CurrentUserType, ProfileType, UserType } from '../types.js';
+import {
+  AvatarSchemaType,
+  CurrentUserType,
+  ProfileType,
+  UserType,
+  url,
+} from '../types.js';
 import UserModel from '../../schemas/UserSchema.js';
 import category from '../../schemas/categorySchema.js';
+import avatar from '../../schemas/avatarSchema.js';
 
 // ----------------------- local ----------------------- //
 
@@ -49,6 +56,28 @@ const getSingleCategoryBaId = (categoryId: string) =>
 
 const getAllCategories = () => category.find();
 
+const getSingleAvatarById = (avatarId: string) =>
+  avatar.findOne({ _id: avatarId });
+
+const getAllAvatars = () => avatar.find();
+
+const returnAvatar = (
+  data:
+    | (Document<unknown, any, AvatarSchemaType> &
+        AvatarSchemaType & {
+          _id: string;
+        })
+    | null
+) => {
+  return {
+    id: data?._id,
+    name: data?.name,
+    url: `${url}/${data?.url}`,
+    urlPath: data?.url,
+    category: data?.category,
+  };
+};
+
 const returnErrorData = (message: string, status: string | number) => ({
   message,
   status: String(status),
@@ -64,7 +93,12 @@ const returnCurrentUser = (
     refreshToken: user.refreshToken,
     firstName: user.firstName,
     lastName: user.lastName,
-    profiles: user?.profiles || undefined,
+    profiles:
+      user?.profiles?.map(({ _id, profileName, avatarURL }) => ({
+        _id,
+        profileName,
+        avatarURL: `${url}/${avatarURL}`,
+      })) || undefined,
     role: user.role,
     userStatus: user.userStatus,
   },
@@ -83,4 +117,7 @@ export default {
   removeRefreshToken,
   getSingleCategoryBaId,
   getAllCategories,
+  getSingleAvatarById,
+  getAllAvatars,
+  returnAvatar,
 };

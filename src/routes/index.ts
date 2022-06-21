@@ -1,6 +1,6 @@
 import express from 'express';
 import {
-  authenticateToken,
+  isAuthenticate,
   multerErrorHandler,
   fileFilterImages as fileFilter,
 } from '../utilities/middleware.js';
@@ -12,16 +12,18 @@ import {
   addSingleCategory,
   sendMultipleCategories,
   sendSingleCategory,
+  sendSingleAvatar,
+  sendMultipleAvatars,
 } from '../controller/index.js';
 
 const router = express.Router();
 
-router.use(authenticateToken);
+router.use(isAuthenticate);
 
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, 'uploads/images/public/'),
   filename: (_req, file, cb) =>
-    cb(null, `${Date.now()}-${file.originalname.replaceAll(' ', '')}`),
+    cb(null, `${Date.now()}-${file.originalname.replaceAll(' ', '-')}`),
 });
 
 const upload = multer({ fileFilter, storage });
@@ -47,5 +49,9 @@ router.post(
   multerErrorHandler,
   addMultipleAvatars
 );
+
+router.get('/avatar/:avatarId', sendSingleAvatar);
+
+router.get('/avatar/get/multiple', sendMultipleAvatars);
 
 export default router;

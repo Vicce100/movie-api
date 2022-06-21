@@ -22,7 +22,6 @@ const UserSchema = new mongoose.Schema({
   lastName: requiredShortString,
   profiles: [
     {
-      id: { ...uniqueString, immutable: true, default: () => uuidV4() },
       profileName: requiredShortString,
       avatarURL: reqString,
     },

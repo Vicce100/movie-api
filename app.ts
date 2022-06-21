@@ -18,7 +18,8 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cors(corsOptions));
 
-app.use('/uploads', express.static('uploads'));
+app.use('/uploads/images/public/', express.static('uploads/images/public'));
+app.use('/uploads/videos/public/', express.static('uploads/videos/public'));
 app.use('/video', videRoutes);
 app.use('/user', userRoutes);
 app.use(indexRouter);

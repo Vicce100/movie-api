@@ -1,5 +1,10 @@
 import { Request } from 'express';
 
+const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
+const host = process.env.NODE_ENV === 'production' ? 'localhost' : 'localhost';
+const port = process.env.NODE_ENV === 'production' ? '3000' : '5050';
+export const url = `${protocol}://${host}:${port}`;
+
 export const jpeg = 'image/jpeg';
 export const jpg = 'image/jpg';
 export const png = 'image/png';
@@ -47,7 +52,7 @@ export interface AvatarSchemaType {
 
 export type ProfileType =
   | {
-      id: string;
+      _id: string;
       profileName: string;
       avatarURL: string;
     }[]
