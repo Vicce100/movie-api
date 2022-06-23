@@ -2,16 +2,7 @@ import { NextFunction, Request, Response } from 'express';
 import multer, { FileFilterCallback, MulterError } from 'multer';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
-import {
-  jpeg,
-  jpg,
-  mp4,
-  png,
-  MulterErrorCode,
-  CurrentUserType,
-  userRoles,
-  // AuthRequestType,
-} from './types.js';
+import { MulterErrorCode, CurrentUserType, userRoles } from './types.js';
 import db from './db/index.js';
 
 dotenv.config();
@@ -117,7 +108,7 @@ export const fileFilterAll = (
   file: Express.Multer.File,
   cb: FileFilterCallback
 ) => {
-  if (file.mimetype === jpg || jpeg || png || mp4) return cb(null, true);
+  if (file.mimetype.split('/')[0] === 'image' || 'video') return cb(null, true);
   cb(new MulterError(MulterErrorCode.LIMIT_UNEXPECTED_FILE));
 };
 
@@ -126,7 +117,7 @@ export const fileFilterVideos = (
   file: Express.Multer.File,
   cb: FileFilterCallback
 ) => {
-  if (file.mimetype === mp4) return cb(null, true);
+  if (file.mimetype.split('/')[0] === 'video') return cb(null, true);
   cb(new MulterError(MulterErrorCode.LIMIT_UNEXPECTED_FILE));
 };
 
@@ -135,8 +126,7 @@ export const fileFilterImages = (
   file: Express.Multer.File,
   cb: FileFilterCallback
 ) => {
-  if (file.mimetype.split('/')[0] === 'image') cb(null, true);
-  if (file.mimetype === jpg || jpeg || png) return cb(null, true);
+  if (file.mimetype.split('/')[0] === 'image') return cb(null, true);
   cb(new MulterError(MulterErrorCode.LIMIT_UNEXPECTED_FILE));
 };
 

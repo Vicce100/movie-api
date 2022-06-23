@@ -48,7 +48,7 @@ export const signUp = async (
 };
 
 export const login = async (
-  req: Request<{}, any, any, any, Record<string, any>>,
+  req: Request,
   res: Response<any, Record<string, any>>
 ) => {
   if (!process.env.SECRET_REFRESH_TOKEN) return;
@@ -92,7 +92,7 @@ export const login = async (
 };
 
 export const logout = async (
-  req: any, // AuthRequestType
+  req: Request,
   res: Response<any, Record<string, any>>
 ) => {
   try {
@@ -105,7 +105,7 @@ export const logout = async (
 };
 
 export const refreshToken = async (
-  req: Request<{}, any, any, any, Record<string, any>>,
+  req: Request,
   res: Response<any, Record<string, any>>
 ) => {
   const { refreshToken }: { refreshToken: string } = req.body;
@@ -141,7 +141,7 @@ export const refreshToken = async (
 };
 
 export const deleteUser = async (
-  req: any, // AuthRequestType
+  req: Request,
   res: Response<any, Record<string, any>>
 ) => {
   const { email, password, userId } = req.body;
@@ -168,7 +168,7 @@ export const deleteUser = async (
 };
 
 export const addProfile = async (
-  req: any, // AuthRequestType
+  req: Request,
   res: Response<any, Record<string, any>>
 ) => {
   const { profileName, avatarURL }: { profileName: string; avatarURL: string } =
@@ -199,7 +199,7 @@ export const addProfile = async (
 };
 
 export const getCurrentUser = async (
-  req: any, // AuthRequestType
+  req: Request,
   res: Response<any, Record<string, any>>
 ) => {
   try {

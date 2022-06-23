@@ -37,6 +37,18 @@ export const userRoles = {
 type UsersRolesType = 'admin' | 'user' | 'superAdmin';
 type UserStatusType = 'active' | 'disabled';
 
+export interface VideoSchemaType {
+  title: string;
+  videoUrl: string;
+  displayPicture: string;
+  album: string[];
+  categories: string[];
+  description: string;
+  creatorsId: string;
+  uploadDate: string;
+  releaseDate: string;
+}
+
 export interface CategorySchemaType {
   _id: string;
   name: string;
@@ -45,7 +57,7 @@ export interface CategorySchemaType {
 
 export interface AvatarSchemaType {
   _id: string;
-  category: string;
+  categories: string;
   name: string;
   url: string;
 }
@@ -63,12 +75,13 @@ export interface UserType {
   email: string;
   refreshToken: string;
   password: string;
-  createdAt: string;
   firstName: string;
   lastName: string;
   profiles?: ProfileType; // never
   role: UsersRolesType;
   userStatus: UserStatusType;
+  createdAt: string;
+  videosUploaded: string;
 }
 
 export type CurrentUserType = {

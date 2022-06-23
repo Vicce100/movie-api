@@ -1,4 +1,4 @@
-import { Document, Model } from 'mongoose';
+import { Document, Model, Types } from 'mongoose';
 import { StringDecoder } from 'string_decoder';
 import {
   AvatarSchemaType,
@@ -61,6 +61,16 @@ const getSingleAvatarById = (avatarId: string) =>
 
 const getAllAvatars = () => avatar.find();
 
+const addUsersVideos = async (
+  userId: string,
+  videoSchemaId: Types.ObjectId
+) => {
+  const a = UserModel.updateOne(
+    { _id: userId },
+    { $push: { videosUploaded: videoSchemaId } }
+  );
+};
+
 const returnAvatar = (
   data:
     | (Document<unknown, any, AvatarSchemaType> &
@@ -74,7 +84,7 @@ const returnAvatar = (
     name: data?.name,
     url: `${url}/${data?.url}`,
     urlPath: data?.url,
-    category: data?.category,
+    categories: data?.categories,
   };
 };
 
@@ -120,4 +130,5 @@ export default {
   getSingleAvatarById,
   getAllAvatars,
   returnAvatar,
+  addUsersVideos,
 };
