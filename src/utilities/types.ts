@@ -28,13 +28,29 @@ export const MulterErrorCode: {
   LIMIT_UNEXPECTED_FILE: 'LIMIT_UNEXPECTED_FILE',
 };
 
-export const userRoles = {
-  superAdmin: 'superAdmin',
-  admin: 'admin',
-  user: 'user',
+export const errorCode: {
+  NOT_AUTHENTICATED: 'user not authenticated';
+  ACCESS_WRONG_USER: 'trying to access wrong data';
+  MISSING_ENV_TOKEN: 'missing env token';
+} = {
+  NOT_AUTHENTICATED: 'user not authenticated',
+  ACCESS_WRONG_USER: 'trying to access wrong data',
+  MISSING_ENV_TOKEN: 'missing env token',
 };
 
-type UsersRolesType = 'admin' | 'user' | 'superAdmin';
+export const userRoles: {
+  user: 'user';
+  moderator: 'moderator';
+  admin: 'admin';
+  superAdmin: 'superAdmin';
+} = {
+  user: 'user',
+  moderator: 'moderator',
+  admin: 'admin',
+  superAdmin: 'superAdmin',
+};
+
+type UsersRolesType = 'user' | 'moderator' | 'admin' | 'superAdmin';
 type UserStatusType = 'active' | 'disabled';
 
 export interface VideoSchemaType {

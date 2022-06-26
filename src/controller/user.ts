@@ -9,6 +9,7 @@ import { generateAccessToken } from '../utilities/index.js';
 import db from '../utilities/db/index.js';
 
 dotenv.config();
+const userNotAuthObject = db.returnErrorData('user not authenticated.', 401);
 
 export const signUp = async (
   req: Request,
@@ -95,6 +96,7 @@ export const logout = async (
   req: Request,
   res: Response<any, Record<string, any>>
 ) => {
+  if (!req.user) return res.status(401).json(userNotAuthObject);
   try {
     await db.updateRefreshToken(req.user._id, '');
     res.clearCookie('SSID');
@@ -144,6 +146,7 @@ export const deleteUser = async (
   req: Request,
   res: Response<any, Record<string, any>>
 ) => {
+  if (!req.user) return res.status(401).json(userNotAuthObject);
   const { email, password, userId } = req.body;
   if (req.user._id === userId) {
     const tempUser = await db.findUserByEmail(email);
@@ -171,6 +174,7 @@ export const addProfile = async (
   req: Request,
   res: Response<any, Record<string, any>>
 ) => {
+  if (!req.user) return res.status(401).json(userNotAuthObject);
   const { profileName, avatarURL }: { profileName: string; avatarURL: string } =
     req.body;
   if (!profileName || !avatarURL) {
@@ -202,6 +206,7 @@ export const getCurrentUser = async (
   req: Request,
   res: Response<any, Record<string, any>>
 ) => {
+  if (!req.user) return res.status(401).json(userNotAuthObject);
   try {
     const user = await db.findUserById(req.user._id);
     if (!user)

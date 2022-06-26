@@ -11,6 +11,8 @@ import {
   mp4,
 } from '../utilities/types.js';
 
+const userNotAuthObject = db.returnErrorData('user not authenticated.', 401);
+
 export const addSingleCategory = (req: Request, res: Response) => {
   new category({ name: req.body.category }).save(
     (
@@ -165,8 +167,10 @@ export const postSingleVideo = async (req: Request, res: Response) => {
     releaseDate: string;
   } = req.body;
 
+  if (!req.user) return res.status(401).json(userNotAuthObject);
+
   if (!files || !categories || !title)
-    return res.status(404).send('wrong filled value was uploaded!');
+    return res.status(404).json('wrong filled value was uploaded!');
 
   if (!Array.isArray(files)) {
     let tempCategory: string[] | null = null;

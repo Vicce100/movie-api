@@ -11,7 +11,7 @@ import UserModel from '../../schemas/UserSchema.js';
 import category from '../../schemas/categorySchema.js';
 import avatar from '../../schemas/avatarSchema.js';
 
-// ----------------------- local ----------------------- //
+/* ----------------------- local ----------------------- */
 
 const setFieldWithId = <T>(
   dataPoint: Model<T>,
@@ -19,7 +19,7 @@ const setFieldWithId = <T>(
   valueToUpdate: unknown
 ) => dataPoint.updateOne({ _id: userId }, { $set: { valueToUpdate } });
 
-// ----------------------- local ----------------------- //
+/* ----------------------- local ----------------------- */
 
 const findUserByEmail = (value: string | number) =>
   UserModel.findOne({ email: value });
