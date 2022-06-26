@@ -5,7 +5,6 @@ import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 import fs from 'fs';
 
-import videRoutes from './src/routes/video.js';
 import userRoutes from './src/routes/user.js';
 import indexRouter from './src/routes/index.js';
 import corsOptions from './src/config/corsOptions.js';
@@ -20,7 +19,6 @@ app.use(cors(corsOptions));
 
 app.use('/uploads/images/public/', express.static('uploads/images/public'));
 app.use('/uploads/videos/public/', express.static('uploads/videos/public'));
-app.use('/video', videRoutes);
 app.use('/user', userRoutes);
 app.use(indexRouter);
 
