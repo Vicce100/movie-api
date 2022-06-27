@@ -9,12 +9,12 @@ export const generateAccessToken = (user: UserType) =>
 
 // assertion
 
-export const assertNonNullish = <T>(
+export function assertNonNullish<T>(
   value: T,
   message: string
-): asserts value is NonNullable<T> => {
+): asserts value is NonNullable<T> {
   if (value === null || value === undefined) throw new Error(message);
-};
+}
 
 export function assertIsNotNullOrUndefined(
   value: unknown | undefined,
@@ -24,19 +24,22 @@ export function assertIsNotNullOrUndefined(
   return true;
 }
 
-export const assertsIsDefined = (
+export function assertsIsDefined(
   value: unknown | undefined,
   message: string
-): asserts value => {
+): asserts value {
   if (value === null || value === undefined) throw new Error(message);
-};
+}
 
-export const isTruthy = <T>(
+export function isTruthy<T>(
   data: T
-): data is Exclude<T, null | undefined | false | '' | 0> => !!data;
+): data is Exclude<T, null | undefined | false | '' | 0> {
+  return !!data;
+}
 
-export const assertIsNotArray = (value: unknown | undefined) =>
-  !Array.isArray(value);
+export function assertIsNotArray(value: unknown | undefined) {
+  return !Array.isArray(value);
+}
 
 export function assertIsArray(
   value: unknown | undefined,
@@ -93,5 +96,6 @@ export function assertIsStringArray(
   return arrayLikeObject.every((prop) => typeof prop === 'string');
 }
 
-export const assertSumIsNegative = (num1: number, num2: number): boolean =>
-  num1 + num2 < 0;
+export function assertSumIsNegative(num1: number, num2: number): boolean {
+  return num1 + num2 < 0;
+}

@@ -32,10 +32,12 @@ export const errorCode: {
   NOT_AUTHENTICATED: 'user not authenticated';
   ACCESS_WRONG_USER: 'trying to access wrong data';
   MISSING_ENV_TOKEN: 'missing env token';
+  PERMISSION_DENIED: 'permission denied';
 } = {
   NOT_AUTHENTICATED: 'user not authenticated',
   ACCESS_WRONG_USER: 'trying to access wrong data',
   MISSING_ENV_TOKEN: 'missing env token',
+  PERMISSION_DENIED: 'permission denied',
 };
 
 export const userRoles: {

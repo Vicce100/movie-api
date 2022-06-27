@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 
 import { MulterErrorCode, userRoles, UserType, errorCode } from './types.js';
+import { assertNonNullish } from './index.js';
 import db from './db/index.js';
 
 dotenv.config();
@@ -40,7 +41,10 @@ const errorHandler = (error: Error) => {
     case errorCode.MISSING_ENV_TOKEN:
       return db.returnErrorData(errorCode.MISSING_ENV_TOKEN, 500);
     default:
-      return db.returnErrorData(error.message || 'not allowed', 400);
+      return db.returnErrorData(
+        error.message || errorCode.PERMISSION_DENIED,
+        400
+      );
   }
 };
 
@@ -53,10 +57,7 @@ export const isAuthenticate = (
 ) => {
   try {
     const user = checkAuth(req.cookies);
-    const { NOT_AUTHENTICATED } = errorCode;
-
-    if (!user)
-      return res.status(401).json(db.returnErrorData(NOT_AUTHENTICATED, 401));
+    assertNonNullish(user, errorCode.NOT_AUTHENTICATED);
 
     req.user = user;
     next();
@@ -71,10 +72,7 @@ export const isAuthenticate = (
 export const isModerator = (req: any, res: Response, next: NextFunction) => {
   try {
     const user = checkAuth(req.cookies);
-    const { NOT_AUTHENTICATED } = errorCode;
-
-    if (!user)
-      return res.status(401).json(db.returnErrorData(NOT_AUTHENTICATED, 401));
+    assertNonNullish(user, errorCode.NOT_AUTHENTICATED);
 
     if (user.role !== userRoles.moderator)
       return res.status(403).json({ message: 'You are not an moderator' });
@@ -92,10 +90,7 @@ export const isModerator = (req: any, res: Response, next: NextFunction) => {
 export const isAdmin = (req: any, res: Response, next: NextFunction) => {
   try {
     const user = checkAuth(req.cookies);
-    const { NOT_AUTHENTICATED } = errorCode;
-
-    if (!user)
-      return res.status(401).json(db.returnErrorData(NOT_AUTHENTICATED, 401));
+    assertNonNullish(user, errorCode.NOT_AUTHENTICATED);
 
     if (user.role !== userRoles.admin)
       return res.status(403).json({ message: 'You are not an admin' });
@@ -117,10 +112,7 @@ export const isSuperAdmin = (
 ) => {
   try {
     const user = checkAuth(req.cookies);
-    const { NOT_AUTHENTICATED } = errorCode;
-
-    if (!user)
-      return res.status(401).json(db.returnErrorData(NOT_AUTHENTICATED, 401));
+    assertNonNullish(user, errorCode.NOT_AUTHENTICATED);
 
     if (user.role !== userRoles.superAdmin)
       return res.status(403).json({ message: 'You are not an super admin' });
