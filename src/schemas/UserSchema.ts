@@ -1,6 +1,6 @@
 import mongoose from 'mongoose'; // only allows commonjs unless using default import
 import dayjs from 'dayjs';
-import { v4 as uuidV4 } from 'uuid';
+// import { v4 as uuidV4 } from 'uuid';
 import { UserType } from '../utilities/types.js';
 
 const reqString = { type: String, require: true };
@@ -36,6 +36,9 @@ const UserSchema = new mongoose.Schema({
     imitable: true,
     require: true,
   },
+  videosUploaded: [
+    { type: mongoose.SchemaTypes.ObjectId, require: true, ref: 'video' },
+  ],
 });
 
 export default mongoose.model<UserType>('Users', UserSchema);

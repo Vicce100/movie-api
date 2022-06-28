@@ -1,4 +1,4 @@
-import { Document, Model } from 'mongoose';
+import { Document, Model, Types } from 'mongoose';
 import { StringDecoder } from 'string_decoder';
 import {
   AvatarSchemaType,
@@ -10,8 +10,9 @@ import {
 import UserModel from '../../schemas/UserSchema.js';
 import category from '../../schemas/categorySchema.js';
 import avatar from '../../schemas/avatarSchema.js';
+import video from '../../schemas/videoSchema.js';
 
-// ----------------------- local ----------------------- //
+/* ----------------------- local ----------------------- */
 
 const setFieldWithId = <T>(
   dataPoint: Model<T>,
@@ -19,7 +20,9 @@ const setFieldWithId = <T>(
   valueToUpdate: unknown
 ) => dataPoint.updateOne({ _id: userId }, { $set: { valueToUpdate } });
 
-// ----------------------- local ----------------------- //
+/* ----------------------- local ----------------------- */
+
+/* ----------------------- user ----------------------- */
 
 const findUserByEmail = (value: string | number) =>
   UserModel.findOne({ email: value });
@@ -48,11 +51,19 @@ const removeRefreshToken = (userId: string) =>
     )
   );
 
+const EmailTaken = async (email: string) =>
+  (await findUserByEmail(email)) ? true : false;
+
+/* ----------------------- user ----------------------- */
+
 const addProfileToUser = (userId: StringDecoder, data: ProfileType) =>
   UserModel.updateOne({ _id: userId }, { $push: { profiles: data } });
 
 const getSingleCategoryBaId = (categoryId: string) =>
   category.findOne({ _id: categoryId });
+
+const getSingleCategoryBaName = (categoryName: string) =>
+  category.findOne({ name: categoryName });
 
 const getAllCategories = () => category.find();
 
@@ -60,6 +71,21 @@ const getSingleAvatarById = (avatarId: string) =>
   avatar.findOne({ _id: avatarId });
 
 const getAllAvatars = () => avatar.find();
+
+const addUsersVideos = async (
+  userId: string,
+  videoSchemaId: Types.ObjectId
+) => {
+  const a = UserModel.updateOne(
+    { _id: userId },
+    { $push: { videosUploaded: videoSchemaId } }
+  );
+};
+
+const getSingleVideoById = (videoId: string) => video.findOne({ _id: videoId });
+
+const getSingleVideoByName = (videoTitle: string) =>
+  video.findOne({ title: videoTitle });
 
 const returnAvatar = (
   data:
@@ -74,7 +100,7 @@ const returnAvatar = (
     name: data?.name,
     url: `${url}/${data?.url}`,
     urlPath: data?.url,
-    category: data?.category,
+    categories: data?.categories,
   };
 };
 
@@ -115,9 +141,14 @@ export default {
   updatePassword,
   updateRefreshToken,
   removeRefreshToken,
+  EmailTaken,
   getSingleCategoryBaId,
+  getSingleCategoryBaName,
   getAllCategories,
   getSingleAvatarById,
+  getSingleVideoById,
+  getSingleVideoByName,
   getAllAvatars,
   returnAvatar,
+  addUsersVideos,
 };

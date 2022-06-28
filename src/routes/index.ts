@@ -2,7 +2,7 @@ import express from 'express';
 import {
   isAuthenticate,
   multerErrorHandler,
-  fileFilterImages as fileFilter,
+  fileFilterAll as fileFilter,
 } from '../utilities/middleware.js';
 import multer from 'multer';
 import {
@@ -14,19 +14,42 @@ import {
   sendSingleCategory,
   sendSingleAvatar,
   sendMultipleAvatars,
+  getVideo,
+  postSingleVideo,
 } from '../controller/index.js';
 
 const router = express.Router();
 
-router.use(isAuthenticate);
+// router.use(isAuthenticate);
 
-const storage = multer.diskStorage({
+const imageStorage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, 'uploads/images/public/'),
   filename: (_req, file, cb) =>
     cb(null, `${Date.now()}-${file.originalname.replaceAll(' ', '-')}`),
 });
+const publicVideoStorage = multer.diskStorage({
+  destination: (_req, file, cb) => {
+    // if (file.mimetype.split('/')[0] === 'video')
+    return cb(null, 'uploads/videos/public/');
+    // else if (file.mimetype.split('/')[0] === 'image')
+    //   return cb(null, 'uploads/image/public/');
+  },
+  filename: (_req, file, cb) =>
+    cb(null, `${Date.now()}-${file.originalname.replaceAll(' ', '')}`),
+});
 
-const upload = multer({ fileFilter, storage });
+const uploadPublicImage = multer({ fileFilter, storage: imageStorage });
+const publicVideoUpload = multer({ storage: publicVideoStorage, fileFilter });
+
+const uploadSingleVideo = publicVideoUpload.fields([
+  // { name: 'title', maxCount: 1 }, // text
+  { name: 'videoFile', maxCount: 1 },
+  { name: 'displayPicture', maxCount: 1 },
+  // { name: 'album', maxCount: 100 },
+  // { name: 'categories', maxCount: 20 }, // text
+  // { name: 'description', maxCount: 1 }, // text
+  // { name: 'releaseDate', maxCount: 1 }, // text
+]);
 
 router.post('/category/upload/single', addSingleCategory);
 
@@ -38,14 +61,14 @@ router.get('/category/get/multiple', sendMultipleCategories);
 
 router.post(
   '/avatar/upload/single',
-  upload.single('avatarImage'),
+  uploadPublicImage.single('avatarImage'),
   multerErrorHandler,
   addSingleAvatar
 );
 
 router.post(
   '/avatar/upload/multiple',
-  upload.array('avatarImage'),
+  uploadPublicImage.array('avatarImage'),
   multerErrorHandler,
   addMultipleAvatars
 );
@@ -53,5 +76,14 @@ router.post(
 router.get('/avatar/:avatarId', sendSingleAvatar);
 
 router.get('/avatar/get/multiple', sendMultipleAvatars);
+
+router.get('/video/:videoId', getVideo);
+
+router.post(
+  '/video/upload/singe/public',
+  uploadSingleVideo,
+  multerErrorHandler,
+  postSingleVideo
+);
 
 export default router;

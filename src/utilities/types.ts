@@ -28,14 +28,48 @@ export const MulterErrorCode: {
   LIMIT_UNEXPECTED_FILE: 'LIMIT_UNEXPECTED_FILE',
 };
 
-export const userRoles = {
-  superAdmin: 'superAdmin',
-  admin: 'admin',
-  user: 'user',
+export const errorCode: {
+  NOT_AUTHENTICATED: 'user not authenticated';
+  ACCESS_WRONG_USER: 'trying to access wrong data';
+  MISSING_ENV_TOKEN: 'missing env token';
+  PERMISSION_DENIED: 'permission denied';
+  VALUE_TAKEN: 'value already taken';
+  VALUE_MISSING: 'value missing';
+} = {
+  NOT_AUTHENTICATED: 'user not authenticated',
+  ACCESS_WRONG_USER: 'trying to access wrong data',
+  MISSING_ENV_TOKEN: 'missing env token',
+  PERMISSION_DENIED: 'permission denied',
+  VALUE_TAKEN: 'value already taken',
+  VALUE_MISSING: 'value missing',
 };
 
-type UsersRolesType = 'admin' | 'user' | 'superAdmin';
+export const userRoles: {
+  user: 'user';
+  moderator: 'moderator';
+  admin: 'admin';
+  superAdmin: 'superAdmin';
+} = {
+  user: 'user',
+  moderator: 'moderator',
+  admin: 'admin',
+  superAdmin: 'superAdmin',
+};
+
+type UsersRolesType = 'user' | 'moderator' | 'admin' | 'superAdmin';
 type UserStatusType = 'active' | 'disabled';
+
+export interface VideoSchemaType {
+  title: string;
+  videoUrl: string;
+  displayPicture: string;
+  album: string[];
+  categories: string[];
+  description: string;
+  creatorsId: string;
+  uploadDate: string;
+  releaseDate: string;
+}
 
 export interface CategorySchemaType {
   _id: string;
@@ -45,7 +79,7 @@ export interface CategorySchemaType {
 
 export interface AvatarSchemaType {
   _id: string;
-  category: string;
+  categories: string;
   name: string;
   url: string;
 }
@@ -63,12 +97,13 @@ export interface UserType {
   email: string;
   refreshToken: string;
   password: string;
-  createdAt: string;
   firstName: string;
   lastName: string;
   profiles?: ProfileType; // never
   role: UsersRolesType;
   userStatus: UserStatusType;
+  createdAt: string;
+  videosUploaded: string;
 }
 
 export type CurrentUserType = {
