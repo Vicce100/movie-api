@@ -4,12 +4,10 @@ import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 
 import { MulterErrorCode, userRoles, UserType, errorCode } from './types.js';
-import { assertNonNullish } from './index.js';
+import { assertNonNullish } from './assertions.js';
 import db from './db/index.js';
 
 dotenv.config();
-
-/* ----------------------- local ----------------------- */
 
 const checkAuth = (cookies: any) => {
   if (!cookies?.SSID) throw new Error(errorCode.NOT_AUTHENTICATED);
@@ -32,7 +30,7 @@ const checkAuth = (cookies: any) => {
   } else throw new Error(errorCode.MISSING_ENV_TOKEN);
 };
 
-const errorHandler = (error: Error) => {
+export const errorHandler = (error: Error) => {
   switch (error.message) {
     case errorCode.NOT_AUTHENTICATED:
       return db.returnErrorData(errorCode.NOT_AUTHENTICATED, 401);
@@ -40,6 +38,10 @@ const errorHandler = (error: Error) => {
       return db.returnErrorData(errorCode.ACCESS_WRONG_USER, 401);
     case errorCode.MISSING_ENV_TOKEN:
       return db.returnErrorData(errorCode.MISSING_ENV_TOKEN, 500);
+    case errorCode.VALUE_TAKEN:
+      return db.returnErrorData(errorCode.VALUE_TAKEN, 400);
+    case errorCode.VALUE_MISSING:
+      return db.returnErrorData(errorCode.VALUE_MISSING, 404);
     default:
       return db.returnErrorData(
         error.message || errorCode.PERMISSION_DENIED,
@@ -47,8 +49,6 @@ const errorHandler = (error: Error) => {
       );
   }
 };
-
-/* ----------------------- local ----------------------- */
 
 export const isAuthenticate = (
   req: Request,

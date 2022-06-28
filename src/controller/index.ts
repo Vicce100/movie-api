@@ -8,8 +8,11 @@ import db from '../utilities/db/index.js';
 import {
   AvatarSchemaType,
   CategorySchemaType,
+  errorCode,
   mp4,
 } from '../utilities/types.js';
+import { assertNullish, assertNonNullish } from '../utilities/assertions.js';
+import { errorHandler } from '../utilities/middleware.js';
 
 const userNotAuthObject = db.returnErrorData('user not authenticated.', 401);
 
@@ -26,16 +29,38 @@ export const addSingleCategory = (req: Request, res: Response) => {
 };
 
 export const addMultipleCategories = (req: Request, res: Response) => {
-  req.body.categories.forEach((tempCategory: string) => {
-    new category({ name: tempCategory }).save(
-      (
-        err: CallbackError,
-        _category: Document<unknown, any, CategorySchemaType> &
-          CategorySchemaType
-      ) => (err ? res.status(400).send(err) : null)
-    );
+  const { categories }: { categories: string[] } = req.body;
+  categories.forEach(async (name) => {
+    try {
+      const tempCategory = await db.getSingleCategoryBaName(name);
+      assertNullish(tempCategory, errorCode.VALUE_TAKEN);
+
+      categories.forEach((tempCategory: string) => {
+        try {
+          new category({ name: tempCategory }).save(
+            (
+              err: CallbackError,
+              _category: Document<unknown, any, CategorySchemaType> &
+                CategorySchemaType
+            ) => {
+              if (err) throw new Error(err.message);
+            }
+          );
+        } catch (error) {
+          if (error instanceof Error) {
+            const errorResponse = errorHandler(error);
+            return res.status(Number(errorResponse.status)).json(errorResponse);
+          }
+        }
+      });
+      res.status(201).json(`category's added successfully`);
+    } catch (error) {
+      if (error instanceof Error) {
+        const errorResponse = errorHandler(error);
+        return res.status(Number(errorResponse.status)).json(errorResponse);
+      }
+    }
   });
-  res.status(201).json(`category's added successfully`);
 };
 
 export const sendSingleCategory = async (req: Request, res: Response) => {
@@ -125,32 +150,43 @@ export const sendMultipleAvatars = async (_req: Request, res: Response) => {
   }
 };
 
-export const getVideo = (req: Request, res: Response) => {
+export const getVideo = async (req: Request, res: Response) => {
   const { range } = req.headers;
+  const { videoId } = req.params;
   if (!range) return res.status(404).send('Missing Requires Range header! ');
 
-  const videoPath = 'uploads/videos/Blue.mp4';
-  const videoSize = fs.statSync(videoPath).size;
-  // const chunkSize = 1 * 1e6; // 1MB
+  const tempVideo = await db.getSingleVideoById(videoId);
+  try {
+    assertNonNullish(tempVideo, errorCode.VALUE_MISSING);
 
-  const CHUNK_SIZE = 10 ** 6; // 1MB
-  const start = Number(range.replace(/\D/g, ''));
-  const end = Math.min(start + CHUNK_SIZE, videoSize - 1);
+    const videoPath = tempVideo.videoUrl;
+    const videoSize = fs.statSync(videoPath).size;
+    // const chunkSize = 1 * 1e6; // 1MB
 
-  res.writeHead(206, {
-    'Content-Range': `bytes ${start}-${end}/${videoSize}`,
-    'Accept-Ranges': 'bytes',
-    'Content-Length': end - start + 1, // contentLength
-    'Content-Type': mp4,
-  });
+    const CHUNK_SIZE = 10 ** 6; // 1MB
+    const start = Number(range.replace(/\D/g, ''));
+    const end = Math.min(start + CHUNK_SIZE, videoSize - 1);
 
-  const stream = fs.createReadStream(videoPath, { start, end });
-  stream.pipe(res);
-  stream.on('connection', (connect) => {
-    connect.on('close', (close: any) => {
-      console.log(close);
+    res.writeHead(206, {
+      'Content-Range': `bytes ${start}-${end}/${videoSize}`,
+      'Accept-Ranges': 'bytes',
+      'Content-Length': end - start + 1, // contentLength
+      'Content-Type': mp4,
     });
-  });
+
+    const stream = fs.createReadStream(videoPath, { start, end });
+    stream.pipe(res);
+    stream.on('connection', (connect) => {
+      connect.on('close', (close: any) => {
+        console.log(close);
+      });
+    });
+  } catch (error) {
+    if (error instanceof Error) {
+      const errorResponse = errorHandler(error);
+      return res.status(Number(errorResponse.status)).json(errorResponse);
+    }
+  }
 };
 
 export const postSingleVideo = async (req: Request, res: Response) => {
@@ -183,7 +219,7 @@ export const postSingleVideo = async (req: Request, res: Response) => {
         title,
         videoUrl: files.videoFile[0].path,
         displayPicture: files.displayPicture[0].path,
-        album: files.album.map((file) => file.path) || [],
+        // album: files.album.map((file) => file.path) || [],
         categories: tempCategory,
         description,
         creatorsId: req.user._id,

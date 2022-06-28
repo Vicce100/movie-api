@@ -33,11 +33,15 @@ export const errorCode: {
   ACCESS_WRONG_USER: 'trying to access wrong data';
   MISSING_ENV_TOKEN: 'missing env token';
   PERMISSION_DENIED: 'permission denied';
+  VALUE_TAKEN: 'value already taken';
+  VALUE_MISSING: 'value missing';
 } = {
   NOT_AUTHENTICATED: 'user not authenticated',
   ACCESS_WRONG_USER: 'trying to access wrong data',
   MISSING_ENV_TOKEN: 'missing env token',
   PERMISSION_DENIED: 'permission denied',
+  VALUE_TAKEN: 'value already taken',
+  VALUE_MISSING: 'value missing',
 };
 
 export const userRoles: {

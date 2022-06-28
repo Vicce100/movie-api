@@ -1,4 +1,4 @@
-import mongoose from 'mongoose'; // only allows commonjs unless using default import
+import mongoose from 'mongoose';
 import dayjs from 'dayjs';
 import { VideoSchemaType } from '../utilities/types.js';
 
@@ -16,12 +16,12 @@ const videoSchema = new mongoose.Schema({
   title: requiredShortString,
   videoUrl: { ...reqString, unique: true },
   displayPicture: { ...reqString },
-  album: [{ url: { ...reqString } }],
+  // album: [{ url: { ...reqString } }],
   categories: [{ ...reqString }],
   description: { type: String, require: false, maxLength: 1225 },
   creatorsId: { type: mongoose.SchemaTypes.ObjectId, ref: 'Users' },
   uploadDate: date,
-  releaseDate: date,
+  releaseDate: { type: String, imitable: true, require: true },
 });
 
 export default mongoose.model<VideoSchemaType>('video', videoSchema);
