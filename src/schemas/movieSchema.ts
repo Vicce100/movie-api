@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 import dayjs from 'dayjs';
-import { VideoSchemaType } from '../utilities/types.js';
+import { MovieSchemaType } from '../utilities/types.js';
 
 const reqString = { type: String, require: true };
 const ShortString = { type: String, minLength: 1, maxLength: 255 };
@@ -12,7 +12,7 @@ const date = {
   require: true,
 };
 
-const videoSchema = new mongoose.Schema({
+const MovieSchema = new mongoose.Schema({
   title: requiredShortString,
   videoUrl: { ...reqString, unique: true },
   displayPicture: { ...reqString },
@@ -24,4 +24,4 @@ const videoSchema = new mongoose.Schema({
   releaseDate: { type: String, imitable: true, require: true },
 });
 
-export default mongoose.model<VideoSchemaType>('video', videoSchema);
+export default mongoose.model<MovieSchemaType>('movie', MovieSchema);

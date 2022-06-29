@@ -3,7 +3,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 
-import User from '../schemas/UserSchema.js';
+import userSchema from '../schemas/UserSchema.js';
 import { generateAccessToken } from '../utilities/index.js';
 // import { AuthRequestType, UserType } from '../utilities/types.js';
 import db from '../utilities/db/index.js';
@@ -28,13 +28,13 @@ export const signUp = async (
     return res
       .status(400)
       .json(db.returnErrorData('no empty data in field', 400));
-  if (await User.findOne({ email }))
+  if (await userSchema.findOne({ email }))
     return res
       .status(400)
       .json(db.returnErrorData('username already taken', 404));
 
   try {
-    await new User({
+    await new userSchema({
       firstName,
       lastName,
       email,
@@ -183,7 +183,7 @@ export const addProfile = async (
       .json(db.returnErrorData('no empty data in field', 400));
   }
   try {
-    await User.updateOne(
+    await userSchema.updateOne(
       { id: req.user._id },
       {
         $push: {

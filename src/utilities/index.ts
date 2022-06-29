@@ -25,11 +25,10 @@ export const generateAccessToken = (user: UserType) => {
 const characters = '/^()[]{}?!$!"#¤%%&/()=?`>|@£€*:;,.-_';
 
 export const cleanString = (str: string) => {
-  str = str.trim();
   for (let i = 0; i < characters.length; i++) {
     str = str.replaceAll(characters[i], '');
   }
-  return str;
+  return str.trim();
 };
 
 export const checkForEmailUniqueness = async (str: string) => {

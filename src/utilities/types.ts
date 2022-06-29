@@ -59,11 +59,11 @@ export const userRoles: {
 type UsersRolesType = 'user' | 'moderator' | 'admin' | 'superAdmin';
 type UserStatusType = 'active' | 'disabled';
 
-export interface VideoSchemaType {
+export interface MovieSchemaType {
   title: string;
   videoUrl: string;
   displayPicture: string;
-  album: string[];
+  // album: string[];
   categories: string[];
   description: string;
   creatorsId: string;
