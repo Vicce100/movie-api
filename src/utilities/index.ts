@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-import validate from 'deep-email-validator';
+import * as validate from 'email-validator';
 
 import { assertsIsString, assertNonNullish } from './assertions.js';
 import { UserType, errorCode } from './types.js';
@@ -37,7 +37,6 @@ export const checkForEmailUniqueness = async (str: string) => {
   return !(await db.EmailTaken(str.trim()));
 };
 
-export const emailIsValid = async (email: string) => {
-  const { valid, reason } = await validate(email);
-  if (!valid) throw new Error(reason || errorCode.INVALID_EMAIL);
+export const emailIsValid = (email: string) => {
+  if (!validate.validate(email)) throw new Error(errorCode.INVALID_EMAIL);
 };
