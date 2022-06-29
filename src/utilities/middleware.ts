@@ -44,6 +44,8 @@ export const errorHandler = (error: Error) => {
       return db.returnErrorData(errorCode.VALUE_MISSING, 404);
     case errorCode.PERMISSION_DENIED:
       return db.returnErrorData(errorCode.PERMISSION_DENIED, 400);
+    case errorCode.INVALID_EMAIL:
+      return db.returnErrorData(errorCode.INVALID_EMAIL, 400);
     default:
       return db.returnErrorData(
         error.message || errorCode.PERMISSION_DENIED,

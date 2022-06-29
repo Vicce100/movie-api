@@ -4,9 +4,10 @@ import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 
 import userSchema from '../schemas/UserSchema.js';
-import { generateAccessToken } from '../utilities/index.js';
+import { generateAccessToken, emailIsValid } from '../utilities/index.js';
 // import { AuthRequestType, UserType } from '../utilities/types.js';
 import db from '../utilities/db/index.js';
+import { errorHandler } from '../utilities/middleware.js';
 
 dotenv.config();
 const userNotAuthObject = db.returnErrorData('user not authenticated.', 401);
@@ -28,12 +29,14 @@ export const signUp = async (
     return res
       .status(400)
       .json(db.returnErrorData('no empty data in field', 400));
+
   if (await userSchema.findOne({ email }))
     return res
       .status(400)
       .json(db.returnErrorData('username already taken', 404));
 
   try {
+    await emailIsValid(email);
     await new userSchema({
       firstName,
       lastName,
@@ -42,6 +45,10 @@ export const signUp = async (
     }).save();
     next();
   } catch (error: any) {
+    if (error instanceof Error) {
+      const errorResponse = errorHandler(error);
+      return res.status(Number(errorResponse.status)).json(errorResponse);
+    }
     return res
       .status(500)
       .json(db.returnErrorData('server error while creating user', 500));
