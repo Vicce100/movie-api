@@ -7,10 +7,10 @@ import {
   UserType,
   url,
 } from '../types.js';
-import UserModel from '../../schemas/UserSchema.js';
-import category from '../../schemas/categorySchema.js';
-import avatar from '../../schemas/avatarSchema.js';
-import video from '../../schemas/videoSchema.js';
+import userSchema from '../../schemas/UserSchema.js';
+import categorySchema from '../../schemas/categorySchema.js';
+import avatarSchema from '../../schemas/avatarSchema.js';
+import videoSchema from '../../schemas/movieSchema.js';
 
 /* ----------------------- local ----------------------- */
 
@@ -20,72 +20,78 @@ const setFieldWithId = <T>(
   valueToUpdate: unknown
 ) => dataPoint.updateOne({ _id: userId }, { $set: { valueToUpdate } });
 
-/* ----------------------- local ----------------------- */
-
 /* ----------------------- user ----------------------- */
 
 const findUserByEmail = (value: string | number) =>
-  UserModel.findOne({ email: value });
+  userSchema.findOne({ email: value });
 
-const findUserById = (id: string) => UserModel.findById(id);
+const findUserById = (id: string) => userSchema.findById(id);
 
 const findUserByRefreshToken = (refreshToken: string) =>
-  UserModel.findOne({ refreshToken });
+  userSchema.findOne({ refreshToken });
 
-const removeUser = (userId: string) => UserModel.remove({ _id: userId });
+const removeUser = (userId: string) => userSchema.remove({ _id: userId });
 
 const updatePassword = (userId: string, valueToUpdate: string | null) =>
-  setFieldWithId(UserModel, userId, valueToUpdate);
+  setFieldWithId(userSchema, userId, valueToUpdate);
 
 const updateRefreshToken = (userId: string, refreshToken: string | null) =>
-  UserModel.updateOne(
+  userSchema.updateOne(
     { _id: userId },
     { $set: { refreshToken: refreshToken } }
   );
 
 const removeRefreshToken = (userId: string) =>
-  UserModel.findOne<UserType>({ _id: userId }).then((user: UserType | null) =>
-    UserModel.updateOne(
-      { _id: userId },
-      { $unset: { refreshToken: user?.refreshToken || '' } }
-    )
+  userSchema
+    .findOne<UserType>({ _id: userId })
+    .then((user: UserType | null) =>
+      userSchema.updateOne(
+        { _id: userId },
+        { $unset: { refreshToken: user?.refreshToken || '' } }
+      )
+    );
+
+const removeUsersVideoRef = (userId: string, videoId: string) =>
+  userSchema.updateOne(
+    { _id: userId },
+    { $pullAll: { videosUploaded: videoId } }
   );
+
+const addProfileToUser = (userId: StringDecoder, data: ProfileType) =>
+  userSchema.updateOne({ _id: userId }, { $push: { profiles: data } });
 
 const EmailTaken = async (email: string) =>
   (await findUserByEmail(email)) ? true : false;
 
-/* ----------------------- user ----------------------- */
-
-const addProfileToUser = (userId: StringDecoder, data: ProfileType) =>
-  UserModel.updateOne({ _id: userId }, { $push: { profiles: data } });
+/* ----------------------- category ----------------------- */
 
 const getSingleCategoryBaId = (categoryId: string) =>
-  category.findOne({ _id: categoryId });
+  categorySchema.findOne({ _id: categoryId });
 
 const getSingleCategoryBaName = (categoryName: string) =>
-  category.findOne({ name: categoryName });
+  categorySchema.findOne({ name: categoryName });
 
-const getAllCategories = () => category.find();
+const getAllCategories = () => categorySchema.find();
+
+/* ----------------------- avatar ----------------------- */
 
 const getSingleAvatarById = (avatarId: string) =>
-  avatar.findOne({ _id: avatarId });
+  avatarSchema.findOne({ _id: avatarId });
 
-const getAllAvatars = () => avatar.find();
+const getAllAvatars = () => avatarSchema.find();
 
-const addUsersVideos = async (
-  userId: string,
-  videoSchemaId: Types.ObjectId
-) => {
-  const a = UserModel.updateOne(
-    { _id: userId },
-    { $push: { videosUploaded: videoSchemaId } }
-  );
-};
+/* ----------------------- video ----------------------- */
 
-const getSingleVideoById = (videoId: string) => video.findOne({ _id: videoId });
+const addUsersVideos = async (userId: string, videoId: Types.ObjectId) =>
+  userSchema.updateOne({ _id: userId }, { $push: { videosUploaded: videoId } });
 
-const getSingleVideoByName = (videoTitle: string) =>
-  video.findOne({ title: videoTitle });
+const findVideoById = (videoId: string) =>
+  videoSchema.findOne({ _id: videoId });
+
+const findVideoByName = (videoTitle: string) =>
+  videoSchema.findOne({ title: videoTitle });
+
+/* ----------------------- returned values ----------------------- */
 
 const returnAvatar = (
   data:
@@ -141,13 +147,14 @@ export default {
   updatePassword,
   updateRefreshToken,
   removeRefreshToken,
+  removeUsersVideoRef,
   EmailTaken,
   getSingleCategoryBaId,
   getSingleCategoryBaName,
   getAllCategories,
   getSingleAvatarById,
-  getSingleVideoById,
-  getSingleVideoByName,
+  findVideoById,
+  findVideoByName,
   getAllAvatars,
   returnAvatar,
   addUsersVideos,

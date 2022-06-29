@@ -16,11 +16,12 @@ import {
   sendMultipleAvatars,
   getVideo,
   postSingleVideo,
+  deleteVideo,
 } from '../controller/index.js';
 
 const router = express.Router();
 
-// router.use(isAuthenticate);
+router.use(isAuthenticate);
 
 const imageStorage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, 'uploads/images/public/'),
@@ -29,10 +30,19 @@ const imageStorage = multer.diskStorage({
 });
 const publicVideoStorage = multer.diskStorage({
   destination: (_req, file, cb) => {
-    // if (file.mimetype.split('/')[0] === 'video')
-    return cb(null, 'uploads/videos/public/');
-    // else if (file.mimetype.split('/')[0] === 'image')
-    //   return cb(null, 'uploads/image/public/');
+    const fileType = file.mimetype.split('/')[0];
+    if (fileType === 'video') return cb(null, 'uploads/videos/public/');
+    else if (fileType === 'image') return cb(null, 'uploads/images/public/');
+  },
+  filename: (_req, file, cb) =>
+    cb(null, `${Date.now()}-${file.originalname.replaceAll(' ', '')}`),
+});
+
+const privateVideoStorage = multer.diskStorage({
+  destination: (_req, file, cb) => {
+    const fileType = file.mimetype.split('/')[0];
+    if (fileType === 'video') return cb(null, 'uploads/videos/private/');
+    else if (fileType === 'image') return cb(null, 'uploads/images/private/');
   },
   filename: (_req, file, cb) =>
     cb(null, `${Date.now()}-${file.originalname.replaceAll(' ', '')}`),
@@ -40,16 +50,7 @@ const publicVideoStorage = multer.diskStorage({
 
 const uploadPublicImage = multer({ fileFilter, storage: imageStorage });
 const publicVideoUpload = multer({ storage: publicVideoStorage, fileFilter });
-
-const uploadSingleVideo = publicVideoUpload.fields([
-  // { name: 'title', maxCount: 1 }, // text
-  { name: 'videoFile', maxCount: 1 },
-  { name: 'displayPicture', maxCount: 1 },
-  // { name: 'album', maxCount: 100 },
-  // { name: 'categories', maxCount: 20 }, // text
-  // { name: 'description', maxCount: 1 }, // text
-  // { name: 'releaseDate', maxCount: 1 }, // text
-]);
+const privateVideoUpload = multer({ storage: privateVideoStorage, fileFilter });
 
 router.post('/category/upload/single', addSingleCategory);
 
@@ -79,9 +80,24 @@ router.get('/avatar/get/multiple', sendMultipleAvatars);
 
 router.get('/video/:videoId', getVideo);
 
+router.delete('/video/delete/:videoId', deleteVideo);
+
 router.post(
   '/video/upload/singe/public',
-  uploadSingleVideo,
+  publicVideoUpload.fields([
+    { name: 'videoFile', maxCount: 1 },
+    { name: 'displayPicture', maxCount: 1 },
+  ]),
+  multerErrorHandler,
+  postSingleVideo
+);
+
+router.post(
+  '/video/upload/singe/private',
+  privateVideoUpload.fields([
+    { name: 'videoFile', maxCount: 1 },
+    { name: 'displayPicture', maxCount: 1 },
+  ]),
   multerErrorHandler,
   postSingleVideo
 );

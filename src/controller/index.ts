@@ -1,31 +1,26 @@
 import { Request, Response } from 'express';
 import { CallbackError, Document } from 'mongoose';
 import fs from 'fs';
-import category from '../schemas/categorySchema.js';
-import avatar from '../schemas/avatarSchema.js';
-import video from '../schemas/videoSchema.js';
+import categorySchema from '../schemas/categorySchema.js';
+import avatarSchema from '../schemas/avatarSchema.js';
+import movieSchema from '../schemas/movieSchema.js';
 import db from '../utilities/db/index.js';
-import {
-  AvatarSchemaType,
-  CategorySchemaType,
-  errorCode,
-  mp4,
-} from '../utilities/types.js';
+import { CategorySchemaType, errorCode, mp4 } from '../utilities/types.js';
 import { assertNullish, assertNonNullish } from '../utilities/assertions.js';
 import { errorHandler } from '../utilities/middleware.js';
 
-const userNotAuthObject = db.returnErrorData('user not authenticated.', 401);
-
-export const addSingleCategory = (req: Request, res: Response) => {
-  new category({ name: req.body.category }).save(
-    (
-      err: CallbackError,
-      category: Document<unknown, any, CategorySchemaType> & CategorySchemaType
-    ) => {
-      if (err) return res.status(400).send(err);
-      res.status(201).json(category);
+export const addSingleCategory = async (req: Request, res: Response) => {
+  try {
+    const category = await new categorySchema({
+      name: req.body.category,
+    }).save();
+    res.status(201).json(category);
+  } catch (error) {
+    if (error instanceof Error) {
+      const errorResponse = errorHandler(error);
+      return res.status(Number(errorResponse.status)).json(errorResponse);
     }
-  );
+  }
 };
 
 export const addMultipleCategories = (req: Request, res: Response) => {
@@ -37,12 +32,8 @@ export const addMultipleCategories = (req: Request, res: Response) => {
 
       categories.forEach((tempCategory: string) => {
         try {
-          new category({ name: tempCategory }).save(
-            (
-              err: CallbackError,
-              _category: Document<unknown, any, CategorySchemaType> &
-                CategorySchemaType
-            ) => {
+          new categorySchema({ name: tempCategory }).save(
+            (err: CallbackError) => {
               if (err) throw new Error(err.message);
             }
           );
@@ -81,7 +72,7 @@ export const sendMultipleCategories = async (_req: Request, res: Response) => {
   }
 };
 
-export const addSingleAvatar = (req: Request, res: Response) => {
+export const addSingleAvatar = async (req: Request, res: Response) => {
   const { file } = req;
   const { name, category }: { name: string; category: string[] | string } =
     req.body;
@@ -90,19 +81,20 @@ export const addSingleAvatar = (req: Request, res: Response) => {
   if (Array.isArray(category))
     tempCategory = category.map((tempCategory) => tempCategory);
   else tempCategory = [category];
-  new avatar({
-    categories: tempCategory,
-    name,
-    url: file.path.replaceAll(' ', '-'),
-  }).save(
-    (
-      err: CallbackError,
-      avatar: Document<unknown, any, AvatarSchemaType> & AvatarSchemaType
-    ) => {
-      if (err) return res.status(400).send(err);
-      res.status(201).json(avatar);
+  try {
+    const tempAvatar = await new avatarSchema({
+      categories: tempCategory,
+      name,
+      url: file.path.replaceAll(' ', '-'),
+    }).save();
+
+    res.status(201).json(tempAvatar);
+  } catch (error) {
+    if (error instanceof Error) {
+      const errorResponse = errorHandler(error);
+      return res.status(Number(errorResponse.status)).json(errorResponse);
     }
-  );
+  }
 };
 
 export const addMultipleAvatars = (req: Request, res: Response) => {
@@ -116,18 +108,13 @@ export const addMultipleAvatars = (req: Request, res: Response) => {
     return res.status(400).json(db.returnErrorData(message, 400));
 
   req.files.forEach((file, index) => {
-    new avatar({
+    new avatarSchema({
       name: name[index],
       url: file.path.replaceAll(' ', '-'),
       categories: categories
         .filter((category) => category === `${index}/${category.split('/')[1]}`)
         .map((category) => category.split('/')[1]),
-    }).save(
-      (
-        err: CallbackError,
-        _avatar: Document<unknown, any, AvatarSchemaType> & AvatarSchemaType
-      ) => (err ? res.status(400).send(err) : null)
-    );
+    }).save((err: CallbackError) => (err ? res.status(400).send(err) : null));
   });
   res.status(201).json(`avatars added successfully`);
 };
@@ -155,8 +142,8 @@ export const getVideo = async (req: Request, res: Response) => {
   const { videoId } = req.params;
   if (!range) return res.status(404).send('Missing Requires Range header! ');
 
-  const tempVideo = await db.getSingleVideoById(videoId);
   try {
+    const tempVideo = await db.findVideoById(videoId);
     assertNonNullish(tempVideo, errorCode.VALUE_MISSING);
 
     const videoPath = tempVideo.videoUrl;
@@ -203,8 +190,6 @@ export const postSingleVideo = async (req: Request, res: Response) => {
     releaseDate: string;
   } = req.body;
 
-  if (!req.user) return res.status(401).json(userNotAuthObject);
-
   if (!files || !categories || !title)
     return res.status(404).json('wrong filled value was uploaded!');
 
@@ -215,7 +200,7 @@ export const postSingleVideo = async (req: Request, res: Response) => {
     else tempCategory = [categories];
 
     try {
-      const newVideo = new video({
+      const newMovie = new movieSchema({
         title,
         videoUrl: files.videoFile[0].path,
         displayPicture: files.displayPicture[0].path,
@@ -225,8 +210,8 @@ export const postSingleVideo = async (req: Request, res: Response) => {
         creatorsId: req.user._id,
         releaseDate,
       });
-      const { _id } = newVideo;
-      await newVideo.save();
+      const { _id } = newMovie;
+      await newMovie.save();
       await db.addUsersVideos(req.user._id, _id);
     } catch (error) {
       console.log(error);
@@ -236,4 +221,22 @@ export const postSingleVideo = async (req: Request, res: Response) => {
   }
   const message = 'number of files dose not match number of titles';
   return res.status(400).json(db.returnErrorData(message, 400));
+};
+
+export const deleteVideo = async (req: Request, res: Response) => {
+  const { videoId } = req.params;
+  try {
+    const movie = await db.findVideoById(videoId);
+    assertNonNullish(movie, errorCode.VALUE_MISSING);
+    if (req.user._id !== movie.creatorsId)
+      throw new Error(errorCode.PERMISSION_DENIED);
+
+    (await movie.remove()).save();
+    await db.removeUsersVideoRef(req.user._id, videoId);
+  } catch (error) {
+    if (error instanceof Error) {
+      const errorResponse = errorHandler(error);
+      return res.status(Number(errorResponse.status)).json(errorResponse);
+    }
+  }
 };
