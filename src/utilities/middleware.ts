@@ -9,7 +9,7 @@ import db from './db/index.js';
 
 dotenv.config();
 
-const checkAuth = (cookies: any) => {
+export const checkAuth = (cookies: any) => {
   if (!cookies?.SSID) throw new Error(errorCode.NOT_AUTHENTICATED);
 
   if (process.env.SECRET_ACCESS_TOKEN) {

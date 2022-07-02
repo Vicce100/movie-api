@@ -23,7 +23,7 @@ export const generateAccessToken = (user: UserType) => {
   }
 };
 
-const characters = '/^()[]{}?!$!"#¤%%&/()=?`>|@£€*:;,.-_';
+const characters = '/^()[]{}?!$!"#¤%%&()=?`>|@£€*:;,-_';
 
 export const cleanString = (str: string) => {
   for (let i = 0; i < characters.length; i++) {

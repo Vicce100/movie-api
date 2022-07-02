@@ -1,4 +1,5 @@
 import { Request } from 'express';
+import { Types } from 'mongoose';
 
 const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
 const host = process.env.NODE_ENV === 'production' ? 'localhost' : 'localhost';
@@ -61,26 +62,68 @@ export const userRoles: {
 type UsersRolesType = 'user' | 'moderator' | 'admin' | 'superAdmin';
 type UserStatusType = 'active' | 'disabled';
 
+export type ReturnedVideoData = {
+  _id: Types.ObjectId;
+  isMovie: boolean;
+  title: string;
+  episodeTitle: string | undefined;
+  session: number | undefined;
+  episode: number | undefined;
+  seriesId: Types.ObjectId | undefined;
+  videoUrl: string;
+  displayPicture: string;
+};
+
+export interface SeriesInfoType {
+  _id: Types.ObjectId;
+  title: string;
+  categories: string[];
+  displayPicture: string;
+  description: string;
+  uploadDate: string;
+  creationDate: string;
+  latestDate: string;
+  episodesId: Types.ObjectId[];
+  amountOfSessions: number;
+  creatorsId: Types.ObjectId;
+}
+
+export interface SeriesEpisodeType {
+  _id: Types.ObjectId;
+  session: number;
+  episode: number;
+  seriesId: Types.ObjectId;
+  seriesTitle: string;
+  episodeTitle: string;
+  videoUrl: string;
+  displayPicture: string;
+  description: string;
+  creatorsId: Types.ObjectId;
+  uploadDate: string;
+  releaseDate: string;
+}
+
 export interface MovieSchemaType {
+  _id: Types.ObjectId;
   title: string;
   videoUrl: string;
   displayPicture: string;
   // album: string[];
   categories: string[];
   description: string;
-  creatorsId: string;
+  creatorsId: Types.ObjectId;
   uploadDate: string;
   releaseDate: string;
 }
 
 export interface CategorySchemaType {
-  _id: string;
+  _id: Types.ObjectId;
   name: string;
   // url: string;
 }
 
 export interface AvatarSchemaType {
-  _id: string;
+  _id: Types.ObjectId;
   categories: string;
   name: string;
   url: string;
@@ -88,14 +131,14 @@ export interface AvatarSchemaType {
 
 export type ProfileType =
   | {
-      _id: string;
+      _id: Types.ObjectId;
       profileName: string;
       avatarURL: string;
     }[]
   | undefined;
 
 export interface UserType {
-  _id: string;
+  _id: Types.ObjectId;
   email: string;
   refreshToken: string;
   password: string;
@@ -105,11 +148,11 @@ export interface UserType {
   role: UsersRolesType;
   userStatus: UserStatusType;
   createdAt: string;
-  videosUploaded: string;
+  videosUploaded: Types.ObjectId[];
 }
 
 export type CurrentUserType = {
-  id: string;
+  id: Types.ObjectId;
   email: string;
   createdAt: string;
   refreshToken: string;

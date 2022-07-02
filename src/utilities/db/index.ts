@@ -6,7 +6,11 @@ import {
   ProfileType,
   UserType,
   url,
+  MovieSchemaType,
+  SeriesEpisodeType,
+  ReturnedVideoData,
 } from '../types.js';
+import { assertsValueToType } from '../assertions.js';
 import userSchema from '../../schemas/UserSchema.js';
 import categorySchema from '../../schemas/categorySchema.js';
 import avatarSchema from '../../schemas/avatarSchema.js';
@@ -16,7 +20,7 @@ import videoSchema from '../../schemas/movieSchema.js';
 
 const setFieldWithId = <T>(
   dataPoint: Model<T>,
-  userId: string,
+  userId: Types.ObjectId,
   valueToUpdate: unknown
 ) => dataPoint.updateOne({ _id: userId }, { $set: { valueToUpdate } });
 
@@ -25,23 +29,27 @@ const setFieldWithId = <T>(
 const findUserByEmail = (value: string | number) =>
   userSchema.findOne({ email: value });
 
-const findUserById = (id: string) => userSchema.findById(id);
+const findUserById = (id: Types.ObjectId) => userSchema.findById(id);
 
 const findUserByRefreshToken = (refreshToken: string) =>
   userSchema.findOne({ refreshToken });
 
-const removeUser = (userId: string) => userSchema.remove({ _id: userId });
+const removeUser = (userId: Types.ObjectId) =>
+  userSchema.remove({ _id: userId });
 
-const updatePassword = (userId: string, valueToUpdate: string | null) =>
+const updatePassword = (userId: Types.ObjectId, valueToUpdate: string | null) =>
   setFieldWithId(userSchema, userId, valueToUpdate);
 
-const updateRefreshToken = (userId: string, refreshToken: string | null) =>
+const updateRefreshToken = (
+  userId: Types.ObjectId,
+  refreshToken: string | null
+) =>
   userSchema.updateOne(
     { _id: userId },
     { $set: { refreshToken: refreshToken } }
   );
 
-const removeRefreshToken = (userId: string) =>
+const removeRefreshToken = (userId: Types.ObjectId) =>
   userSchema
     .findOne<UserType>({ _id: userId })
     .then((user: UserType | null) =>
@@ -51,13 +59,13 @@ const removeRefreshToken = (userId: string) =>
       )
     );
 
-const removeUsersVideoRef = (userId: string, videoId: string) =>
+const removeUsersVideoRef = (userId: Types.ObjectId, videoId: Types.ObjectId) =>
   userSchema.updateOne(
     { _id: userId },
     { $pullAll: { videosUploaded: videoId } }
   );
 
-const addProfileToUser = (userId: StringDecoder, data: ProfileType) =>
+const addProfileToUser = (userId: Types.ObjectId, data: ProfileType) =>
   userSchema.updateOne({ _id: userId }, { $push: { profiles: data } });
 
 const EmailTaken = async (email: string) =>
@@ -65,7 +73,7 @@ const EmailTaken = async (email: string) =>
 
 /* ----------------------- category ----------------------- */
 
-const getSingleCategoryBaId = (categoryId: string) =>
+const getSingleCategoryBaId = (categoryId: Types.ObjectId) =>
   categorySchema.findOne({ _id: categoryId });
 
 const getSingleCategoryBaName = (categoryName: string) =>
@@ -75,17 +83,20 @@ const getAllCategories = () => categorySchema.find();
 
 /* ----------------------- avatar ----------------------- */
 
-const getSingleAvatarById = (avatarId: string) =>
+const getSingleAvatarById = (avatarId: Types.ObjectId) =>
   avatarSchema.findOne({ _id: avatarId });
 
 const getAllAvatars = () => avatarSchema.find();
 
 /* ----------------------- video ----------------------- */
 
-const addUsersVideos = async (userId: string, videoId: Types.ObjectId) =>
+const addUsersVideos = async (
+  userId: Types.ObjectId,
+  videoId: Types.ObjectId
+) =>
   userSchema.updateOne({ _id: userId }, { $push: { videosUploaded: videoId } });
 
-const findVideoById = (videoId: string) =>
+const findVideoById = (videoId: Types.ObjectId) =>
   videoSchema.findOne({ _id: videoId });
 
 const findVideoByName = (videoTitle: string) =>
@@ -93,14 +104,7 @@ const findVideoByName = (videoTitle: string) =>
 
 /* ----------------------- returned values ----------------------- */
 
-const returnAvatar = (
-  data:
-    | (Document<unknown, any, AvatarSchemaType> &
-        AvatarSchemaType & {
-          _id: string;
-        })
-    | null
-) => {
+const returnAvatar = (data: AvatarSchemaType) => {
   return {
     id: data?._id,
     name: data?.name,
@@ -136,15 +140,47 @@ const returnCurrentUser = (
   },
 });
 
+export const returnVideo = (
+  video: MovieSchemaType | SeriesEpisodeType,
+  isMovie: boolean
+): ReturnedVideoData => {
+  if (isMovie) {
+    assertsValueToType<MovieSchemaType>(video);
+    return {
+      _id: video._id,
+      isMovie: isMovie,
+      title: video.title,
+      episodeTitle: undefined,
+      session: undefined,
+      episode: undefined,
+      seriesId: undefined,
+      videoUrl: video.videoUrl,
+      displayPicture: video.displayPicture,
+    };
+  } else {
+    assertsValueToType<SeriesEpisodeType>(video);
+    return {
+      _id: video._id,
+      isMovie: isMovie,
+      title: video.seriesTitle,
+      episodeTitle: video.seriesTitle,
+      session: video.session,
+      episode: video.episode,
+      seriesId: video.seriesId,
+      videoUrl: video.videoUrl,
+      displayPicture: video.displayPicture,
+    };
+  }
+};
+
 export default {
   findUserByEmail,
   findUserById,
   findUserByRefreshToken,
   removeUser,
-  returnErrorData,
-  returnCurrentUser,
   addProfileToUser,
   updatePassword,
+  addUsersVideos,
   updateRefreshToken,
   removeRefreshToken,
   removeUsersVideoRef,
@@ -156,6 +192,8 @@ export default {
   findVideoById,
   findVideoByName,
   getAllAvatars,
+  returnErrorData,
+  returnCurrentUser,
   returnAvatar,
-  addUsersVideos,
+  returnVideo,
 };

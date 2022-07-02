@@ -1,13 +1,22 @@
 import { Request, Response } from 'express';
-import { CallbackError, Document } from 'mongoose';
+import { CallbackError, Document, Types } from 'mongoose';
 import fs from 'fs';
 import categorySchema from '../schemas/categorySchema.js';
 import avatarSchema from '../schemas/avatarSchema.js';
 import movieSchema from '../schemas/movieSchema.js';
 import db from '../utilities/db/index.js';
-import { CategorySchemaType, errorCode, mp4 } from '../utilities/types.js';
-import { assertNullish, assertNonNullish } from '../utilities/assertions.js';
-import { errorHandler } from '../utilities/middleware.js';
+import {
+  CategorySchemaType,
+  errorCode,
+  mp4,
+  userRoles,
+} from '../utilities/types.js';
+import {
+  assertNullish,
+  assertNonNullish,
+  assertsValueToType,
+} from '../utilities/assertions.js';
+import { errorHandler, checkAuth } from '../utilities/middleware.js';
 
 export const addSingleCategory = async (req: Request, res: Response) => {
   try {
@@ -55,8 +64,10 @@ export const addMultipleCategories = (req: Request, res: Response) => {
 };
 
 export const sendSingleCategory = async (req: Request, res: Response) => {
+  const { categoryId } = req.params;
+  assertsValueToType<Types.ObjectId>(categoryId);
   try {
-    const data = await db.getSingleCategoryBaId(req.params.categoryId);
+    const data = await db.getSingleCategoryBaId(categoryId);
     res.status(200).json(data);
   } catch (error) {
     res.status(400).send(error);
@@ -120,11 +131,17 @@ export const addMultipleAvatars = (req: Request, res: Response) => {
 };
 
 export const sendSingleAvatar = async (req: Request, res: Response) => {
+  const { categoryId } = req.params;
+  assertsValueToType<Types.ObjectId>(categoryId);
   try {
-    const data = await db.getSingleAvatarById(req.params.categoryId);
+    const data = await db.getSingleAvatarById(categoryId);
+    assertNonNullish(data, errorCode.VALUE_MISSING);
     res.status(200).json(db.returnAvatar(data));
   } catch (error) {
-    res.status(400).send(error);
+    if (error instanceof Error) {
+      const errorResponse = errorHandler(error);
+      return res.status(Number(errorResponse.status)).json(errorResponse);
+    }
   }
 };
 
@@ -142,6 +159,7 @@ export const getVideo = async (req: Request, res: Response) => {
   const { videoId } = req.params;
   if (!range) return res.status(404).send('Missing Requires Range header! ');
 
+  assertsValueToType<Types.ObjectId>(videoId);
   try {
     const tempVideo = await db.findVideoById(videoId);
     assertNonNullish(tempVideo, errorCode.VALUE_MISSING);
@@ -225,10 +243,13 @@ export const postSingleVideo = async (req: Request, res: Response) => {
 
 export const deleteVideo = async (req: Request, res: Response) => {
   const { videoId } = req.params;
+  const { _id: userId } = req.user;
+
+  assertsValueToType<Types.ObjectId>(videoId);
   try {
     const movie = await db.findVideoById(videoId);
     assertNonNullish(movie, errorCode.VALUE_MISSING);
-    if (req.user._id !== movie.creatorsId)
+    if (userId !== movie.creatorsId)
       throw new Error(errorCode.PERMISSION_DENIED);
 
     (await movie.remove()).save();
@@ -239,4 +260,57 @@ export const deleteVideo = async (req: Request, res: Response) => {
       return res.status(Number(errorResponse.status)).json(errorResponse);
     }
   }
+};
+
+export const getSingleVideoData = async (req: Request, res: Response) => {
+  const { videoId } = req.params;
+  assertsValueToType<Types.ObjectId>(videoId);
+
+  try {
+    const isMovie = true;
+    const video = await db.findVideoById(videoId);
+    assertNonNullish(video, errorCode.VALUE_MISSING);
+
+    res.status(200).json(db.returnVideo(video, isMovie));
+  } catch (error) {
+    if (error instanceof Error) {
+      const errorResponse = errorHandler(error);
+      return res.status(Number(errorResponse.status)).json(errorResponse);
+    }
+  }
+};
+
+export const getVideosData = (req: Request, res: Response) => {};
+
+export const checkAuthFunction = (req: Request, res: Response) => {
+  if (!checkAuth(req.cookies))
+    return res.status(401).json({ isLoggedIn: false });
+  return res.status(200).json({ isLoggedIn: true });
+};
+
+export const checkAuthRoles = (req: Request, res: Response) => {
+  const { rolesType } = req.params;
+  if (
+    rolesType !== userRoles.user ||
+    userRoles.moderator ||
+    userRoles.admin ||
+    userRoles.superAdmin
+  )
+    return res.status(404).json({ message: 'route dose not exist' });
+
+  const user = checkAuth(req.cookies);
+
+  if (!user) return res.status(401).json({ access: false });
+
+  if (rolesType === user.role) return res.status(401).json({ access: true });
+  else if (rolesType === userRoles.admin && user.role === userRoles.superAdmin)
+    return res.status(401).json({ access: true });
+  else if (
+    rolesType === userRoles.moderator &&
+    (user.role === userRoles.superAdmin || userRoles.admin)
+  )
+    return res.status(401).json({ access: true });
+  else return res.status(401).json({ access: false });
+
+  // return res.status(200).json({ access: true });
 };

@@ -15,9 +15,14 @@ import {
   sendSingleAvatar,
   sendMultipleAvatars,
   getVideo,
+  getSingleVideoData,
+  getVideosData,
   postSingleVideo,
   deleteVideo,
+  checkAuthFunction,
+  checkAuthRoles,
 } from '../controller/index.js';
+import { cleanString } from '../utilities/index.js';
 
 const router = express.Router();
 
@@ -26,7 +31,7 @@ router.use(isAuthenticate);
 const imageStorage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, 'uploads/images/public/'),
   filename: (_req, file, cb) =>
-    cb(null, `${Date.now()}-${file.originalname.replaceAll(' ', '-')}`),
+    cb(null, `${Date.now()}-${cleanString(file.originalname)}`),
 });
 const publicVideoStorage = multer.diskStorage({
   destination: (_req, file, cb) => {
@@ -35,7 +40,7 @@ const publicVideoStorage = multer.diskStorage({
     else if (fileType === 'image') return cb(null, 'uploads/images/public/');
   },
   filename: (_req, file, cb) =>
-    cb(null, `${Date.now()}-${file.originalname.replaceAll(' ', '')}`),
+    cb(null, `${Date.now()}-${cleanString(file.originalname)}`),
 });
 
 const privateVideoStorage = multer.diskStorage({
@@ -45,7 +50,7 @@ const privateVideoStorage = multer.diskStorage({
     else if (fileType === 'image') return cb(null, 'uploads/images/private/');
   },
   filename: (_req, file, cb) =>
-    cb(null, `${Date.now()}-${file.originalname.replaceAll(' ', '')}`),
+    cb(null, `${Date.now()}-${cleanString(file.originalname)}`),
 });
 
 const uploadPublicImage = multer({ fileFilter, storage: imageStorage });
@@ -80,6 +85,10 @@ router.get('/avatar/get/multiple', sendMultipleAvatars);
 
 router.get('/video/:videoId', getVideo);
 
+router.get('/video/data/:videoId', getSingleVideoData);
+
+router.get('/video/data/', getVideosData);
+
 router.delete('/video/delete/:videoId', deleteVideo);
 
 router.post(
@@ -101,5 +110,10 @@ router.post(
   multerErrorHandler,
   postSingleVideo
 );
+
+router.get('/user/checkAuth', checkAuthFunction);
+
+// rolesType = 'user' | 'moderator' | 'admin' | 'superAdmin'
+router.get('/user/checkAuth/:rolesType', checkAuthRoles);
 
 export default router;
