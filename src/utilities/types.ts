@@ -59,8 +59,8 @@ export const userRoles: {
   superAdmin: 'superAdmin',
 };
 
-type UsersRolesType = 'user' | 'moderator' | 'admin' | 'superAdmin';
-type UserStatusType = 'active' | 'disabled';
+export type UsersRolesType = 'user' | 'moderator' | 'admin' | 'superAdmin';
+export type UserStatusType = 'active' | 'disabled';
 
 export type ReturnedVideoData = {
   _id: Types.ObjectId;

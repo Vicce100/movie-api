@@ -5,11 +5,17 @@ import categorySchema from '../schemas/categorySchema.js';
 import avatarSchema from '../schemas/avatarSchema.js';
 import movieSchema from '../schemas/movieSchema.js';
 import db from '../utilities/db/index.js';
-import { errorCode, mp4, userRoles } from '../utilities/types.js';
+import {
+  errorCode,
+  mp4,
+  userRoles,
+  UsersRolesType,
+} from '../utilities/types.js';
 import {
   assertNullish,
   assertNonNullish,
   assertIsNonEmptyArray,
+  assertsValueToType,
 } from '../utilities/assertions.js';
 import { errorHandler, checkAuth } from '../utilities/middleware.js';
 
@@ -300,29 +306,30 @@ export const checkAuthFunction = (req: Request, res: Response) => {
   return res.status(200).json({ isLoggedIn: true });
 };
 
-export const checkAuthRoles = (req: Request, res: Response) => {
-  const { rolesType } = req.params;
+export const checkAuthRole = (req: Request, res: Response) => {
+  const roleType = req.params.roleType.toLocaleLowerCase();
   if (
-    rolesType !== userRoles.user ||
+    roleType === userRoles.user ||
     userRoles.moderator ||
     userRoles.admin ||
     userRoles.superAdmin
-  )
-    return res.status(404).json({ message: 'route dose not exist' });
+  ) {
+    assertsValueToType<UsersRolesType>(roleType);
+    const user = checkAuth(req.cookies);
 
-  const user = checkAuth(req.cookies);
+    if (!user) return res.status(401).json({ access: false });
 
-  if (!user) return res.status(401).json({ access: false });
-
-  if (rolesType === user.role) return res.status(401).json({ access: true });
-  else if (rolesType === userRoles.admin && user.role === userRoles.superAdmin)
-    return res.status(401).json({ access: true });
-  else if (
-    rolesType === userRoles.moderator &&
-    (user.role === userRoles.superAdmin || userRoles.admin)
-  )
-    return res.status(401).json({ access: true });
-  else return res.status(401).json({ access: false });
-
-  // return res.status(200).json({ access: true });
+    if (roleType === user.role) return res.status(200).json({ access: true });
+    else if (roleType === userRoles.admin && user.role === userRoles.superAdmin)
+      return res.status(200).json({ access: true });
+    else if (
+      roleType === userRoles.moderator &&
+      (user.role === userRoles.superAdmin || userRoles.admin)
+    )
+      return res.status(200).json({ access: true });
+    else return res.status(401).json({ access: false });
+  } else
+    return res
+      .status(404)
+      .json({ message: 'route dose not exist', access: false });
 };

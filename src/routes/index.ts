@@ -21,7 +21,7 @@ import {
   postSingleVideo,
   deleteVideo,
   checkAuthFunction,
-  checkAuthRoles,
+  checkAuthRole,
 } from '../controller/index.js';
 import { cleanString } from '../utilities/index.js';
 
@@ -117,6 +117,6 @@ router.post(
 router.get('/user/checkAuth', checkAuthFunction);
 
 // rolesType = 'user' | 'moderator' | 'admin' | 'superAdmin'
-router.get('/user/checkAuth/:rolesType', checkAuthRoles);
+router.get('/user/checkAuth/:roleType', checkAuthRole);
 
 export default router;
