@@ -14,13 +14,13 @@ import { assertsValueToType } from '../assertions.js';
 import userSchema from '../../schemas/UserSchema.js';
 import categorySchema from '../../schemas/categorySchema.js';
 import avatarSchema from '../../schemas/avatarSchema.js';
-import videoSchema from '../../schemas/movieSchema.js';
+import movieSchema from '../../schemas/movieSchema.js';
 
 /* ----------------------- local ----------------------- */
 
 const setFieldWithId = <T>(
   dataPoint: Model<T>,
-  userId: Types.ObjectId,
+  userId: Types.ObjectId | string,
   valueToUpdate: unknown
 ) => dataPoint.updateOne({ _id: userId }, { $set: { valueToUpdate } });
 
@@ -29,16 +29,18 @@ const setFieldWithId = <T>(
 const findUserByEmail = (value: string | number) =>
   userSchema.findOne({ email: value });
 
-const findUserById = (id: Types.ObjectId) => userSchema.findById(id);
+const findUserById = (id: Types.ObjectId | string) => userSchema.findById(id);
 
 const findUserByRefreshToken = (refreshToken: string) =>
   userSchema.findOne({ refreshToken });
 
-const removeUser = (userId: Types.ObjectId) =>
+const removeUser = (userId: Types.ObjectId | string) =>
   userSchema.remove({ _id: userId });
 
-const updatePassword = (userId: Types.ObjectId, valueToUpdate: string | null) =>
-  setFieldWithId(userSchema, userId, valueToUpdate);
+const updatePassword = (
+  userId: Types.ObjectId | string,
+  valueToUpdate: string | null
+) => setFieldWithId(userSchema, userId, valueToUpdate);
 
 const updateRefreshToken = (
   userId: Types.ObjectId,
@@ -49,7 +51,7 @@ const updateRefreshToken = (
     { $set: { refreshToken: refreshToken } }
   );
 
-const removeRefreshToken = (userId: Types.ObjectId) =>
+const removeRefreshToken = (userId: Types.ObjectId | string) =>
   userSchema
     .findOne<UserType>({ _id: userId })
     .then((user: UserType | null) =>
@@ -59,13 +61,16 @@ const removeRefreshToken = (userId: Types.ObjectId) =>
       )
     );
 
-const removeUsersVideoRef = (userId: Types.ObjectId, videoId: Types.ObjectId) =>
+const removeUsersVideoRef = (
+  userId: Types.ObjectId | string,
+  videoId: Types.ObjectId | string
+) =>
   userSchema.updateOne(
     { _id: userId },
     { $pullAll: { videosUploaded: videoId } }
   );
 
-const addProfileToUser = (userId: Types.ObjectId, data: ProfileType) =>
+const addProfileToUser = (userId: Types.ObjectId | string, data: ProfileType) =>
   userSchema.updateOne({ _id: userId }, { $push: { profiles: data } });
 
 const EmailTaken = async (email: string) =>
@@ -73,7 +78,7 @@ const EmailTaken = async (email: string) =>
 
 /* ----------------------- category ----------------------- */
 
-const getSingleCategoryBaId = (categoryId: Types.ObjectId) =>
+const getSingleCategoryBaId = (categoryId: Types.ObjectId | string) =>
   categorySchema.findOne({ _id: categoryId });
 
 const getSingleCategoryBaName = (categoryName: string) =>
@@ -83,7 +88,7 @@ const getAllCategories = () => categorySchema.find();
 
 /* ----------------------- avatar ----------------------- */
 
-const getSingleAvatarById = (avatarId: Types.ObjectId) =>
+const getSingleAvatarById = (avatarId: Types.ObjectId | string) =>
   avatarSchema.findOne({ _id: avatarId });
 
 const getAllAvatars = () => avatarSchema.find();
@@ -91,16 +96,16 @@ const getAllAvatars = () => avatarSchema.find();
 /* ----------------------- video ----------------------- */
 
 const addUsersVideos = async (
-  userId: Types.ObjectId,
-  videoId: Types.ObjectId
+  userId: Types.ObjectId | string,
+  videoId: Types.ObjectId | string
 ) =>
   userSchema.updateOne({ _id: userId }, { $push: { videosUploaded: videoId } });
 
-const findVideoById = (videoId: Types.ObjectId) =>
-  videoSchema.findOne({ _id: videoId });
+const findVideoById = (videoId: Types.ObjectId | string) =>
+  movieSchema.findOne({ _id: videoId });
 
 const findVideoByName = (videoTitle: string) =>
-  videoSchema.findOne({ title: videoTitle });
+  movieSchema.findOne({ title: videoTitle });
 
 /* ----------------------- returned values ----------------------- */
 
@@ -154,8 +159,6 @@ export const returnVideo = (
       session: undefined,
       episode: undefined,
       seriesId: undefined,
-      videoUrl: video.videoUrl,
-      displayPicture: video.displayPicture,
     };
   } else {
     assertsValueToType<SeriesEpisodeType>(video);
@@ -167,8 +170,6 @@ export const returnVideo = (
       session: video.session,
       episode: video.episode,
       seriesId: video.seriesId,
-      videoUrl: video.videoUrl,
-      displayPicture: video.displayPicture,
     };
   }
 };

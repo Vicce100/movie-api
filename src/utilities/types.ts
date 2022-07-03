@@ -70,8 +70,6 @@ export type ReturnedVideoData = {
   session: number | undefined;
   episode: number | undefined;
   seriesId: Types.ObjectId | undefined;
-  videoUrl: string;
-  displayPicture: string;
 };
 
 export interface SeriesInfoType {

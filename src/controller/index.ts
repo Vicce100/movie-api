@@ -5,17 +5,8 @@ import categorySchema from '../schemas/categorySchema.js';
 import avatarSchema from '../schemas/avatarSchema.js';
 import movieSchema from '../schemas/movieSchema.js';
 import db from '../utilities/db/index.js';
-import {
-  CategorySchemaType,
-  errorCode,
-  mp4,
-  userRoles,
-} from '../utilities/types.js';
-import {
-  assertNullish,
-  assertNonNullish,
-  assertsValueToType,
-} from '../utilities/assertions.js';
+import { errorCode, mp4, userRoles } from '../utilities/types.js';
+import { assertNullish, assertNonNullish } from '../utilities/assertions.js';
 import { errorHandler, checkAuth } from '../utilities/middleware.js';
 
 export const addSingleCategory = async (req: Request, res: Response) => {
@@ -65,7 +56,6 @@ export const addMultipleCategories = (req: Request, res: Response) => {
 
 export const sendSingleCategory = async (req: Request, res: Response) => {
   const { categoryId } = req.params;
-  assertsValueToType<Types.ObjectId>(categoryId);
   try {
     const data = await db.getSingleCategoryBaId(categoryId);
     res.status(200).json(data);
@@ -132,7 +122,6 @@ export const addMultipleAvatars = (req: Request, res: Response) => {
 
 export const sendSingleAvatar = async (req: Request, res: Response) => {
   const { categoryId } = req.params;
-  assertsValueToType<Types.ObjectId>(categoryId);
   try {
     const data = await db.getSingleAvatarById(categoryId);
     assertNonNullish(data, errorCode.VALUE_MISSING);
@@ -159,7 +148,6 @@ export const getVideo = async (req: Request, res: Response) => {
   const { videoId } = req.params;
   if (!range) return res.status(404).send('Missing Requires Range header! ');
 
-  assertsValueToType<Types.ObjectId>(videoId);
   try {
     const tempVideo = await db.findVideoById(videoId);
     assertNonNullish(tempVideo, errorCode.VALUE_MISSING);
@@ -245,7 +233,6 @@ export const deleteVideo = async (req: Request, res: Response) => {
   const { videoId } = req.params;
   const { _id: userId } = req.user;
 
-  assertsValueToType<Types.ObjectId>(videoId);
   try {
     const movie = await db.findVideoById(videoId);
     assertNonNullish(movie, errorCode.VALUE_MISSING);
@@ -264,7 +251,6 @@ export const deleteVideo = async (req: Request, res: Response) => {
 
 export const getSingleVideoData = async (req: Request, res: Response) => {
   const { videoId } = req.params;
-  assertsValueToType<Types.ObjectId>(videoId);
 
   try {
     const isMovie = true;
