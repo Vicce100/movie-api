@@ -39,13 +39,14 @@ export function assertIsNotArray(value: unknown | undefined) {
   return !Array.isArray(value);
 }
 
-export function assertIsArray(
+export function assertIsNonEmptyArray(
   value: unknown | undefined,
   msg: string
 ): asserts value {
   if (value === undefined) throw Error(msg);
   if (value === null) throw Error(msg);
   if (!Array.isArray(value)) throw new Error(msg);
+  if (!value.length) throw new Error(msg);
 }
 
 export function assertsIsString(value: unknown): asserts value is string {

@@ -107,6 +107,12 @@ const findVideoById = (videoId: Types.ObjectId | string) =>
 const findVideoByName = (videoTitle: string) =>
   movieSchema.findOne({ title: videoTitle });
 
+const getVideoDataByCategory = (categoryName: string) =>
+  movieSchema.find(
+    { categories: categoryName },
+    { _id: 1, title: 1, displayPicture: 1 }
+  );
+
 /* ----------------------- returned values ----------------------- */
 
 const returnAvatar = (data: AvatarSchemaType) => {
@@ -192,6 +198,7 @@ export default {
   getSingleAvatarById,
   findVideoById,
   findVideoByName,
+  getVideoDataByCategory,
   getAllAvatars,
   returnErrorData,
   returnCurrentUser,

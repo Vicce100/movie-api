@@ -17,6 +17,7 @@ import {
   getVideo,
   getSingleVideoData,
   getVideosData,
+  getVideosDataByCategory,
   postSingleVideo,
   deleteVideo,
   checkAuthFunction,
@@ -88,6 +89,8 @@ router.get('/video/:videoId', getVideo);
 router.get('/video/data/:videoId', getSingleVideoData);
 
 router.get('/video/data/', getVideosData);
+
+router.get('/video/data/category/:categoryName', getVideosDataByCategory);
 
 router.delete('/video/delete/:videoId', deleteVideo);
 

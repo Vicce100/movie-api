@@ -6,7 +6,11 @@ import avatarSchema from '../schemas/avatarSchema.js';
 import movieSchema from '../schemas/movieSchema.js';
 import db from '../utilities/db/index.js';
 import { errorCode, mp4, userRoles } from '../utilities/types.js';
-import { assertNullish, assertNonNullish } from '../utilities/assertions.js';
+import {
+  assertNullish,
+  assertNonNullish,
+  assertIsNonEmptyArray,
+} from '../utilities/assertions.js';
 import { errorHandler, checkAuth } from '../utilities/middleware.js';
 
 export const addSingleCategory = async (req: Request, res: Response) => {
@@ -267,6 +271,28 @@ export const getSingleVideoData = async (req: Request, res: Response) => {
 };
 
 export const getVideosData = (req: Request, res: Response) => {};
+
+export const getVideosDataByCategory = async (req: Request, res: Response) => {
+  const { categoryName } = req.params;
+
+  try {
+    const videosFromCategory = await db.getVideoDataByCategory(categoryName);
+    assertIsNonEmptyArray(videosFromCategory, errorCode.VALUE_MISSING);
+
+    res.status(200).json(
+      videosFromCategory.map(({ _id, title, displayPicture }) => ({
+        _id,
+        title,
+        displayPicture,
+      }))
+    );
+  } catch (error) {
+    if (error instanceof Error) {
+      const errorResponse = errorHandler(error);
+      return res.status(Number(errorResponse.status)).json(errorResponse);
+    }
+  }
+};
 
 export const checkAuthFunction = (req: Request, res: Response) => {
   if (!checkAuth(req.cookies))
