@@ -18,6 +18,7 @@ app.use(express.json());
 app.use(cors(corsOptions));
 
 app.use('/uploads/images/public/', express.static('uploads/images/public'));
+app.use('/uploads/images/ffmpeg/', express.static('uploads/images/ffmpeg'));
 app.use('/uploads/videos/public/', express.static('uploads/videos/public'));
 app.use('/user', userRoutes);
 app.use(indexRouter);
@@ -38,6 +39,7 @@ const imageCheck = () => {
   fs.mkdirSync(images);
   fs.mkdirSync(`${images}/private`);
   fs.mkdirSync(`${images}/public`);
+  fs.mkdirSync(`${images}/ffmpeg`);
 };
 const videoCheck = () => {
   fs.mkdirSync(videos);
@@ -58,6 +60,7 @@ const checkAssetsFolder = () => {
   if (!fs.existsSync(images)) imageCheck();
   if (!fs.existsSync(`${images}/private`)) fs.mkdirSync(`${images}/private`);
   if (!fs.existsSync(`${images}/public`)) fs.mkdirSync(`${images}/public`);
+  if (!fs.existsSync(`${images}/ffmpeg`)) fs.mkdirSync(`${images}/ffmpeg`);
 };
 checkAssetsFolder();
 

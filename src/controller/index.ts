@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
 import { CallbackError, Document, Types } from 'mongoose';
 import fs from 'fs';
+import ffmpeg from 'ffmpeg';
+
 import categorySchema from '../schemas/categorySchema.js';
 import avatarSchema from '../schemas/avatarSchema.js';
 import movieSchema from '../schemas/movieSchema.js';
@@ -227,17 +229,39 @@ export const postSingleVideo = async (req: Request, res: Response) => {
         creatorsId: req.user._id,
         releaseDate,
       });
-      const { _id } = newMovie;
+      const { _id, videoUrl } = newMovie;
       await newMovie.save();
       await db.addUsersVideos(req.user._id, _id);
+
+      // send response to client before running ffmpeg so client gets a faster response time
+      res.status(201).json('video added');
+
+      try {
+        new ffmpeg(`/${videoUrl}`, (err, video) => {
+          if (err) console.log(err);
+          else {
+            video.fnExtractFrameToJPG(
+              '../../uploads/images/ffmpeg/',
+              {
+                frame_rate: 1 / 10,
+                file_name: `${files.videoFile[0].filename}-%d`,
+              },
+              (error, _file) => {
+                if (!error) console.log(error);
+              }
+            );
+          }
+        });
+      } catch (error) {
+        console.log(error);
+      }
     } catch (error) {
       console.log(error);
     }
-
-    return res.status(201).json('video added');
+  } else {
+    const message = 'number of files dose not match number of titles';
+    return res.status(400).json(db.returnErrorData(message, 400));
   }
-  const message = 'number of files dose not match number of titles';
-  return res.status(400).json(db.returnErrorData(message, 400));
 };
 
 export const deleteVideo = async (req: Request, res: Response) => {
