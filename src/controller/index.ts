@@ -8,6 +8,7 @@ import db from '../utilities/db/index.js';
 import {
   errorCode,
   mp4,
+  url,
   userRoles,
   UsersRolesType,
 } from '../utilities/types.js';
@@ -289,7 +290,7 @@ export const getVideosDataByCategory = async (req: Request, res: Response) => {
       videosFromCategory.map(({ _id, title, displayPicture }) => ({
         _id,
         title,
-        displayPicture,
+        displayPicture: `${url}/${displayPicture}`,
       }))
     );
   } catch (error) {
