@@ -172,9 +172,9 @@ export const returnVideo = (
       _id: video._id,
       isMovie: isMovie,
       title: video.seriesTitle,
-      episodeTitle: video.seriesTitle,
+      episodeTitle: video.episodeTitle,
       session: video.session,
-      episode: video.episode,
+      episode: video.episodeNr,
       seriesId: video.seriesId,
     };
   }

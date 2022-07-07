@@ -89,7 +89,7 @@ export interface SeriesInfoType {
 export interface SeriesEpisodeType {
   _id: Types.ObjectId;
   session: number;
-  episode: number;
+  episodeNr: number;
   seriesId: Types.ObjectId;
   seriesTitle: string;
   episodeTitle: string;

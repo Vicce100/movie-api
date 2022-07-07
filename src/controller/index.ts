@@ -234,27 +234,27 @@ export const postSingleVideo = async (req: Request, res: Response) => {
       await db.addUsersVideos(req.user._id, _id);
 
       // send response to client before running ffmpeg so client gets a faster response time
-      res.status(201).json('video added');
 
       try {
-        new ffmpeg(`/${videoUrl}`, (err, video) => {
-          if (err) console.log(err);
-          else {
-            video.fnExtractFrameToJPG(
-              '../../uploads/images/ffmpeg/',
-              {
-                frame_rate: 1 / 10,
-                file_name: `${files.videoFile[0].filename}-%d`,
-              },
-              (error, _file) => {
-                if (!error) console.log(error);
-              }
-            );
+        console.log('start');
+        (await new ffmpeg(videoUrl)).fnExtractFrameToJPG(
+          `uploads/images/ffmpeg/`,
+          {
+            frame_rate: 1 / 10,
+            file_name: `${files.videoFile[0].filename}-%d`,
+          },
+          (error, file) => {
+            if (error) console.log(error);
+            console.log(JSON.stringify(file, undefined, 2));
           }
-        });
+        );
+        console.log('stop1s');
       } catch (error) {
         console.log(error);
       }
+
+      console.log('stop2');
+      res.status(201).json('video added');
     } catch (error) {
       console.log(error);
     }
@@ -317,6 +317,37 @@ export const getVideosDataByCategory = async (req: Request, res: Response) => {
         displayPicture: `${url}/${displayPicture}`,
       }))
     );
+  } catch (error) {
+    if (error instanceof Error) {
+      const errorResponse = errorHandler(error);
+      return res.status(Number(errorResponse.status)).json(errorResponse);
+    }
+  }
+};
+
+export const generateFFmpegToVideo = async (req: Request, res: Response) => {
+  const { videoId } = req.params;
+  try {
+    const video = await db.findVideoById(videoId);
+    assertNonNullish(video, errorCode.VALUE_MISSING);
+
+    try {
+      (await new ffmpeg(video.videoUrl)).fnExtractFrameToJPG(
+        `uploads/images/ffmpeg`,
+        {
+          frame_rate: 1 / 10,
+          file_name: `${video.title}-%d`,
+        },
+        (error, file) => {
+          if (error) console.log(error);
+          console.log(JSON.stringify(file, undefined, 2));
+        }
+      );
+      console.log('stop1s');
+      res.status(200).json({ message: 'success' });
+    } catch (error) {
+      console.log(error);
+    }
   } catch (error) {
     if (error instanceof Error) {
       const errorResponse = errorHandler(error);
