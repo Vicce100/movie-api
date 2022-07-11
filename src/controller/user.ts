@@ -7,7 +7,9 @@ import userSchema from '../schemas/UserSchema.js';
 import { generateAccessToken, emailIsValid } from '../utilities/index.js';
 // import { AuthRequestType, UserType } from '../utilities/types.js';
 import db from '../utilities/db/index.js';
-import { errorHandler } from '../utilities/middleware.js';
+import { checkAuth, errorHandler } from '../utilities/middleware.js';
+import { userRoles, UsersRolesType } from '../utilities/types.js';
+import { assertsValueToType } from '../utilities/assertions.js';
 
 dotenv.config();
 const userNotAuthObject = db.returnErrorData('user not authenticated.', 401);
@@ -225,4 +227,38 @@ export const getCurrentUser = async (
       .status(500)
       .json(db.returnErrorData('internal server error', 500));
   }
+};
+
+export const checkAuthFunction = (req: Request, res: Response) => {
+  if (!checkAuth(req.cookies))
+    return res.status(401).json({ isLoggedIn: false });
+  return res.status(200).json({ isLoggedIn: true });
+};
+
+export const checkAuthRole = (req: Request, res: Response) => {
+  const roleType = req.params.roleType.toLocaleLowerCase();
+  if (
+    roleType === userRoles.user ||
+    userRoles.moderator ||
+    userRoles.admin ||
+    userRoles.superAdmin
+  ) {
+    assertsValueToType<UsersRolesType>(roleType);
+    const user = checkAuth(req.cookies);
+
+    if (!user) return res.status(401).json({ access: false });
+
+    if (roleType === user.role) return res.status(200).json({ access: true });
+    else if (roleType === userRoles.admin && user.role === userRoles.superAdmin)
+      return res.status(200).json({ access: true });
+    else if (
+      roleType === userRoles.moderator &&
+      (user.role === userRoles.superAdmin || userRoles.admin)
+    )
+      return res.status(200).json({ access: true });
+    else return res.status(401).json({ access: false });
+  } else
+    return res
+      .status(404)
+      .json({ message: 'route dose not exist', access: false });
 };

@@ -6,6 +6,7 @@ import dotenv from 'dotenv';
 import fs from 'fs';
 
 import userRoutes from './src/routes/user.js';
+import videoRoutes from './src/routes/video.js';
 import indexRouter from './src/routes/index.js';
 import corsOptions from './src/config/corsOptions.js';
 
@@ -19,8 +20,8 @@ app.use(cors(corsOptions));
 
 app.use('/uploads/images/public/', express.static('uploads/images/public'));
 app.use('/uploads/images/ffmpeg/', express.static('uploads/images/ffmpeg'));
-app.use('/uploads/videos/public/', express.static('uploads/videos/public'));
 app.use('/user', userRoutes);
+app.use('/video', videoRoutes);
 app.use(indexRouter);
 
 // connect to db

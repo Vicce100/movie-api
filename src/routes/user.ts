@@ -7,6 +7,8 @@ import {
   deleteUser,
   addProfile,
   getCurrentUser,
+  checkAuthFunction,
+  checkAuthRole,
 } from '../controller/user.js';
 import { isAuthenticate } from '../utilities/middleware.js';
 
@@ -25,5 +27,10 @@ router.delete('/delete', isAuthenticate, deleteUser);
 router.post('/addProfile', isAuthenticate, addProfile);
 
 router.get('/getCurrentUser', isAuthenticate, getCurrentUser);
+
+router.get('/checkAuth', checkAuthFunction);
+
+// rolesType = 'user' | 'moderator' | 'admin' | 'superAdmin'
+router.get('/checkAuth/:roleType', checkAuthRole);
 
 export default router;
