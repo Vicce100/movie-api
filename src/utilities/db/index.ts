@@ -113,6 +113,15 @@ const getVideoDataByCategory = (categoryName: string) =>
     { _id: 1, title: 1, displayPicture: 1 }
   );
 
+const updateVideoPreviewImages = (
+  videoId: Types.ObjectId | string,
+  imageArray: string[]
+) =>
+  movieSchema.updateOne(
+    { _id: videoId },
+    { $push: { previewImagesUrl: { $each: imageArray } } }
+  );
+
 /* ----------------------- returned values ----------------------- */
 
 const returnAvatar = (data: AvatarSchemaType) => {
@@ -160,6 +169,7 @@ export const returnVideo = (
     return {
       _id: video._id,
       isMovie: isMovie,
+      previewImagesUrl: video.previewImagesUrl,
       title: video.title,
       episodeTitle: undefined,
       session: undefined,
@@ -171,9 +181,10 @@ export const returnVideo = (
     return {
       _id: video._id,
       isMovie: isMovie,
+      previewImagesUrl: video.previewImagesUrl,
       title: video.seriesTitle,
       episodeTitle: video.episodeTitle,
-      session: video.session,
+      session: video.sessionNr,
       episode: video.episodeNr,
       seriesId: video.seriesId,
     };
@@ -199,6 +210,7 @@ export default {
   findVideoById,
   findVideoByName,
   getVideoDataByCategory,
+  updateVideoPreviewImages,
   getAllAvatars,
   returnErrorData,
   returnCurrentUser,

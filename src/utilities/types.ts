@@ -65,6 +65,7 @@ export type UserStatusType = 'active' | 'disabled';
 export type ReturnedVideoData = {
   _id: Types.ObjectId;
   isMovie: boolean;
+  previewImagesUrl: string[];
   title: string;
   episodeTitle: string | undefined;
   session: number | undefined;
@@ -88,12 +89,13 @@ export interface SeriesInfoType {
 
 export interface SeriesEpisodeType {
   _id: Types.ObjectId;
-  session: number;
+  sessionNr: number;
   episodeNr: number;
   seriesId: Types.ObjectId;
   seriesTitle: string;
   episodeTitle: string;
   videoUrl: string;
+  previewImagesUrl: string[];
   displayPicture: string;
   description: string;
   creatorsId: Types.ObjectId;
@@ -105,6 +107,7 @@ export interface MovieSchemaType {
   _id: Types.ObjectId;
   title: string;
   videoUrl: string;
+  previewImagesUrl: string[];
   displayPicture: string;
   // album: string[];
   categories: string[];

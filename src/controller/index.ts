@@ -1,7 +1,6 @@
 import { Request, Response } from 'express';
-import { CallbackError, Document, Types } from 'mongoose';
+import { CallbackError } from 'mongoose';
 import fs from 'fs';
-import ffmpeg from 'ffmpeg';
 
 import categorySchema from '../schemas/categorySchema.js';
 import avatarSchema from '../schemas/avatarSchema.js';
@@ -21,6 +20,11 @@ import {
   assertsValueToType,
 } from '../utilities/assertions.js';
 import { errorHandler, checkAuth } from '../utilities/middleware.js';
+import {
+  cleanFFmpegEndString,
+  cleanString,
+  generatePreviewImages,
+} from '../utilities/index.js';
 
 export const addSingleCategory = async (req: Request, res: Response) => {
   try {
@@ -223,6 +227,7 @@ export const postSingleVideo = async (req: Request, res: Response) => {
         title,
         videoUrl: files.videoFile[0].path,
         displayPicture: files.displayPicture[0].path,
+        previewImagesUrl: [],
         // album: files.album.map((file) => file.path) || [],
         categories: tempCategory,
         description,
@@ -234,27 +239,16 @@ export const postSingleVideo = async (req: Request, res: Response) => {
       await db.addUsersVideos(req.user._id, _id);
 
       // send response to client before running ffmpeg so client gets a faster response time
-
-      try {
-        console.log('start');
-        (await new ffmpeg(videoUrl)).fnExtractFrameToJPG(
-          `uploads/images/ffmpeg/`,
-          {
-            frame_rate: 1 / 10,
-            file_name: `${files.videoFile[0].filename}-%d`,
-          },
-          (error, file) => {
-            if (error) console.log(error);
-            console.log(JSON.stringify(file, undefined, 2));
-          }
-        );
-        console.log('stop1s');
-      } catch (error) {
-        console.log(error);
-      }
-
-      console.log('stop2');
       res.status(201).json('video added');
+
+      const previewImageArray = await generatePreviewImages({
+        videoUrl: videoUrl,
+        outputPathAndFileName: `uploads/images/ffmpeg/${cleanString(title)}`, // no increment or extension
+        fps: 1 / 10,
+        resolution: '720x480',
+      });
+
+      await db.updateVideoPreviewImages(_id, previewImageArray);
     } catch (error) {
       console.log(error);
     }
@@ -331,28 +325,26 @@ export const generateFFmpegToVideo = async (req: Request, res: Response) => {
     const video = await db.findVideoById(videoId);
     assertNonNullish(video, errorCode.VALUE_MISSING);
 
-    try {
-      (await new ffmpeg(video.videoUrl)).fnExtractFrameToJPG(
-        `uploads/images/ffmpeg`,
-        {
-          frame_rate: 1 / 10,
-          file_name: `${video.title}-%d`,
-        },
-        (error, file) => {
-          if (error) console.log(error);
-          console.log(JSON.stringify(file, undefined, 2));
-        }
-      );
-      console.log('stop1s');
-      res.status(200).json({ message: 'success' });
-    } catch (error) {
-      console.log(error);
-    }
+    const cleanedString = cleanString(video.title);
+
+    const previewImageArray = await generatePreviewImages({
+      videoUrl: video.videoUrl,
+      outputPathAndFileName: `uploads/images/ffmpeg/${Date.now()}-${cleanedString}`, // no increment or extension
+      fps: 1 / 10,
+      resolution: '720x480',
+    });
+
+    const response = await db.updateVideoPreviewImages(
+      video._id,
+      previewImageArray
+    );
+
+    res.status(200).json({ success: response.acknowledged });
   } catch (error) {
     if (error instanceof Error) {
       const errorResponse = errorHandler(error);
       return res.status(Number(errorResponse.status)).json(errorResponse);
-    }
+    } else console.log(error);
   }
 };
 

@@ -16,6 +16,7 @@ const MovieSchema = new mongoose.Schema({
   title: requiredShortString,
   videoUrl: { ...reqString, unique: true },
   displayPicture: { ...reqString },
+  previewImagesUrl: [{ type: String, require: true }],
   // album: [{ url: { ...reqString } }],
   categories: [{ ...reqString }],
   description: { type: String, require: false, maxLength: 1225 },
