@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import fs from 'fs';
+import fs, { readSync } from 'fs';
 
 import movieSchema from '../schemas/movieSchema.js';
 import db from '../utilities/db/index.js';
@@ -189,6 +189,30 @@ export const generateFFmpegToVideo = async (req: Request, res: Response) => {
       video._id,
       previewImageArray
     );
+
+    res.status(200).json({ success: response.acknowledged });
+  } catch (error) {
+    if (error instanceof Error) {
+      const errorResponse = errorHandler(error);
+      return res.status(Number(errorResponse.status)).json(errorResponse);
+    } else console.log(error);
+  }
+};
+
+export const removeFFmpegFromVideo = async (req: Request, res: Response) => {
+  const { videoId } = req.params;
+  try {
+    const video = await db.findVideoById(videoId);
+    assertNonNullish(video, errorCode.VALUE_MISSING);
+
+    if (!video.previewImagesUrl.length)
+      throw new Error(errorCode.VALUE_NOT_EXISTING);
+
+    one: for (let index = 0; index < video.previewImagesUrl.length; index++) {
+      if (!fs.existsSync(video.previewImagesUrl[index])) continue one;
+      fs.unlinkSync(video.previewImagesUrl[index]);
+    }
+    const response = await db.deleteVideoPreviewImages(video._id);
 
     res.status(200).json({ success: response.acknowledged });
   } catch (error) {

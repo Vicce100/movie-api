@@ -36,6 +36,7 @@ export const errorCode: {
   PERMISSION_DENIED: 'permission denied';
   VALUE_TAKEN: 'value already taken';
   VALUE_MISSING: 'value missing';
+  VALUE_NOT_EXISTING: 'value dose not exists';
   INVALID_EMAIL: 'invalid email';
 } = {
   NOT_AUTHENTICATED: 'user not authenticated',
@@ -44,6 +45,7 @@ export const errorCode: {
   PERMISSION_DENIED: 'permission denied',
   VALUE_TAKEN: 'value already taken',
   VALUE_MISSING: 'value missing',
+  VALUE_NOT_EXISTING: 'value dose not exists',
   INVALID_EMAIL: 'invalid email',
 };
 
