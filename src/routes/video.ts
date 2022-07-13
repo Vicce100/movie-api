@@ -13,6 +13,7 @@ import {
   postSingleVideo,
   deleteVideo,
   generateFFmpegToVideo,
+  removeFFmpegFromVideo,
 } from '../controller/video.js';
 import { cleanString } from '../utilities/index.js';
 
@@ -74,5 +75,7 @@ router.post(
 );
 
 router.get('/ffmpeg/:videoId', generateFFmpegToVideo);
+
+router.get('/ffmpeg/remove/:videoId', removeFFmpegFromVideo);
 
 export default router;

@@ -59,7 +59,7 @@ export const generatePreviewImages = ({
   videoUrl,
   outputPathAndFileName, // no increment or extension
   fps = 1,
-  resolution = '480x360',
+  resolution = '1080x720',
 }: {
   videoUrl: string;
   outputPathAndFileName: string;

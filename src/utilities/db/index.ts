@@ -122,6 +122,12 @@ const updateVideoPreviewImages = (
     { $push: { previewImagesUrl: { $each: imageArray } } }
   );
 
+const deleteVideoPreviewImages = (videoId: Types.ObjectId | string) =>
+  movieSchema.updateOne(
+    { _id: videoId },
+    { $$unset: { previewImagesUrl: '' } }
+  );
+
 /* ----------------------- returned values ----------------------- */
 
 const returnAvatar = (data: AvatarSchemaType) => {
@@ -169,7 +175,9 @@ export const returnVideo = (
     return {
       _id: video._id,
       isMovie: isMovie,
-      previewImagesUrl: video.previewImagesUrl,
+      previewImagesUrl: video.previewImagesUrl.map(
+        (image) => `${url}/${image}`
+      ),
       title: video.title,
       episodeTitle: undefined,
       session: undefined,
@@ -211,6 +219,7 @@ export default {
   findVideoByName,
   getVideoDataByCategory,
   updateVideoPreviewImages,
+  deleteVideoPreviewImages,
   getAllAvatars,
   returnErrorData,
   returnCurrentUser,
