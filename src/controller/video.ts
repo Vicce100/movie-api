@@ -182,7 +182,7 @@ export const generateFFmpegToVideo = async (req: Request, res: Response) => {
       videoUrl: video.videoUrl,
       outputPathAndFileName: `uploads/images/ffmpeg/${Date.now()}-${cleanedString}`, // no increment or extension
       fps: 1 / 10,
-      resolution: '720x480',
+      resolution: '1080x720',
     });
 
     const response = await db.updateVideoPreviewImages(
