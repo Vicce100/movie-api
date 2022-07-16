@@ -6,6 +6,7 @@ import * as validate from 'email-validator';
 import { assertsIsString, assertNonNullish } from './assertions.js';
 import { UserType, errorCode } from './types.js';
 import db from './db/index.js';
+import { on } from 'events';
 
 export const generateAccessToken = (user: UserType) => {
   try {
@@ -91,6 +92,30 @@ export const generatePreviewImages = ({
         }
         resolve(tempPreviewImageArray);
       })
+      .run();
+  });
+};
+
+export const convertToMp4 = ({
+  videoUrl,
+  outputPathAndFileName, // no increment or extension
+}: {
+  videoUrl: string;
+  outputPathAndFileName: string;
+}) => {
+  if (!videoUrl || !outputPathAndFileName)
+    throw new Error(errorCode.VALUE_MISSING);
+
+  return new Promise<{ success: boolean }>((resolve, reject) => {
+    const cmd = ffmpeg(videoUrl);
+
+    cmd
+      .format('mp4')
+      .input(`${outputPathAndFileName}--converted.mp4`)
+      .on('error', (error) => reject(new Error(error.message)))
+      .on('end', (error) =>
+        error ? resolve({ success: false }) : resolve({ success: true })
+      )
       .run();
   });
 };

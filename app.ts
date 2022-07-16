@@ -46,6 +46,7 @@ const videoCheck = () => {
   fs.mkdirSync(videos);
   fs.mkdirSync(`${videos}/private`);
   fs.mkdirSync(`${videos}/public`);
+  fs.mkdirSync(`${videos}/converted`);
 };
 
 // setup folder structure for image and video files
@@ -58,6 +59,8 @@ const checkAssetsFolder = () => {
   if (!fs.existsSync(videos)) videoCheck();
   if (!fs.existsSync(`${videos}/private`)) fs.mkdirSync(`${videos}/private`);
   if (!fs.existsSync(`${videos}/public`)) fs.mkdirSync(`${videos}/public`);
+  if (!fs.existsSync(`${videos}/converted`))
+    fs.mkdirSync(`${videos}/converted`);
   if (!fs.existsSync(images)) imageCheck();
   if (!fs.existsSync(`${images}/private`)) fs.mkdirSync(`${images}/private`);
   if (!fs.existsSync(`${images}/public`)) fs.mkdirSync(`${images}/public`);

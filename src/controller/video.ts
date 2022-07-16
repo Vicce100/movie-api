@@ -96,7 +96,7 @@ export const postSingleVideo = async (req: Request, res: Response) => {
         videoUrl: videoUrl,
         outputPathAndFileName: `uploads/images/ffmpeg/${cleanString(title)}`, // no increment or extension
         fps: 1 / 10,
-        resolution: '720x480',
+        resolution: '1920x1080',
       });
 
       await db.updateVideoPreviewImages(_id, previewImageArray);
