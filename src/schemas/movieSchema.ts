@@ -20,6 +20,8 @@ const MovieSchema = new mongoose.Schema({
   // album: [{ url: { ...reqString } }],
   categories: [{ ...reqString }],
   description: { type: String, require: false, maxLength: 1225 },
+  views: { type: Number, require: true },
+  monthlyViews: { type: Number, require: true },
   creatorsId: { type: mongoose.SchemaTypes.ObjectId, ref: 'Users' },
   uploadDate: date,
   releaseDate: { type: String, imitable: true, require: true },

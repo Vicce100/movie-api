@@ -156,10 +156,11 @@ const returnCurrentUser = (
     firstName: user.firstName,
     lastName: user.lastName,
     profiles:
-      user?.profiles?.map(({ _id, profileName, avatarURL }) => ({
+      user?.profiles?.map(({ _id, profileName, avatarURL, savedList }) => ({
         _id,
         profileName,
         avatarURL: `${url}/${avatarURL}`,
+        savedList,
       })) || undefined,
     role: user.role,
     userStatus: user.userStatus,

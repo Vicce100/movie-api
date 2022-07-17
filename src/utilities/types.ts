@@ -81,6 +81,8 @@ export interface SeriesInfoType {
   categories: string[];
   displayPicture: string;
   description: string;
+  views: number;
+  monthlyViews: number;
   uploadDate: string;
   creationDate: string;
   latestDate: string;
@@ -114,6 +116,8 @@ export interface MovieSchemaType {
   // album: string[];
   categories: string[];
   description: string;
+  views: number;
+  monthlyViews: number;
   creatorsId: Types.ObjectId;
   uploadDate: string;
   releaseDate: string;
@@ -137,6 +141,7 @@ export type ProfileType =
       _id: Types.ObjectId;
       profileName: string;
       avatarURL: string;
+      savedList: Types.ObjectId[];
     }[]
   | undefined;
 

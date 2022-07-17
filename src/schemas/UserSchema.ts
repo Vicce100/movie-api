@@ -24,6 +24,7 @@ const UserSchema = new mongoose.Schema({
     {
       profileName: requiredShortString,
       avatarURL: reqString,
+      savedList: [{ type: mongoose.SchemaTypes.ObjectId, ref: 'video' }],
     },
   ],
   role: { type: String, require: true, default: 'user' },

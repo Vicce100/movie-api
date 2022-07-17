@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import fs, { readSync } from 'fs';
+import fs from 'fs';
 
 import movieSchema from '../schemas/movieSchema.js';
 import db from '../utilities/db/index.js';
@@ -14,7 +14,10 @@ import { cleanString, generatePreviewImages } from '../utilities/index.js';
 export const getVideo = async (req: Request, res: Response) => {
   const { range } = req.headers;
   const { videoId } = req.params;
-  if (!range) return res.status(404).send('Missing Requires Range header! ');
+
+  // on linux the if statement will get trigger on the first request even
+  // if range header is set to "bytes=0-"
+  // if (!range) return res.status(404).send('Missing Requires Range header! ');
 
   try {
     const tempVideo = await db.findVideoById(videoId);
@@ -25,7 +28,7 @@ export const getVideo = async (req: Request, res: Response) => {
     // const chunkSize = 1 * 1e6; // 1MB
 
     const CHUNK_SIZE = 10 ** 6; // 1MB
-    const start = Number(range.replace(/\D/g, ''));
+    const start = Number(range?.replace(/\D/g, '') || 'bytes=0-');
     const end = Math.min(start + CHUNK_SIZE, videoSize - 1);
 
     res.writeHead(206, {

@@ -19,7 +19,7 @@ import { cleanString } from '../utilities/index.js';
 
 const router = express.Router();
 
-// router.use(isAuthenticate);
+router.use(isAuthenticate);
 
 const imageStorage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, 'uploads/images/public/'),

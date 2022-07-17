@@ -1,3 +1,8 @@
+// https://stackoverflow.com/questions/15809611/bcrypt-invalid-elf-header-when-running-node-app
+// to get bcrypt to work on windows jus install it like "npm i bcrypt"
+// to get bcrypt to work on linux you need to run the
+// following command as root "npm i bcrypt --unsafe-perm=true --allow-root --save"
+
 import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
