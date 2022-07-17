@@ -128,6 +128,12 @@ const deleteVideoPreviewImages = (videoId: Types.ObjectId | string) =>
 const resetMoviesMonthlyViews = () =>
   movieSchema.updateMany({}, { $set: { monthlyViews: 0 } });
 
+const addViewToMovie = (videoId: Types.ObjectId | string) =>
+  movieSchema.updateOne({ _id: videoId }, { $inc: { views: 1 } });
+
+const addMonthlyViewToMovie = (videoId: Types.ObjectId | string) =>
+  movieSchema.updateOne({ _id: videoId }, { $inc: { monthlyViews: 1 } });
+
 /* ----------------------- returned values ----------------------- */
 
 const returnAvatar = (data: AvatarSchemaType) => {
@@ -222,6 +228,8 @@ export default {
   updateVideoPreviewImages,
   deleteVideoPreviewImages,
   resetMoviesMonthlyViews,
+  addViewToMovie,
+  addMonthlyViewToMovie,
   getAllAvatars,
   returnErrorData,
   returnCurrentUser,

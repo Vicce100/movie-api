@@ -7,6 +7,7 @@ import {
 import multer from 'multer';
 import {
   getVideo,
+  addView,
   getSingleVideoData,
   getVideosData,
   getVideosDataByCategory,
@@ -45,6 +46,7 @@ const publicVideoUpload = multer({ storage: publicVideoStorage, fileFilter });
 const privateVideoUpload = multer({ storage: privateVideoStorage, fileFilter });
 
 router.get('/:videoId', getVideo);
+router.post('/addView', addView);
 
 router.get('/data/:videoId', getSingleVideoData);
 

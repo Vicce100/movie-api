@@ -53,6 +53,19 @@ export const getVideo = async (req: Request, res: Response) => {
   }
 };
 
+export const addView = async (req: Request, res: Response) => {
+  const { videoId, isMovie }: { videoId: string; isMovie: boolean } = req.body;
+  if (isMovie) {
+    try {
+      await db.addViewToMovie(videoId);
+      await db.addMonthlyViewToMovie(videoId);
+    } catch (error) {
+      console.log(error);
+    }
+  }
+  res.status(200).json({ success: true });
+};
+
 export const postSingleVideo = async (req: Request, res: Response) => {
   const { files } = req;
   const {
