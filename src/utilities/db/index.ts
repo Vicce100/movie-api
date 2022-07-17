@@ -123,10 +123,10 @@ const updateVideoPreviewImages = (
   );
 
 const deleteVideoPreviewImages = (videoId: Types.ObjectId | string) =>
-  movieSchema.updateOne(
-    { _id: videoId },
-    { $$unset: { previewImagesUrl: '' } }
-  );
+  movieSchema.updateOne({ _id: videoId }, { $unset: { previewImagesUrl: '' } });
+
+const resetMoviesMonthlyViews = () =>
+  movieSchema.updateMany({}, { $set: { monthlyViews: 0 } });
 
 /* ----------------------- returned values ----------------------- */
 
@@ -221,6 +221,7 @@ export default {
   getVideoDataByCategory,
   updateVideoPreviewImages,
   deleteVideoPreviewImages,
+  resetMoviesMonthlyViews,
   getAllAvatars,
   returnErrorData,
   returnCurrentUser,
