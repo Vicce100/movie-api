@@ -10,6 +10,8 @@ import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 import fs from 'fs';
 
+import { resetMonthlyViews } from './src/utilities/cron.js';
+
 import userRoutes from './src/routes/user.js';
 import videoRoutes from './src/routes/video.js';
 import indexRouter from './src/routes/index.js';
@@ -37,6 +39,8 @@ mongoose
   .then(() => console.log('Connected to DB...'))
   .catch((err) => console.log(err));
 
+resetMonthlyViews();
+
 const uploads = './uploads';
 const images = `${uploads}/images`;
 const videos = `${uploads}/videos`;
@@ -55,7 +59,7 @@ const videoCheck = () => {
 };
 
 // setup folder structure for image and video files
-const checkAssetsFolder = () => {
+(() => {
   if (!fs.existsSync(uploads)) {
     fs.mkdirSync(uploads);
     videoCheck();
@@ -70,8 +74,7 @@ const checkAssetsFolder = () => {
   if (!fs.existsSync(`${images}/private`)) fs.mkdirSync(`${images}/private`);
   if (!fs.existsSync(`${images}/public`)) fs.mkdirSync(`${images}/public`);
   if (!fs.existsSync(`${images}/ffmpeg`)) fs.mkdirSync(`${images}/ffmpeg`);
-};
-checkAssetsFolder();
+})();
 
 const port = process.env.PORT || 5001;
 app.listen(port, () => console.log(`it's alive on http://localhost:${port}`));
