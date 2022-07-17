@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 import dayjs from 'dayjs';
-import { MovieSchemaType } from '../utilities/types.js';
+import { SeriesInfoType } from '../utilities/types.js';
 
 const reqString = { type: String, require: true };
 const ShortString = { type: String, minLength: 1, maxLength: 255 };
@@ -12,7 +12,7 @@ const date = {
   require: true,
 };
 
-const MovieSchema = new mongoose.Schema({
+const seriesSchema = new mongoose.Schema({
   title: requiredShortString,
   videoUrl: { ...reqString, unique: true },
   displayPicture: { ...reqString },
@@ -22,9 +22,12 @@ const MovieSchema = new mongoose.Schema({
   description: { type: String, require: false, maxLength: 1225 },
   views: { type: Number, require: true },
   monthlyViews: { type: Number, require: true },
-  creatorsId: { type: mongoose.SchemaTypes.ObjectId, ref: 'users' },
   uploadDate: date,
-  releaseDate: { type: String, imitable: true, require: true },
+  creationDate: date,
+  latestDate: date,
+  episodesId: [{ type: mongoose.Types.ObjectId }],
+  amountOfSessions: { type: Number },
+  creatorsId: { type: mongoose.SchemaTypes.ObjectId, ref: 'Users' },
 });
 
-export default mongoose.model<MovieSchemaType>('movie', MovieSchema);
+export default mongoose.model<SeriesInfoType>('series', seriesSchema);

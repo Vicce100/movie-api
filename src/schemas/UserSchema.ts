@@ -9,7 +9,7 @@ const ShortString = { type: String, minLength: 1, maxLength: 255 };
 const nonRequiredShortString = { ...ShortString, require: false };
 const requiredShortString = { ...ShortString, require: true };
 
-const UserSchema = new mongoose.Schema({
+const userSchema = new mongoose.Schema({
   email: {
     type: String,
     require: true,
@@ -37,9 +37,12 @@ const UserSchema = new mongoose.Schema({
     imitable: true,
     require: true,
   },
-  videosUploaded: [
+  moviesUploaded: [
+    { type: mongoose.SchemaTypes.ObjectId, require: true, ref: 'video' },
+  ],
+  seriesUploaded: [
     { type: mongoose.SchemaTypes.ObjectId, require: true, ref: 'video' },
   ],
 });
 
-export default mongoose.model<UserType>('Users', UserSchema);
+export default mongoose.model<UserType>('users', userSchema);

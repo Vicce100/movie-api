@@ -53,7 +53,6 @@ const imageCheck = () => {
 };
 const videoCheck = () => {
   fs.mkdirSync(videos);
-  fs.mkdirSync(`${videos}/private`);
   fs.mkdirSync(`${videos}/public`);
   fs.mkdirSync(`${videos}/converted`);
 };
@@ -66,7 +65,6 @@ const videoCheck = () => {
     return imageCheck();
   }
   if (!fs.existsSync(videos)) videoCheck();
-  if (!fs.existsSync(`${videos}/private`)) fs.mkdirSync(`${videos}/private`);
   if (!fs.existsSync(`${videos}/public`)) fs.mkdirSync(`${videos}/public`);
   if (!fs.existsSync(`${videos}/converted`))
     fs.mkdirSync(`${videos}/converted`);

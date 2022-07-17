@@ -103,7 +103,7 @@ export const postSingleVideo = async (req: Request, res: Response) => {
       });
       const { _id, videoUrl } = newMovie;
       await newMovie.save();
-      await db.addUsersVideos(req.user._id, _id);
+      await db.addUsersMovie(req.user._id, _id);
 
       // send response to client before running ffmpeg so client gets a faster response time
       res.status(201).json('video added');

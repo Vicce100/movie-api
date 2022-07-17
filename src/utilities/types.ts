@@ -83,6 +83,7 @@ export interface SeriesInfoType {
   description: string;
   views: number;
   monthlyViews: number;
+  public: boolean;
   uploadDate: string;
   creationDate: string;
   latestDate: string;
@@ -98,6 +99,7 @@ export interface SeriesEpisodeType {
   seriesId: Types.ObjectId;
   seriesTitle: string;
   episodeTitle: string;
+  public: boolean;
   videoUrl: string;
   previewImagesUrl: string[];
   displayPicture: string;
@@ -113,7 +115,7 @@ export interface MovieSchemaType {
   videoUrl: string;
   previewImagesUrl: string[];
   displayPicture: string;
-  // album: string[];
+  public: boolean;
   categories: string[];
   description: string;
   views: number;
@@ -126,7 +128,6 @@ export interface MovieSchemaType {
 export interface CategorySchemaType {
   _id: Types.ObjectId;
   name: string;
-  // url: string;
 }
 
 export interface AvatarSchemaType {
@@ -156,7 +157,8 @@ export interface UserType {
   role: UsersRolesType;
   userStatus: UserStatusType;
   createdAt: string;
-  videosUploaded: Types.ObjectId[];
+  moviesUploaded: Types.ObjectId[]; // videosUploaded
+  seriesUploaded: Types.ObjectId[];
 }
 
 export type CurrentUserType = {

@@ -1,5 +1,4 @@
-import { Document, Model, Types } from 'mongoose';
-import { StringDecoder } from 'string_decoder';
+import { Model, Types } from 'mongoose';
 import {
   AvatarSchemaType,
   CurrentUserType,
@@ -95,11 +94,17 @@ const getAllAvatars = () => avatarSchema.find();
 
 /* ----------------------- video ----------------------- */
 
-const addUsersVideos = async (
+const addUsersMovie = (
   userId: Types.ObjectId | string,
   videoId: Types.ObjectId | string
 ) =>
-  userSchema.updateOne({ _id: userId }, { $push: { videosUploaded: videoId } });
+  userSchema.updateOne({ _id: userId }, { $push: { movieUploaded: videoId } });
+
+const addUsersSeries = (
+  userId: Types.ObjectId | string,
+  videoId: Types.ObjectId | string
+) =>
+  userSchema.updateOne({ _id: userId }, { $push: { seriesUploaded: videoId } });
 
 const findVideoById = (videoId: Types.ObjectId | string) =>
   movieSchema.findOne({ _id: videoId });
@@ -213,7 +218,8 @@ export default {
   removeUser,
   addProfileToUser,
   updatePassword,
-  addUsersVideos,
+  addUsersMovie,
+  addUsersSeries,
   updateRefreshToken,
   removeRefreshToken,
   removeUsersVideoRef,
