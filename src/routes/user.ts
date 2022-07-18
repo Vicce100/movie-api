@@ -1,4 +1,5 @@
 import express from 'express';
+
 import {
   signUp,
   login,
@@ -11,26 +12,27 @@ import {
   checkAuthRole,
 } from '../controller/user.js';
 import { isAuthenticate } from '../utilities/middleware.js';
+import { routesString as rs } from '../utilities/index.js';
 
 const router = express.Router();
 
-router.post('/create', signUp, login);
+router.post(`/${rs.create}`, signUp, login);
 
-router.post('/login', login);
+router.post(`/${rs.login}`, login);
 
-router.delete('/logout', isAuthenticate, logout);
+router.delete(`/${rs.logout}`, isAuthenticate, logout);
 
-router.post('/refreshToken', refreshToken);
+router.post(`/${rs.refreshToken}`, refreshToken);
 
-router.delete('/delete', isAuthenticate, deleteUser);
+router.delete(`/${rs.delete}`, isAuthenticate, deleteUser);
 
-router.post('/addProfile', isAuthenticate, addProfile);
+router.post(`/${rs.addProfile}`, isAuthenticate, addProfile);
 
-router.get('/getCurrentUser', isAuthenticate, getCurrentUser);
+router.get(`/${rs.getCurrentUser}`, isAuthenticate, getCurrentUser);
 
-router.get('/checkAuth', checkAuthFunction);
+router.get(`/${rs.checkAuth}`, checkAuthFunction);
 
 // rolesType = 'user' | 'moderator' | 'admin' | 'superAdmin'
-router.get('/checkAuth/:roleType', checkAuthRole);
+router.get(`/${rs.checkAuth}/:${rs.roleType}`, checkAuthRole);
 
 export default router;

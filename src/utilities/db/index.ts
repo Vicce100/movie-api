@@ -14,6 +14,8 @@ import userSchema from '../../schemas/UserSchema.js';
 import categorySchema from '../../schemas/categorySchema.js';
 import avatarSchema from '../../schemas/avatarSchema.js';
 import movieSchema from '../../schemas/movieSchema.js';
+import seriesSchema from '../../schemas/seriesSchema.js';
+import episodesSchema from '../../schemas/episodesSchema.js';
 
 /* ----------------------- local ----------------------- */
 
@@ -106,38 +108,80 @@ const addUsersSeries = (
 ) =>
   userSchema.updateOne({ _id: userId }, { $push: { seriesUploaded: videoId } });
 
-const findVideoById = (videoId: Types.ObjectId | string) =>
-  movieSchema.findOne({ _id: videoId });
+const findMovieById = (movieId: Types.ObjectId | string) =>
+  movieSchema.findOne({ _id: movieId });
 
-const findVideoByName = (videoTitle: string) =>
+const findSeriesById = (seriesId: Types.ObjectId | string) =>
+  seriesSchema.findOne({ _id: seriesId });
+
+const findEpisodeById = (episodeId: Types.ObjectId | string) =>
+  episodesSchema.findOne({ _id: episodeId });
+
+const findMovieByName = (videoTitle: string) =>
   movieSchema.findOne({ title: videoTitle });
 
-const getVideoDataByCategory = (categoryName: string) =>
+const findSeriesByName = (videoTitle: string) =>
+  seriesSchema.findOne({ title: videoTitle });
+
+const findEpisodeByName = (videoTitle: string) =>
+  episodesSchema.findOne({ seriesTitle: videoTitle });
+
+const getMovieDataByCategory = (categoryName: string) =>
   movieSchema.find(
     { categories: categoryName },
     { _id: 1, title: 1, displayPicture: 1 }
   );
 
-const updateVideoPreviewImages = (
-  videoId: Types.ObjectId | string,
+const getSeriesDataByCategory = (categoryName: string) =>
+  seriesSchema.find(
+    { categories: categoryName },
+    { _id: 1, title: 1, displayPicture: 1 }
+  );
+
+const updateMoviePreviewImages = (
+  movieId: Types.ObjectId | string,
   imageArray: string[]
 ) =>
   movieSchema.updateOne(
-    { _id: videoId },
+    { _id: movieId },
     { $push: { previewImagesUrl: { $each: imageArray } } }
   );
 
-const deleteVideoPreviewImages = (videoId: Types.ObjectId | string) =>
-  movieSchema.updateOne({ _id: videoId }, { $unset: { previewImagesUrl: '' } });
+const updateEpisodesPreviewImages = (
+  seriesId: Types.ObjectId | string,
+  imageArray: string[]
+) =>
+  episodesSchema.updateOne(
+    { _id: seriesId },
+    { $push: { previewImagesUrl: { $each: imageArray } } }
+  );
+
+const deleteMoviePreviewImages = (movieId: Types.ObjectId | string) =>
+  movieSchema.updateOne({ _id: movieId }, { $unset: { previewImagesUrl: '' } });
+
+const deleteEpisodePreviewImages = (episodeId: Types.ObjectId | string) =>
+  episodesSchema.updateOne(
+    { _id: episodeId },
+    { $unset: { previewImagesUrl: '' } }
+  );
 
 const resetMoviesMonthlyViews = () =>
   movieSchema.updateMany({}, { $set: { monthlyViews: 0 } });
 
-const addViewToMovie = (videoId: Types.ObjectId | string) =>
-  movieSchema.updateOne({ _id: videoId }, { $inc: { views: 1 } });
+const resetSeriesMonthlyViews = () =>
+  seriesSchema.updateMany({}, { $set: { monthlyViews: 0 } });
 
-const addMonthlyViewToMovie = (videoId: Types.ObjectId | string) =>
-  movieSchema.updateOne({ _id: videoId }, { $inc: { monthlyViews: 1 } });
+const addViewToMovie = (movieId: Types.ObjectId | string) =>
+  movieSchema.updateOne({ _id: movieId }, { $inc: { views: 1 } });
+
+const addViewToSeries = (seriesId: Types.ObjectId | string) =>
+  seriesSchema.updateOne({ _id: seriesId }, { $inc: { views: 1 } });
+
+const addMonthlyViewToMovie = (movieId: Types.ObjectId | string) =>
+  movieSchema.updateOne({ _id: movieId }, { $inc: { monthlyViews: 1 } });
+
+const addMonthlyViewToSeries = (seriesId: Types.ObjectId | string) =>
+  seriesSchema.updateOne({ _id: seriesId }, { $inc: { monthlyViews: 1 } });
 
 /* ----------------------- returned values ----------------------- */
 
@@ -228,14 +272,24 @@ export default {
   getSingleCategoryBaName,
   getAllCategories,
   getSingleAvatarById,
-  findVideoById,
-  findVideoByName,
-  getVideoDataByCategory,
-  updateVideoPreviewImages,
-  deleteVideoPreviewImages,
+  findMovieById,
+  findSeriesById,
+  findEpisodeById,
+  findMovieByName,
+  findSeriesByName,
+  findEpisodeByName,
+  getMovieDataByCategory,
+  getSeriesDataByCategory,
+  updateMoviePreviewImages,
+  updateEpisodesPreviewImages,
+  deleteMoviePreviewImages,
+  deleteEpisodePreviewImages,
   resetMoviesMonthlyViews,
+  resetSeriesMonthlyViews,
   addViewToMovie,
+  addViewToSeries,
   addMonthlyViewToMovie,
+  addMonthlyViewToSeries,
   getAllAvatars,
   returnErrorData,
   returnCurrentUser,

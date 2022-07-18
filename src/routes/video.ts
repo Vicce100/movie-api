@@ -6,17 +6,23 @@ import {
 } from '../utilities/middleware.js';
 import multer from 'multer';
 import {
-  getVideo,
+  getMovie,
+  getEpisode,
   addView,
-  getSingleVideoData,
+  getSingleMovieData,
+  getSingleEpisodeData,
   getVideosData,
-  getVideosDataByCategory,
+  getMoviesDataByCategory,
+  getSeriesDataByCategory,
   postSingleVideo,
-  deleteVideo,
-  generateFFmpegToVideo,
-  removeFFmpegFromVideo,
+  deleteMovie,
+  deleteEpisode,
+  generateFFmpegToMovie,
+  generateFFmpegToEpisode,
+  removeFFmpegFromMovie,
+  removeFFmpegFromEpisode,
 } from '../controller/video.js';
-import { cleanString } from '../utilities/index.js';
+import { cleanString, routesString as rs } from '../utilities/index.js';
 
 const router = express.Router();
 
@@ -45,19 +51,34 @@ const privateVideoStorage = multer.diskStorage({
 const publicVideoUpload = multer({ storage: publicVideoStorage, fileFilter });
 const privateVideoUpload = multer({ storage: privateVideoStorage, fileFilter });
 
-router.get('/:videoId', getVideo);
-router.post('/addView', addView);
+router.get(`/${rs.movie}/:${rs.movieId}`, getMovie);
 
-router.get('/data/:videoId', getSingleVideoData);
+router.get(`/${rs.episode}/:${rs.episodeId}`, getEpisode);
 
-router.get('/data/', getVideosData);
+router.post(`/${rs.addView}`, addView);
 
-router.get('/data/category/:categoryName', getVideosDataByCategory);
+router.get(`/${rs.movie}/${rs.data}/:${rs.movieId}`, getSingleMovieData);
 
-router.delete('/delete/:videoId', deleteVideo);
+router.get(`/${rs.episode}/${rs.data}/:${rs.episodeId}`, getSingleEpisodeData);
+
+router.get(`/${rs.data}/:queryName`, getVideosData);
+
+router.get(
+  `/${rs.movie}/${rs.data}/${rs.category}/:${rs.categoryName}`,
+  getMoviesDataByCategory
+);
+
+router.get(
+  `/${rs.series}/${rs.data}/${rs.movieId}/:${rs.categoryName}`,
+  getSeriesDataByCategory
+);
+
+router.delete(`/${rs.movie}/${rs.delete}/:${rs.movieId}`, deleteMovie);
+
+router.delete(`/${rs.episode}/${rs.delete}/:${rs.episodeId}`, deleteEpisode);
 
 router.post(
-  '/upload/singe/public',
+  `/${rs.upload}/${rs.single}/public`,
   publicVideoUpload.fields([
     { name: 'videoFile', maxCount: 1 },
     { name: 'displayPicture', maxCount: 1 },
@@ -67,7 +88,7 @@ router.post(
 );
 
 router.post(
-  '/upload/singe/private',
+  `/${rs.upload}/${rs.single}/private`,
   privateVideoUpload.fields([
     { name: 'videoFile', maxCount: 1 },
     { name: 'displayPicture', maxCount: 1 },
@@ -76,8 +97,21 @@ router.post(
   postSingleVideo
 );
 
-router.get('/ffmpeg/:videoId', generateFFmpegToVideo);
+router.get(`/${rs.movie}/${rs.ffmpeg}/:${rs.movieId}`, generateFFmpegToMovie);
 
-router.get('/ffmpeg/remove/:videoId', removeFFmpegFromVideo);
+router.get(
+  `/${rs.episode}/${rs.ffmpeg}/:${rs.episodeId}`,
+  generateFFmpegToEpisode
+);
+
+router.get(
+  `/${rs.movie}/${rs.ffmpeg}/${rs.remove}/:${rs.movieId}`,
+  removeFFmpegFromMovie
+);
+
+router.get(
+  `/${rs.episode}/${rs.ffmpeg}/${rs.remove}/:${rs.episodeId}`,
+  removeFFmpegFromEpisode
+);
 
 export default router;

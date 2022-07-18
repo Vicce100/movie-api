@@ -3,10 +3,9 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 
+import db from '../utilities/db/index.js';
 import userSchema from '../schemas/UserSchema.js';
 import { generateAccessToken, emailIsValid } from '../utilities/index.js';
-// import { AuthRequestType, UserType } from '../utilities/types.js';
-import db from '../utilities/db/index.js';
 import { checkAuth, errorHandler } from '../utilities/middleware.js';
 import { userRoles, UsersRolesType } from '../utilities/types.js';
 import { assertsValueToType } from '../utilities/assertions.js';

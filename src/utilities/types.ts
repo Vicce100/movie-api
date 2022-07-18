@@ -61,6 +61,18 @@ export const userRoles: {
   superAdmin: 'superAdmin',
 };
 
+export type queryPaths =
+  | 'myList'
+  | 'continueWatching'
+  | 'watchAged'
+  | 'becauseYouWatch'
+  | 'becauseYouLiked'
+  | 'forYou'
+  | 'newlyAdded'
+  | 'popular'
+  | 'top10movies'
+  | 'top10series';
+
 export type UsersRolesType = 'user' | 'moderator' | 'admin' | 'superAdmin';
 export type UserStatusType = 'active' | 'disabled';
 
@@ -78,12 +90,12 @@ export type ReturnedVideoData = {
 export interface SeriesInfoType {
   _id: Types.ObjectId;
   title: string;
-  categories: string[];
   displayPicture: string;
-  description: string;
   views: number;
   monthlyViews: number;
   public: boolean;
+  categories: string[];
+  description: string;
   uploadDate: string;
   creationDate: string;
   latestDate: string;
@@ -143,6 +155,7 @@ export type ProfileType =
       profileName: string;
       avatarURL: string;
       savedList: Types.ObjectId[];
+      hasWatch: Types.ObjectId[];
     }[]
   | undefined;
 

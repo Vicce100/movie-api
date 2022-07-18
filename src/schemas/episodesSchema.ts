@@ -28,4 +28,4 @@ const episodesSchema = new mongoose.Schema({
   creatorsId: { type: mongoose.SchemaTypes.ObjectId, ref: 'users' },
 });
 
-export default mongoose.model<SeriesEpisodeType>('series', episodesSchema);
+export default mongoose.model<SeriesEpisodeType>('episode', episodesSchema);

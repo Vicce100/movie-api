@@ -15,7 +15,7 @@ import {
   sendSingleAvatar,
   sendMultipleAvatars,
 } from '../controller/index.js';
-import { cleanString } from '../utilities/index.js';
+import { cleanString, routesString as rs } from '../utilities/index.js';
 
 const router = express.Router();
 
@@ -29,30 +29,35 @@ const imageStorage = multer.diskStorage({
 
 const uploadPublicImage = multer({ fileFilter, storage: imageStorage });
 
-router.post('/category/upload/single', addSingleCategory);
+// `/${routesString.checkAuth}`
 
-router.post('/category/upload/multiple', addMultipleCategories);
-
-router.get('/category/:categoryId', sendSingleCategory);
-
-router.get('/category/get/multiple', sendMultipleCategories);
+router.post(`/${rs.category}/${rs.upload}/${rs.single}`, addSingleCategory);
 
 router.post(
-  '/avatar/upload/single',
+  `/${rs.category}/${rs.upload}/${rs.multiple}`,
+  addMultipleCategories
+);
+
+router.get(`/${rs.category}/:${rs.categoryId}`, sendSingleCategory);
+
+router.get(`/${rs.category}/${rs.get}/${rs.multiple}`, sendMultipleCategories);
+
+router.post(
+  `/${rs.avatar}/${rs.upload}/${rs.single}`,
   uploadPublicImage.single('avatarImage'),
   multerErrorHandler,
   addSingleAvatar
 );
 
 router.post(
-  '/avatar/upload/multiple',
+  `/${rs.avatar}/${rs.upload}/${rs.multiple}`,
   uploadPublicImage.array('avatarImage'),
   multerErrorHandler,
   addMultipleAvatars
 );
 
-router.get('/avatar/:avatarId', sendSingleAvatar);
+router.get(`/${rs.avatar}/:${rs.avatarId}`, sendSingleAvatar);
 
-router.get('/avatar/get/multiple', sendMultipleAvatars);
+router.get(`/${rs.avatar}/${rs.get}/${rs.multiple}`, sendMultipleAvatars);
 
 export default router;
