@@ -154,8 +154,9 @@ export type ProfileType =
       _id: Types.ObjectId;
       profileName: string;
       avatarURL: string;
-      savedList: Types.ObjectId[];
-      hasWatch: Types.ObjectId[];
+      savedList?: Types.ObjectId[];
+      likedList?: Types.ObjectId[];
+      hasWatch?: Types.ObjectId[];
     }[]
   | undefined;
 

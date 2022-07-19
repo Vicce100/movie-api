@@ -183,6 +183,55 @@ const addMonthlyViewToMovie = (movieId: Types.ObjectId | string) =>
 const addMonthlyViewToSeries = (seriesId: Types.ObjectId | string) =>
   seriesSchema.updateOne({ _id: seriesId }, { $inc: { monthlyViews: 1 } });
 
+// https://www.mongodb.com/docs/upcoming/reference/operator/aggregation/sample/#pipe._S_sample
+const getMyListInMovie = (MyListId: Types.ObjectId[] | string[]) =>
+  movieSchema.aggregate([
+    { $match: { _id: { $in: MyListId } } },
+    { $sample: { size: MyListId.length } },
+  ]);
+
+const getMyListInSeries = (MyListId: Types.ObjectId[] | string[]) =>
+  seriesSchema.aggregate([
+    { $match: { _id: { $in: MyListId } } },
+    { $sample: { size: MyListId.length } },
+  ]);
+
+const getWatchAgedInMovies = (hasWatchId: Types.ObjectId[] | string[]) =>
+  movieSchema.aggregate([
+    { $match: { _id: { $in: hasWatchId } } },
+    { $sample: { size: hasWatchId.length } },
+  ]);
+
+const getWatchAgedInSeries = (hasWatchId: Types.ObjectId[] | string[]) =>
+  seriesSchema.aggregate([
+    { $match: { _id: { $in: hasWatchId } } },
+    { $sample: { size: hasWatchId.length } },
+  ]);
+
+const getTop10Movies = () =>
+  movieSchema.find().sort({ monthlyViews: -1 }).limit(10);
+
+const getTop10Series = () =>
+  seriesSchema.find().sort({ monthlyViews: -1 }).limit(10);
+
+const randomMovie = (movieId: Types.ObjectId | string) =>
+  movieSchema
+    .aggregate([
+      { $match: { _id: movieId } },
+      { $sample: { size: 10 } },
+      // { $sort: { monthlyViews: -1 } },
+    ])
+    .limit(10);
+
+const randomSeries = (seriesId: Types.ObjectId | string) =>
+  seriesSchema
+    .aggregate([
+      { $match: { _id: seriesId } },
+      { $sample: { size: 10 } },
+      // { $sort: { monthlyViews: -1 } },
+    ])
+    .limit(10);
+
 /* ----------------------- returned values ----------------------- */
 
 const returnAvatar = (data: AvatarSchemaType) => {
@@ -290,6 +339,14 @@ export default {
   addViewToSeries,
   addMonthlyViewToMovie,
   addMonthlyViewToSeries,
+  getMyListInMovie,
+  getMyListInSeries,
+  getWatchAgedInMovies,
+  getWatchAgedInSeries,
+  getTop10Movies,
+  getTop10Series,
+  randomMovie,
+  randomSeries,
   getAllAvatars,
   returnErrorData,
   returnCurrentUser,
