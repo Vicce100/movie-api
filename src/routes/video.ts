@@ -61,7 +61,7 @@ router.get(`/${rs.movie}/${rs.data}/:${rs.movieId}`, getSingleMovieData);
 
 router.get(`/${rs.episode}/${rs.data}/:${rs.episodeId}`, getSingleEpisodeData);
 
-router.get(`/${rs.data}/:queryName`, getVideosData);
+router.get(`/${rs.data}/:queryName/:profileId`, getVideosData);
 
 router.get(
   `/${rs.movie}/${rs.data}/${rs.category}/:${rs.categoryName}`,

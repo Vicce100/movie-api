@@ -15,7 +15,7 @@ const userNotAuthObject = db.returnErrorData('user not authenticated.', 401);
 
 export const signUp = async (
   req: Request,
-  res: Response<any, Record<string, any>>,
+  res: Response,
   next: NextFunction
 ) => {
   const {
@@ -56,10 +56,7 @@ export const signUp = async (
   }
 };
 
-export const login = async (
-  req: Request,
-  res: Response<any, Record<string, any>>
-) => {
+export const login = async (req: Request, res: Response) => {
   if (!process.env.SECRET_REFRESH_TOKEN) return;
   const user = await db.findUserByEmail(req.body.email);
   if (!user)
@@ -100,10 +97,7 @@ export const login = async (
   }
 };
 
-export const logout = async (
-  req: Request,
-  res: Response<any, Record<string, any>>
-) => {
+export const logout = async (req: Request, res: Response) => {
   if (!req.user) return res.status(401).json(userNotAuthObject);
   try {
     await db.updateRefreshToken(req.user._id, '');
@@ -114,10 +108,7 @@ export const logout = async (
   }
 };
 
-export const refreshToken = async (
-  req: Request,
-  res: Response<any, Record<string, any>>
-) => {
+export const refreshToken = async (req: Request, res: Response) => {
   const { refreshToken }: { refreshToken: string } = req.body;
   if (refreshToken === null)
     return res
@@ -150,10 +141,7 @@ export const refreshToken = async (
   } else return res.status(500).json('internal server error');
 };
 
-export const deleteUser = async (
-  req: Request,
-  res: Response<any, Record<string, any>>
-) => {
+export const deleteUser = async (req: Request, res: Response) => {
   if (!req.user) return res.status(401).json(userNotAuthObject);
   const { email, password, userId } = req.body;
   if (req.user._id === userId) {
@@ -178,10 +166,7 @@ export const deleteUser = async (
   }
 };
 
-export const addProfile = async (
-  req: Request,
-  res: Response<any, Record<string, any>>
-) => {
+export const addProfile = async (req: Request, res: Response) => {
   if (!req.user) return res.status(401).json(userNotAuthObject);
   const { profileName, avatarURL }: { profileName: string; avatarURL: string } =
     req.body;
@@ -210,10 +195,7 @@ export const addProfile = async (
   }
 };
 
-export const getCurrentUser = async (
-  req: Request,
-  res: Response<any, Record<string, any>>
-) => {
+export const getCurrentUser = async (req: Request, res: Response) => {
   if (!req.user) return res.status(401).json(userNotAuthObject);
   try {
     const user = await db.findUserById(req.user._id);

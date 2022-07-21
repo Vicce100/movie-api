@@ -3,13 +3,21 @@ import fs from 'fs';
 
 import movieSchema from '../schemas/movieSchema.js';
 import db from '../utilities/db/index.js';
-import { errorCode, mp4, url } from '../utilities/types.js';
+import {
+  errorCode,
+  mp4,
+  url,
+  queryPaths,
+  UserType,
+} from '../utilities/types.js';
 import {
   assertNonNullish,
   assertIsNonEmptyArray,
+  assertsValueToType,
 } from '../utilities/assertions.js';
 import { errorHandler } from '../utilities/middleware.js';
 import { cleanString, generatePreviewImages } from '../utilities/index.js';
+import { Types } from 'mongoose';
 
 export const getMovie = async (req: Request, res: Response) => {
   const { range } = req.headers;
@@ -241,10 +249,119 @@ export const getSingleEpisodeData = async (req: Request, res: Response) => {
   }
 };
 
-export const getVideosData = (req: Request, res: Response) => {
-  const { queryName } = req.params;
+const getMyList = async (profileId: string, user: UserType) => {
+  try {
+    assertsValueToType<Types.ObjectId>(profileId);
+    const activeProfile = user.profiles?.find(({ _id }) => _id === profileId);
+    assertNonNullish(activeProfile, errorCode.VALUE_MISSING);
+    if (!activeProfile.savedList) throw new Error(errorCode.VALUE_NOT_EXISTING);
 
-  res.status(200).json(queryName);
+    const movieList = await db.getMyListInMovie(activeProfile.savedList);
+    assertNonNullish(movieList, errorCode.VALUE_MISSING);
+
+    const seriesList = await db.getMyListInSeries(activeProfile.savedList);
+    assertNonNullish(movieList, errorCode.VALUE_MISSING);
+    return { movieList, seriesList };
+  } catch (error: any) {
+    if (error) throw new Error(error.message || error);
+  }
+};
+
+const getWatchAged = async (profileId: string, user: UserType) => {
+  try {
+    assertsValueToType<Types.ObjectId>(profileId);
+    const activeProfile = user.profiles?.find(({ _id }) => _id === profileId);
+    assertNonNullish(activeProfile, errorCode.VALUE_MISSING);
+    if (!activeProfile.hasWatch) throw new Error(errorCode.VALUE_NOT_EXISTING);
+
+    const movieList = await db.getWatchAgedInMovies(activeProfile.hasWatch);
+    assertNonNullish(movieList, errorCode.VALUE_MISSING);
+
+    const seriesList = await db.getWatchAgedInSeries(activeProfile.hasWatch);
+    assertNonNullish(movieList, errorCode.VALUE_MISSING);
+    return { movieList, seriesList };
+  } catch (error) {}
+};
+
+const getTop10Movies = async () => {
+  try {
+    const res = await db.getTop10Movies();
+    assertNonNullish(res, errorCode.VALUE_MISSING);
+    if (!res.length) throw new Error(errorCode.VALUE_NOT_EXISTING);
+    return res;
+  } catch (error: any) {
+    if (error) throw new Error(error.message || error);
+  }
+};
+
+const getTop10Series = async () => {
+  try {
+    const res = await db.getTop10Series();
+    assertNonNullish(res, errorCode.VALUE_MISSING);
+    if (!res.length) throw new Error(errorCode.VALUE_NOT_EXISTING);
+    return res;
+  } catch (error: any) {
+    if (error) throw new Error(error.message || error);
+  }
+};
+
+const getRandomMovie = async () => {
+  try {
+    const res = await db.randomMovie();
+    assertNonNullish(res, errorCode.VALUE_MISSING);
+    if (!res.length) throw new Error(errorCode.VALUE_NOT_EXISTING);
+    return res;
+  } catch (error: any) {
+    if (error) throw new Error(error.message || error);
+  }
+};
+
+const getRandomSeries = async () => {
+  try {
+    const res = await db.randomSeries();
+    assertNonNullish(res, errorCode.VALUE_MISSING);
+    if (!res.length) throw new Error(errorCode.VALUE_NOT_EXISTING);
+    return res;
+  } catch (error: any) {
+    if (error) throw new Error(error.message || error);
+  }
+};
+
+export const getVideosData = async (req: Request, res: Response) => {
+  const { queryName, profileId } = req.params;
+  const {
+    myList,
+    continueWatching,
+    watchAged,
+    becauseYouWatch,
+    becauseYouLiked,
+    forYou,
+    newlyAdded,
+    popular,
+    top10movies,
+    top10series,
+    randomMovie,
+    randomSeries,
+  } = queryPaths;
+
+  const failedMsg = { message: 'route dose not exist', success: false };
+  let resultData: unknown = null;
+  try {
+    if (queryName === myList) resultData = await getMyList(profileId, req.user);
+    else if (queryName === watchAged)
+      resultData = await getWatchAged(profileId, req.user);
+    else if (queryName === top10movies) resultData = await getTop10Movies();
+    else if (queryName === top10series) resultData = await getTop10Series();
+    else if (queryName === randomMovie) resultData = await getRandomMovie();
+    else if (queryName === randomSeries) resultData = await getRandomSeries();
+    else return res.status(404).json(failedMsg);
+  } catch (error) {
+    if (error instanceof Error) {
+      const errorResponse = errorHandler(error);
+      return res.status(Number(errorResponse.status)).json(errorResponse);
+    }
+  }
+  res.status(200).json(resultData);
 };
 
 export const getMoviesDataByCategory = async (req: Request, res: Response) => {
