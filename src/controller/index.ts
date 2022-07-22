@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { CallbackError } from 'mongoose';
 
 import categorySchema from '../schemas/categorySchema.js';
+import franchiseSchema from '../schemas/franchiseSchema.js';
 import avatarSchema from '../schemas/avatarSchema.js';
 import db from '../utilities/db/index.js';
 import { errorCode } from '../utilities/types.js';
@@ -24,39 +25,28 @@ export const addSingleCategory = async (req: Request, res: Response) => {
 
 export const addMultipleCategories = (req: Request, res: Response) => {
   const { categories }: { categories: string[] } = req.body;
-  categories.forEach(async (name) => {
+  categories.forEach(async (tempCategory) => {
     try {
-      const tempCategory = await db.getSingleCategoryBaName(name);
-      assertNullish(tempCategory, errorCode.VALUE_TAKEN);
+      const category = await db.getSingleCategoryBayName(tempCategory);
+      assertNullish(category, errorCode.VALUE_TAKEN);
 
-      categories.forEach((tempCategory: string) => {
-        try {
-          new categorySchema({ name: tempCategory }).save(
-            (err: CallbackError) => {
-              if (err) throw new Error(err.message);
-            }
-          );
-        } catch (error) {
-          if (error instanceof Error) {
-            const errorResponse = errorHandler(error);
-            return res.status(Number(errorResponse.status)).json(errorResponse);
-          }
-        }
+      new categorySchema({ name: tempCategory }).save((err: CallbackError) => {
+        if (err) throw new Error(err.message);
       });
-      res.status(201).json(`category's added successfully`);
     } catch (error) {
       if (error instanceof Error) {
         const errorResponse = errorHandler(error);
         return res.status(Number(errorResponse.status)).json(errorResponse);
       }
     }
+    res.status(201).json(`category's added successfully`);
   });
 };
 
 export const sendSingleCategory = async (req: Request, res: Response) => {
   const { categoryId } = req.params;
   try {
-    const data = await db.getSingleCategoryBaId(categoryId);
+    const data = await db.getSingleCategoryBayId(categoryId);
     res.status(200).json(data);
   } catch (error) {
     res.status(400).send(error);
@@ -66,6 +56,60 @@ export const sendSingleCategory = async (req: Request, res: Response) => {
 export const sendMultipleCategories = async (_req: Request, res: Response) => {
   try {
     const data = await db.getAllCategories();
+    res.json(data);
+  } catch (error) {
+    res.status(400).json(error);
+  }
+};
+
+export const addSingleFranchise = async (req: Request, res: Response) => {
+  try {
+    const franchise = await new franchiseSchema({
+      name: req.body.franchise,
+    }).save();
+    res.status(201).json(franchise);
+  } catch (error) {
+    if (error instanceof Error) {
+      const errorResponse = errorHandler(error);
+      return res.status(Number(errorResponse.status)).json(errorResponse);
+    }
+  }
+};
+
+export const addMultipleFranchises = (req: Request, res: Response) => {
+  const { franchises }: { franchises: string[] } = req.body;
+  franchises.forEach(async (franchise) => {
+    try {
+      const tempFranchise = await db.getSingleFranchiseBayName(franchise);
+      if (tempFranchise?.id) throw new Error(errorCode.VALUE_EXISTS);
+      assertNullish(tempFranchise, errorCode.VALUE_TAKEN);
+
+      new franchiseSchema({ name: franchise }).save((err: CallbackError) => {
+        if (err) throw new Error(err.message);
+      });
+    } catch (error) {
+      if (error instanceof Error) {
+        const errorResponse = errorHandler(error);
+        return res.status(Number(errorResponse.status)).json(errorResponse);
+      }
+    }
+    res.status(201).json(`category's added successfully`);
+  });
+};
+
+export const sendSingleFranchise = async (req: Request, res: Response) => {
+  const { categoryId } = req.params;
+  try {
+    const data = await db.getSingleFranchiseBayId(categoryId);
+    res.status(200).json(data);
+  } catch (error) {
+    res.status(400).send(error);
+  }
+};
+
+export const sendMultipleFranchise = async (_req: Request, res: Response) => {
+  try {
+    const data = await db.getAllFranchises();
     res.json(data);
   } catch (error) {
     res.status(400).json(error);

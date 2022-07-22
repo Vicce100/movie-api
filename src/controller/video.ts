@@ -343,6 +343,7 @@ export const getVideosData = async (req: Request, res: Response) => {
     randomMovie,
     randomSeries,
   } = queryPaths;
+  // after this query combined categories
 
   const failedMsg = { message: 'route dose not exist', success: false };
   let resultData: unknown = null;

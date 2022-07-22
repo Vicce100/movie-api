@@ -11,6 +11,10 @@ import {
   addSingleAvatar,
   addSingleCategory,
   sendMultipleCategories,
+  addSingleFranchise,
+  addMultipleFranchises,
+  sendSingleFranchise,
+  sendMultipleFranchise,
   sendSingleCategory,
   sendSingleAvatar,
   sendMultipleAvatars,
@@ -41,6 +45,17 @@ router.post(
 router.get(`/${rs.category}/:${rs.categoryId}`, sendSingleCategory);
 
 router.get(`/${rs.category}/${rs.get}/${rs.multiple}`, sendMultipleCategories);
+
+router.post(`/${rs.franchise}/${rs.upload}/${rs.single}`, addSingleFranchise);
+
+router.post(
+  `/${rs.franchise}/${rs.upload}/${rs.multiple}`,
+  addMultipleFranchises
+);
+
+router.get(`/${rs.franchise}/:${rs.categoryId}`, sendSingleFranchise);
+
+router.get(`/${rs.franchise}/${rs.get}/${rs.multiple}`, sendMultipleFranchise);
 
 router.post(
   `/${rs.avatar}/${rs.upload}/${rs.single}`,

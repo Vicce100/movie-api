@@ -10,6 +10,7 @@ import db from './db/index.js';
 export const routesString = {
   video: 'video',
   category: 'category',
+  franchise: 'franchise',
   avatar: 'avatar',
   user: 'user',
   movie: 'movie',

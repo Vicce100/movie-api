@@ -17,6 +17,7 @@ import avatarSchema from '../../schemas/avatarSchema.js';
 import movieSchema from '../../schemas/movieSchema.js';
 import seriesSchema from '../../schemas/seriesSchema.js';
 import episodesSchema from '../../schemas/episodesSchema.js';
+import franchiseSchema from '../../schemas/franchiseSchema.js';
 
 /* ----------------------- local ----------------------- */
 
@@ -80,13 +81,23 @@ const EmailTaken = async (email: string) =>
 
 /* ----------------------- category ----------------------- */
 
-const getSingleCategoryBaId = (categoryId: Types.ObjectId | string) =>
+const getSingleCategoryBayId = (categoryId: Types.ObjectId | string) =>
   categorySchema.findOne({ _id: categoryId });
 
-const getSingleCategoryBaName = (categoryName: string) =>
+const getSingleCategoryBayName = (categoryName: string) =>
   categorySchema.findOne({ name: categoryName });
 
 const getAllCategories = () => categorySchema.find();
+
+/* ----------------------- franchise ----------------------- */
+
+const getSingleFranchiseBayId = (categoryId: Types.ObjectId | string) =>
+  franchiseSchema.findOne({ _id: categoryId });
+
+const getSingleFranchiseBayName = (categoryName: string) =>
+  franchiseSchema.findOne({ name: categoryName });
+
+const getAllFranchises = () => franchiseSchema.find();
 
 /* ----------------------- avatar ----------------------- */
 
@@ -241,7 +252,7 @@ const returnAvatar = (data: AvatarSchemaType) => {
     name: data?.name,
     url: `${url}/${data?.url}`,
     urlPath: data?.url,
-    categories: data?.categories,
+    categories: data?.franchise,
   };
 };
 
@@ -318,9 +329,12 @@ export default {
   removeRefreshToken,
   removeUsersVideoRef,
   EmailTaken,
-  getSingleCategoryBaId,
-  getSingleCategoryBaName,
+  getSingleCategoryBayId,
+  getSingleCategoryBayName,
   getAllCategories,
+  getSingleFranchiseBayId,
+  getSingleFranchiseBayName,
+  getAllFranchises,
   getSingleAvatarById,
   findMovieById,
   findSeriesById,

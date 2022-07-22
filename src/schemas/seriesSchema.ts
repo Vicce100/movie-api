@@ -19,6 +19,7 @@ const seriesSchema = new mongoose.Schema({
   previewImagesUrl: [{ type: String, require: true }],
   public: { type: Boolean, default: () => false, require: true },
   categories: [{ ...reqString }],
+  franchise: [{ ...reqString }],
   description: { type: String, require: false, maxLength: 1225 },
   views: { type: Number, require: true },
   monthlyViews: { type: Number, require: true },

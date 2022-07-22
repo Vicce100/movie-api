@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 import { AvatarSchemaType } from '../utilities/types.js';
 
 const avatarSchema = new mongoose.Schema({
-  categories: [{ type: String, require: true }],
+  franchise: [{ type: String, require: true }],
   name: {
     type: String,
     minLength: 1,

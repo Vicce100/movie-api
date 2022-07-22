@@ -27,6 +27,7 @@ export const errorCode = {
   MISSING_ENV_TOKEN: 'missing env token' as const,
   PERMISSION_DENIED: 'permission denied' as const,
   VALUE_TAKEN: 'value already taken' as const,
+  VALUE_EXISTS: 'value already exists' as const,
   VALUE_MISSING: 'value missing' as const,
   VALUE_NOT_EXISTING: 'value dose not exists' as const,
   INVALID_EMAIL: 'invalid email' as const,
@@ -90,6 +91,7 @@ export interface SeriesInfoType {
   monthlyViews: number;
   public: boolean;
   categories: string[];
+  franchise: string[];
   description: string;
   uploadDate: string;
   creationDate: string;
@@ -124,6 +126,7 @@ export interface MovieSchemaType {
   displayPicture: string;
   public: boolean;
   categories: string[];
+  franchise: string[];
   description: string;
   views: number;
   monthlyViews: number;
@@ -137,9 +140,14 @@ export interface CategorySchemaType {
   name: string;
 }
 
+export interface FranchiseSchemaType {
+  _id: Types.ObjectId;
+  name: string;
+}
+
 export interface AvatarSchemaType {
   _id: Types.ObjectId;
-  categories: string;
+  franchise: string;
   name: string;
   url: string;
 }
