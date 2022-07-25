@@ -61,17 +61,11 @@ router.get(`/${rs.movie}/${rs.data}/:${rs.movieId}`, getSingleMovieData);
 
 router.get(`/${rs.episode}/${rs.data}/:${rs.episodeId}`, getSingleEpisodeData);
 
-router.get(`/${rs.data}/:queryName/:profileId`, getVideosData);
+router.post(`/${rs.data}`, getVideosData);
 
-router.get(
-  `/${rs.movie}/${rs.data}/${rs.category}/:${rs.categoryName}`,
-  getMoviesDataByCategory
-);
+router.post(`/${rs.movie}/${rs.data}/${rs.category}`, getMoviesDataByCategory);
 
-router.get(
-  `/${rs.series}/${rs.data}/${rs.movieId}/:${rs.categoryName}`,
-  getSeriesDataByCategory
-);
+router.post(`/${rs.series}/${rs.data}/${rs.category}`, getSeriesDataByCategory);
 
 router.delete(`/${rs.movie}/${rs.delete}/:${rs.movieId}`, deleteMovie);
 

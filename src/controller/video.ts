@@ -9,11 +9,13 @@ import {
   url,
   queryPaths,
   UserType,
+  queryPathsString,
 } from '../utilities/types.js';
 import {
   assertNonNullish,
   assertIsNonEmptyArray,
   assertsValueToType,
+  assertsQueryPaths,
 } from '../utilities/assertions.js';
 import { errorHandler } from '../utilities/middleware.js';
 import { cleanString, generatePreviewImages } from '../utilities/index.js';
@@ -219,11 +221,10 @@ export const getSingleMovieData = async (req: Request, res: Response) => {
   const { movieId } = req.params;
 
   try {
-    const isMovie = true;
-    const video = await db.findMovieById(movieId);
-    assertNonNullish(video, errorCode.VALUE_MISSING);
+    const movie = await db.findMovieById(movieId);
+    assertNonNullish(movie, errorCode.VALUE_MISSING);
 
-    res.status(200).json(db.returnVideo(video, isMovie));
+    res.status(200).json(db.returnMovie(movie));
   } catch (error) {
     if (error instanceof Error) {
       const errorResponse = errorHandler(error);
@@ -236,11 +237,10 @@ export const getSingleEpisodeData = async (req: Request, res: Response) => {
   const { episodeId } = req.params;
 
   try {
-    const isMovie = true;
-    const video = await db.findEpisodeById(episodeId);
-    assertNonNullish(video, errorCode.VALUE_MISSING);
+    const episode = await db.findEpisodeById(episodeId);
+    assertNonNullish(episode, errorCode.VALUE_MISSING);
 
-    res.status(200).json(db.returnVideo(video, isMovie));
+    res.status(200).json(db.returnEpisode(episode));
   } catch (error) {
     if (error instanceof Error) {
       const errorResponse = errorHandler(error);
@@ -327,8 +327,29 @@ const getRandomSeries = async () => {
   }
 };
 
+// categories to query
+/*
+Romantic movies
+Family movies
+Comedy + Crime series
+Teen + Comedy movies and series
+Action movie
+Documentary // should only be series
+History movies
+*/
+
 export const getVideosData = async (req: Request, res: Response) => {
-  const { queryName, profileId } = req.params;
+  const {
+    queryName,
+    profileId,
+  }: { queryName: queryPathsString; profileId: string } = req.body;
+  try {
+    assertsQueryPaths(queryName, errorCode.WRONG_VALUE);
+  } catch (error: any) {
+    const errorResponse = errorHandler(error);
+    return res.status(Number(errorResponse.status)).json(errorResponse);
+  }
+
   const {
     myList,
     continueWatching,
@@ -366,10 +387,14 @@ export const getVideosData = async (req: Request, res: Response) => {
 };
 
 export const getMoviesDataByCategory = async (req: Request, res: Response) => {
-  const { categoryName } = req.params;
+  const {
+    categoryName1,
+  }: {
+    categoryName1: string;
+  } = req.body;
 
   try {
-    const videosFromCategory = await db.getMovieDataByCategory(categoryName);
+    const videosFromCategory = await db.randomMovieByCategory(categoryName1);
     assertIsNonEmptyArray(videosFromCategory, errorCode.VALUE_MISSING);
 
     res.status(200).json(
@@ -388,10 +413,22 @@ export const getMoviesDataByCategory = async (req: Request, res: Response) => {
 };
 
 export const getSeriesDataByCategory = async (req: Request, res: Response) => {
-  const { categoryName } = req.params;
+  const {
+    categoryName1,
+    categoryName2,
+    categoryName3,
+  }: {
+    categoryName1: string;
+    categoryName2?: string;
+    categoryName3?: string;
+  } = req.body;
 
   try {
-    const videosFromCategory = await db.getSeriesDataByCategory(categoryName);
+    const videosFromCategory = await db.randomSeriesByCategory(
+      categoryName1,
+      categoryName2,
+      categoryName3
+    );
     assertIsNonEmptyArray(videosFromCategory, errorCode.VALUE_MISSING);
 
     res.status(200).json(

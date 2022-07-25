@@ -6,9 +6,9 @@ import {
   UserType,
   url,
   MovieSchemaType,
-  SeriesEpisodeType,
+  EpisodeSchemaType,
   ReturnedVideoData,
-  SeriesInfoType,
+  SeriesSchemaType,
 } from '../types.js';
 import { assertsValueToType } from '../assertions.js';
 import userSchema from '../../schemas/UserSchema.js';
@@ -203,7 +203,7 @@ const getMyListInMovie = (MyListIds: Types.ObjectId[] | string[]) =>
   ]);
 
 const getMyListInSeries = (MyListIds: Types.ObjectId[] | string[]) =>
-  seriesSchema.aggregate<SeriesInfoType>([
+  seriesSchema.aggregate<SeriesSchemaType>([
     { $match: { _id: { $in: MyListIds } } },
     { $sample: { size: MyListIds.length } },
   ]);
@@ -215,7 +215,7 @@ const getWatchAgedInMovies = (hasWatchIds: Types.ObjectId[] | string[]) =>
   ]);
 
 const getWatchAgedInSeries = (hasWatchIds: Types.ObjectId[] | string[]) =>
-  seriesSchema.aggregate<SeriesInfoType>([
+  seriesSchema.aggregate<SeriesSchemaType>([
     { $match: { _id: { $in: hasWatchIds } } },
     { $sample: { size: hasWatchIds.length } },
   ]);
@@ -237,12 +237,48 @@ const randomMovie = (_movieId?: Types.ObjectId[] | string[]) =>
 
 const randomSeries = (_seriesId?: Types.ObjectId[] | string[]) =>
   seriesSchema
-    .aggregate<SeriesInfoType>([
+    .aggregate<SeriesSchemaType>([
       // { $match: { _id: { $in: seriesId } } },
       { $sample: { size: 25 } },
       // { $sort: { monthlyViews: -1 } },
     ])
     .limit(25);
+
+const randomMovieByCategory = (
+  categoryName1: string,
+  categoryName2?: string,
+  categoryName3?: string
+) => {
+  const randomMovies = movieSchema.aggregate<MovieSchemaType>([
+    { $match: { categories: categoryName1 } },
+    { $sample: { size: 25 } },
+  ]);
+
+  if (categoryName2)
+    randomMovies.addFields([{ $match: { categories: categoryName2 } }]);
+  if (categoryName3)
+    randomMovies.addFields([{ $match: { categories: categoryName3 } }]);
+
+  return randomMovies.limit(25);
+};
+
+const randomSeriesByCategory = (
+  categoryName1: string,
+  categoryName2?: string,
+  categoryName3?: string
+) => {
+  const randomSeries = seriesSchema.aggregate<MovieSchemaType>([
+    { $match: { categories: categoryName1 } },
+    { $sample: { size: 25 } },
+  ]);
+
+  if (categoryName2)
+    randomSeries.addFields([{ $match: { categories: categoryName2 } }]);
+  if (categoryName3)
+    randomSeries.addFields([{ $match: { categories: categoryName3 } }]);
+
+  return randomSeries.limit(25);
+};
 
 /* ----------------------- returned values ----------------------- */
 
@@ -283,8 +319,8 @@ const returnCurrentUser = (
   },
 });
 
-export const returnVideo = (
-  video: MovieSchemaType | SeriesEpisodeType,
+const returnVideo = (
+  video: MovieSchemaType | EpisodeSchemaType,
   isMovie: boolean
 ): ReturnedVideoData => {
   if (isMovie) {
@@ -302,7 +338,7 @@ export const returnVideo = (
       seriesId: undefined,
     };
   } else {
-    assertsValueToType<SeriesEpisodeType>(video);
+    assertsValueToType<EpisodeSchemaType>(video);
     return {
       _id: video._id,
       isMovie: isMovie,
@@ -314,6 +350,28 @@ export const returnVideo = (
       seriesId: video.seriesId,
     };
   }
+};
+
+const returnMovie = (movie: MovieSchemaType) => {
+  return {
+    _id: movie._id,
+    previewImagesUrl: movie.previewImagesUrl.map((image) => `${url}/${image}`),
+    title: movie.title,
+  };
+};
+
+const returnEpisode = (episode: EpisodeSchemaType) => {
+  return {
+    _id: episode._id,
+    previewImagesUrl: episode.previewImagesUrl.map(
+      (image) => `${url}/${image}`
+    ),
+    title: episode.seriesTitle,
+    episodeTitle: episode.episodeTitle,
+    session: episode.sessionNr,
+    episode: episode.episodeNr,
+    seriesId: episode.seriesId,
+  };
 };
 
 export default {
@@ -362,9 +420,13 @@ export default {
   getTop10Series,
   randomMovie,
   randomSeries,
+  randomMovieByCategory,
+  randomSeriesByCategory,
   getAllAvatars,
   returnErrorData,
   returnCurrentUser,
   returnAvatar,
   returnVideo,
+  returnMovie,
+  returnEpisode,
 };

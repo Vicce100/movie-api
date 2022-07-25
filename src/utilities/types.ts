@@ -31,6 +31,7 @@ export const errorCode = {
   VALUE_MISSING: 'value missing' as const,
   VALUE_NOT_EXISTING: 'value dose not exists' as const,
   INVALID_EMAIL: 'invalid email' as const,
+  WRONG_VALUE: 'wrong value' as const,
 };
 
 export const userRoles = {
@@ -83,7 +84,7 @@ export type ReturnedVideoData = {
   seriesId: Types.ObjectId | undefined;
 };
 
-export interface SeriesInfoType {
+export interface SeriesSchemaType {
   _id: Types.ObjectId;
   title: string;
   displayPicture: string;
@@ -101,7 +102,7 @@ export interface SeriesInfoType {
   creatorsId: Types.ObjectId;
 }
 
-export interface SeriesEpisodeType {
+export interface EpisodeSchemaType {
   _id: Types.ObjectId;
   sessionNr: number;
   episodeNr: number;

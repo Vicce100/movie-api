@@ -1,17 +1,32 @@
+export const queryPathsArray = [
+  'myList',
+  'continueWatching',
+  'watchAged',
+  'becauseYouWatch',
+  'becauseYouLiked',
+  'forYou',
+  'newlyAdded',
+  'popular',
+  'top10movies',
+  'top10series',
+  'randomMovie',
+  'randomSeries',
+];
+
 export function assertsValueToType<T>(value: unknown): asserts value is T {}
 
 export function assertNonNullish<T>(
   value: T,
-  message: string
+  msg: string
 ): asserts value is NonNullable<T> {
-  if (value === null || value === undefined) throw new Error(message);
+  if (value === null || value === undefined) throw new Error(msg);
 }
 
 export function assertNullish(
   value: unknown,
-  message: string
+  msg: string
 ): asserts value is null {
-  if (value !== null) throw new Error(message);
+  if (value !== null) throw new Error(msg);
 }
 
 export function assertIsNotNullOrUndefined(
@@ -24,9 +39,9 @@ export function assertIsNotNullOrUndefined(
 
 export function assertsIsDefined(
   value: unknown | undefined,
-  message: string
+  msg: string
 ): asserts value {
-  if (value === null || value === undefined) throw new Error(message);
+  if (value === null || value === undefined) throw new Error(msg);
 }
 
 export function isTruthy<T>(
@@ -101,4 +116,8 @@ export function assertSumIsNegative(num1: number, num2: number): boolean {
 
 export function assertsRegex(regex: RegExp, str: string) {
   return regex.test(str);
+}
+
+export function assertsQueryPaths(str: string, msg: string): asserts str {
+  if (!queryPathsArray.some((value) => value === str)) throw new Error(msg);
 }

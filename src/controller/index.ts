@@ -25,11 +25,8 @@ export const addSingleCategory = async (req: Request, res: Response) => {
 
 export const addMultipleCategories = (req: Request, res: Response) => {
   const { categories }: { categories: string[] } = req.body;
-  categories.forEach(async (tempCategory) => {
+  categories.forEach((tempCategory) => {
     try {
-      const category = await db.getSingleCategoryBayName(tempCategory);
-      assertNullish(category, errorCode.VALUE_TAKEN);
-
       new categorySchema({ name: tempCategory }).save((err: CallbackError) => {
         if (err) throw new Error(err.message);
       });
@@ -39,8 +36,8 @@ export const addMultipleCategories = (req: Request, res: Response) => {
         return res.status(Number(errorResponse.status)).json(errorResponse);
       }
     }
-    res.status(201).json(`category's added successfully`);
   });
+  res.status(201).json({ success: true });
 };
 
 export const sendSingleCategory = async (req: Request, res: Response) => {
@@ -78,12 +75,8 @@ export const addSingleFranchise = async (req: Request, res: Response) => {
 
 export const addMultipleFranchises = (req: Request, res: Response) => {
   const { franchises }: { franchises: string[] } = req.body;
-  franchises.forEach(async (franchise) => {
+  franchises.forEach((franchise) => {
     try {
-      const tempFranchise = await db.getSingleFranchiseBayName(franchise);
-      if (tempFranchise?.id) throw new Error(errorCode.VALUE_EXISTS);
-      assertNullish(tempFranchise, errorCode.VALUE_TAKEN);
-
       new franchiseSchema({ name: franchise }).save((err: CallbackError) => {
         if (err) throw new Error(err.message);
       });
@@ -93,8 +86,8 @@ export const addMultipleFranchises = (req: Request, res: Response) => {
         return res.status(Number(errorResponse.status)).json(errorResponse);
       }
     }
-    res.status(201).json(`category's added successfully`);
   });
+  res.status(201).json({ success: true });
 };
 
 export const sendSingleFranchise = async (req: Request, res: Response) => {
