@@ -91,9 +91,9 @@ export const addMultipleFranchises = (req: Request, res: Response) => {
 };
 
 export const sendSingleFranchise = async (req: Request, res: Response) => {
-  const { categoryId } = req.params;
+  const { franchiseId } = req.params;
   try {
-    const data = await db.getSingleFranchiseBayId(categoryId);
+    const data = await db.getSingleFranchiseBayId(franchiseId);
     res.status(200).json(data);
   } catch (error) {
     res.status(400).send(error);

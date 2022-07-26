@@ -37,6 +37,7 @@ export const routesString = {
   episodeId: 'episodesId',
   seriesId: 'seriesId',
   categoryId: 'categoryId',
+  franchiseId: 'franchiseId',
   avatarId: 'avatarId',
   categoryName: 'categoryName',
   roleType: 'roleType',

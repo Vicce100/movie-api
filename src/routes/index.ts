@@ -53,7 +53,7 @@ router.post(
   addMultipleFranchises
 );
 
-router.get(`/${rs.franchise}/:${rs.categoryId}`, sendSingleFranchise);
+router.get(`/${rs.franchise}/:${rs.franchiseId}`, sendSingleFranchise);
 
 router.get(`/${rs.franchise}/${rs.get}/${rs.multiple}`, sendMultipleFranchise);
 
