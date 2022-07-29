@@ -6,14 +6,19 @@ import {
   UserType,
   url,
   MovieSchemaType,
-  SeriesEpisodeType,
+  EpisodeSchemaType,
   ReturnedVideoData,
+  SeriesSchemaType,
+  returnVideosArray,
 } from '../types.js';
 import { assertsValueToType } from '../assertions.js';
 import userSchema from '../../schemas/UserSchema.js';
 import categorySchema from '../../schemas/categorySchema.js';
 import avatarSchema from '../../schemas/avatarSchema.js';
 import movieSchema from '../../schemas/movieSchema.js';
+import seriesSchema from '../../schemas/seriesSchema.js';
+import episodesSchema from '../../schemas/episodesSchema.js';
+import franchiseSchema from '../../schemas/franchiseSchema.js';
 
 /* ----------------------- local ----------------------- */
 
@@ -77,13 +82,23 @@ const EmailTaken = async (email: string) =>
 
 /* ----------------------- category ----------------------- */
 
-const getSingleCategoryBaId = (categoryId: Types.ObjectId | string) =>
+const getSingleCategoryBayId = (categoryId: Types.ObjectId | string) =>
   categorySchema.findOne({ _id: categoryId });
 
-const getSingleCategoryBaName = (categoryName: string) =>
+const getSingleCategoryBayName = (categoryName: string) =>
   categorySchema.findOne({ name: categoryName });
 
 const getAllCategories = () => categorySchema.find();
+
+/* ----------------------- franchise ----------------------- */
+
+const getSingleFranchiseBayId = (categoryId: Types.ObjectId | string) =>
+  franchiseSchema.findOne({ _id: categoryId });
+
+const getSingleFranchiseBayName = (categoryName: string) =>
+  franchiseSchema.findOne({ name: categoryName });
+
+const getAllFranchises = () => franchiseSchema.find();
 
 /* ----------------------- avatar ----------------------- */
 
@@ -106,38 +121,170 @@ const addUsersSeries = (
 ) =>
   userSchema.updateOne({ _id: userId }, { $push: { seriesUploaded: videoId } });
 
-const findVideoById = (videoId: Types.ObjectId | string) =>
-  movieSchema.findOne({ _id: videoId });
+const findMovieById = (movieId: Types.ObjectId | string) =>
+  movieSchema.findOne({ _id: movieId });
 
-const findVideoByName = (videoTitle: string) =>
+const findSeriesById = (seriesId: Types.ObjectId | string) =>
+  seriesSchema.findOne({ _id: seriesId });
+
+const findEpisodeById = (episodeId: Types.ObjectId | string) =>
+  episodesSchema.findOne({ _id: episodeId });
+
+const findMovieByName = (videoTitle: string) =>
   movieSchema.findOne({ title: videoTitle });
 
-const getVideoDataByCategory = (categoryName: string) =>
+const findSeriesByName = (videoTitle: string) =>
+  seriesSchema.findOne({ title: videoTitle });
+
+const findEpisodeByName = (videoTitle: string) =>
+  episodesSchema.findOne({ seriesTitle: videoTitle });
+
+const getMovieDataByCategory = (categoryName: string) =>
   movieSchema.find(
     { categories: categoryName },
     { _id: 1, title: 1, displayPicture: 1 }
   );
 
-const updateVideoPreviewImages = (
-  videoId: Types.ObjectId | string,
+const getSeriesDataByCategory = (categoryName: string) =>
+  seriesSchema.find(
+    { categories: categoryName },
+    { _id: 1, title: 1, displayPicture: 1 }
+  );
+
+const updateMoviePreviewImages = (
+  movieId: Types.ObjectId | string,
   imageArray: string[]
 ) =>
   movieSchema.updateOne(
-    { _id: videoId },
+    { _id: movieId },
     { $push: { previewImagesUrl: { $each: imageArray } } }
   );
 
-const deleteVideoPreviewImages = (videoId: Types.ObjectId | string) =>
-  movieSchema.updateOne({ _id: videoId }, { $unset: { previewImagesUrl: '' } });
+const updateEpisodesPreviewImages = (
+  seriesId: Types.ObjectId | string,
+  imageArray: string[]
+) =>
+  episodesSchema.updateOne(
+    { _id: seriesId },
+    { $push: { previewImagesUrl: { $each: imageArray } } }
+  );
+
+const deleteMoviePreviewImages = (movieId: Types.ObjectId | string) =>
+  movieSchema.updateOne({ _id: movieId }, { $unset: { previewImagesUrl: '' } });
+
+const deleteEpisodePreviewImages = (episodeId: Types.ObjectId | string) =>
+  episodesSchema.updateOne(
+    { _id: episodeId },
+    { $unset: { previewImagesUrl: '' } }
+  );
 
 const resetMoviesMonthlyViews = () =>
   movieSchema.updateMany({}, { $set: { monthlyViews: 0 } });
 
-const addViewToMovie = (videoId: Types.ObjectId | string) =>
-  movieSchema.updateOne({ _id: videoId }, { $inc: { views: 1 } });
+const resetSeriesMonthlyViews = () =>
+  seriesSchema.updateMany({}, { $set: { monthlyViews: 0 } });
 
-const addMonthlyViewToMovie = (videoId: Types.ObjectId | string) =>
-  movieSchema.updateOne({ _id: videoId }, { $inc: { monthlyViews: 1 } });
+const addViewToMovie = (movieId: Types.ObjectId | string) =>
+  movieSchema.updateOne({ _id: movieId }, { $inc: { views: 1 } });
+
+const addViewToSeries = (seriesId: Types.ObjectId | string) =>
+  seriesSchema.updateOne({ _id: seriesId }, { $inc: { views: 1 } });
+
+const addMonthlyViewToMovie = (movieId: Types.ObjectId | string) =>
+  movieSchema.updateOne({ _id: movieId }, { $inc: { monthlyViews: 1 } });
+
+const addMonthlyViewToSeries = (seriesId: Types.ObjectId | string) =>
+  seriesSchema.updateOne({ _id: seriesId }, { $inc: { monthlyViews: 1 } });
+
+// https://www.mongodb.com/docs/upcoming/reference/operator/aggregation/sample/#pipe._S_sample
+const getMyListInMovie = (MyListIds: Types.ObjectId[] | string[]) =>
+  movieSchema.aggregate<MovieSchemaType>([
+    { $match: { _id: { $in: MyListIds } } },
+    { $sample: { size: MyListIds.length } },
+  ]);
+
+const getMyListInSeries = (MyListIds: Types.ObjectId[] | string[]) =>
+  seriesSchema.aggregate<SeriesSchemaType>([
+    { $match: { _id: { $in: MyListIds } } },
+    { $sample: { size: MyListIds.length } },
+  ]);
+
+const getWatchAgedInMovies = (hasWatchIds: Types.ObjectId[] | string[]) =>
+  movieSchema.aggregate<MovieSchemaType>([
+    { $match: { _id: { $in: hasWatchIds } } },
+    { $sample: { size: hasWatchIds.length } },
+  ]);
+
+const getWatchAgedInSeries = (hasWatchIds: Types.ObjectId[] | string[]) =>
+  seriesSchema.aggregate<SeriesSchemaType>([
+    { $match: { _id: { $in: hasWatchIds } } },
+    { $sample: { size: hasWatchIds.length } },
+  ]);
+
+const getTop10Movies = () =>
+  movieSchema.find().sort({ monthlyViews: -1 }).limit(10);
+
+const getTop10Series = () =>
+  seriesSchema.find().sort({ monthlyViews: -1 }).limit(10);
+
+const randomMovie = (_movieId?: Types.ObjectId[] | string[]) =>
+  movieSchema
+    .aggregate<MovieSchemaType>([
+      // { $match: { _id: { $in: movieId } } },
+      { $sample: { size: 25 } },
+      // { $sort: { monthlyViews: -1 } }, //  -1 highest value first | 1 lowest value first
+    ])
+    .limit(25);
+
+const randomSeries = (_seriesId?: Types.ObjectId[] | string[]) =>
+  seriesSchema
+    .aggregate<SeriesSchemaType>([
+      // { $match: { _id: { $in: seriesId } } },
+      { $sample: { size: 25 } },
+      // { $sort: { monthlyViews: -1 } },
+    ])
+    .limit(25);
+
+// array
+// const randomMovieByCategory3 = (categoryName1 string[]) =>
+
+const randomMovieByCategory = (categoryNames: string[]) =>
+  movieSchema
+    .aggregate<MovieSchemaType>([
+      {
+        $match: {
+          categories: {
+            $all: [...categoryNames],
+          },
+        },
+      },
+      { $sample: { size: 25 } },
+    ])
+    .limit(25);
+
+const randomSeriesByCategory = (categoryNames: string[]) =>
+  seriesSchema
+    .aggregate<SeriesSchemaType>([
+      { $match: { categories: { $all: [...categoryNames] } } },
+      { $sample: { size: 25 } },
+    ])
+    .limit(25);
+
+const randomMovieByFranchise = (franchise: string) =>
+  movieSchema
+    .aggregate<MovieSchemaType>([
+      { $match: { franchise: franchise } },
+      { $sample: { size: 25 } },
+    ])
+    .limit(25);
+
+const randomSeriesByFranchise = (franchise: string) =>
+  seriesSchema
+    .aggregate<SeriesSchemaType>([
+      { $match: { franchise: franchise } },
+      { $sample: { size: 25 } },
+    ])
+    .limit(25);
 
 /* ----------------------- returned values ----------------------- */
 
@@ -147,7 +294,7 @@ const returnAvatar = (data: AvatarSchemaType) => {
     name: data?.name,
     url: `${url}/${data?.url}`,
     urlPath: data?.url,
-    categories: data?.categories,
+    franchise: data?.franchise,
   };
 };
 
@@ -178,8 +325,8 @@ const returnCurrentUser = (
   },
 });
 
-export const returnVideo = (
-  video: MovieSchemaType | SeriesEpisodeType,
+const returnVideo = (
+  video: MovieSchemaType | EpisodeSchemaType,
   isMovie: boolean
 ): ReturnedVideoData => {
   if (isMovie) {
@@ -197,7 +344,7 @@ export const returnVideo = (
       seriesId: undefined,
     };
   } else {
-    assertsValueToType<SeriesEpisodeType>(video);
+    assertsValueToType<EpisodeSchemaType>(video);
     return {
       _id: video._id,
       isMovie: isMovie,
@@ -209,6 +356,44 @@ export const returnVideo = (
       seriesId: video.seriesId,
     };
   }
+};
+
+const returnMovie = (movie: MovieSchemaType) => {
+  return {
+    _id: movie._id,
+    previewImagesUrl: movie.previewImagesUrl.map((image) => `${url}/${image}`),
+    title: movie.title,
+  };
+};
+
+const returnMoviesArray = (movie: MovieSchemaType[]): returnVideosArray => {
+  return movie.map((movie) => ({
+    _id: movie._id,
+    title: movie.title,
+    displayPicture: `${url}/${movie.displayPicture}`,
+  }));
+};
+
+const returnSeriesArray = (series: SeriesSchemaType[]): returnVideosArray => {
+  return series.map(({ _id, title, displayPicture }) => ({
+    _id,
+    title,
+    displayPicture: `${url}/${displayPicture}`,
+  }));
+};
+
+const returnEpisode = (episode: EpisodeSchemaType) => {
+  return {
+    _id: episode._id,
+    previewImagesUrl: episode.previewImagesUrl.map(
+      (image) => `${url}/${image}`
+    ),
+    title: episode.seriesTitle,
+    episodeTitle: episode.episodeTitle,
+    session: episode.sessionNr,
+    episode: episode.episodeNr,
+    seriesId: episode.seriesId,
+  };
 };
 
 export default {
@@ -224,21 +409,50 @@ export default {
   removeRefreshToken,
   removeUsersVideoRef,
   EmailTaken,
-  getSingleCategoryBaId,
-  getSingleCategoryBaName,
+  getSingleCategoryBayId,
+  getSingleCategoryBayName,
   getAllCategories,
+  getSingleFranchiseBayId,
+  getSingleFranchiseBayName,
+  getAllFranchises,
   getSingleAvatarById,
-  findVideoById,
-  findVideoByName,
-  getVideoDataByCategory,
-  updateVideoPreviewImages,
-  deleteVideoPreviewImages,
+  findMovieById,
+  findSeriesById,
+  findEpisodeById,
+  findMovieByName,
+  findSeriesByName,
+  findEpisodeByName,
+  getMovieDataByCategory,
+  getSeriesDataByCategory,
+  updateMoviePreviewImages,
+  updateEpisodesPreviewImages,
+  deleteMoviePreviewImages,
+  deleteEpisodePreviewImages,
   resetMoviesMonthlyViews,
+  resetSeriesMonthlyViews,
   addViewToMovie,
+  addViewToSeries,
   addMonthlyViewToMovie,
+  addMonthlyViewToSeries,
+  getMyListInMovie,
+  getMyListInSeries,
+  getWatchAgedInMovies,
+  getWatchAgedInSeries,
+  getTop10Movies,
+  getTop10Series,
+  randomMovie,
+  randomSeries,
+  randomMovieByCategory,
+  randomSeriesByCategory,
+  randomMovieByFranchise,
+  randomSeriesByFranchise,
   getAllAvatars,
   returnErrorData,
   returnCurrentUser,
   returnAvatar,
   returnVideo,
+  returnMovie,
+  returnMoviesArray,
+  returnSeriesArray,
+  returnEpisode,
 };

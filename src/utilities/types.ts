@@ -11,58 +11,73 @@ export const jpg = 'image/jpg';
 export const png = 'image/png';
 export const mp4 = 'video/mp4';
 
-export const MulterErrorCode: {
-  LIMIT_PART_COUNT: 'LIMIT_PART_COUNT';
-  LIMIT_FILE_SIZE: 'LIMIT_FILE_SIZE';
-  LIMIT_FILE_COUNT: 'LIMIT_FILE_COUNT';
-  LIMIT_FIELD_KEY: 'LIMIT_FIELD_KEY';
-  LIMIT_FIELD_VALUE: 'LIMIT_FIELD_VALUE';
-  LIMIT_FIELD_COUNT: 'LIMIT_FIELD_COUNT';
-  LIMIT_UNEXPECTED_FILE: 'LIMIT_UNEXPECTED_FILE';
-} = {
-  LIMIT_PART_COUNT: 'LIMIT_PART_COUNT',
-  LIMIT_FILE_SIZE: 'LIMIT_FILE_SIZE',
-  LIMIT_FILE_COUNT: 'LIMIT_FILE_COUNT',
-  LIMIT_FIELD_KEY: 'LIMIT_FIELD_KEY',
-  LIMIT_FIELD_VALUE: 'LIMIT_FIELD_VALUE',
-  LIMIT_FIELD_COUNT: 'LIMIT_FIELD_COUNT',
-  LIMIT_UNEXPECTED_FILE: 'LIMIT_UNEXPECTED_FILE',
+export const MulterErrorCode = {
+  LIMIT_PART_COUNT: 'LIMIT_PART_COUNT' as 'LIMIT_PART_COUNT',
+  LIMIT_FILE_SIZE: 'LIMIT_FILE_SIZE' as 'LIMIT_FILE_SIZE',
+  LIMIT_FILE_COUNT: 'LIMIT_FILE_COUNT' as 'LIMIT_FILE_COUNT',
+  LIMIT_FIELD_KEY: 'LIMIT_FIELD_KEY' as 'LIMIT_FIELD_KEY',
+  LIMIT_FIELD_VALUE: 'LIMIT_FIELD_VALUE' as 'LIMIT_FIELD_VALUE',
+  LIMIT_FIELD_COUNT: 'LIMIT_FIELD_COUNT' as 'LIMIT_FIELD_COUNT',
+  LIMIT_UNEXPECTED_FILE: 'LIMIT_UNEXPECTED_FILE' as 'LIMIT_UNEXPECTED_FILE',
 };
 
-export const errorCode: {
-  NOT_AUTHENTICATED: 'user not authenticated';
-  ACCESS_WRONG_USER: 'trying to access wrong data';
-  MISSING_ENV_TOKEN: 'missing env token';
-  PERMISSION_DENIED: 'permission denied';
-  VALUE_TAKEN: 'value already taken';
-  VALUE_MISSING: 'value missing';
-  VALUE_NOT_EXISTING: 'value dose not exists';
-  INVALID_EMAIL: 'invalid email';
-} = {
-  NOT_AUTHENTICATED: 'user not authenticated',
-  ACCESS_WRONG_USER: 'trying to access wrong data',
-  MISSING_ENV_TOKEN: 'missing env token',
-  PERMISSION_DENIED: 'permission denied',
-  VALUE_TAKEN: 'value already taken',
-  VALUE_MISSING: 'value missing',
-  VALUE_NOT_EXISTING: 'value dose not exists',
-  INVALID_EMAIL: 'invalid email',
+export const errorCode = {
+  NOT_AUTHENTICATED: 'user not authenticated' as const,
+  ACCESS_WRONG_USER: 'trying to access wrong data' as const,
+  MISSING_ENV_TOKEN: 'missing env token' as const,
+  PERMISSION_DENIED: 'permission denied' as const,
+  VALUE_TAKEN: 'value already taken' as const,
+  VALUE_EXISTS: 'value already exists' as const,
+  VALUE_MISSING: 'value is missing' as const,
+  VALUE_NOT_EXISTING: 'value dose not exists' as const,
+  INVALID_EMAIL: 'invalid email' as const,
+  WRONG_VALUE: 'wrong value' as const,
 };
 
-export const userRoles: {
-  user: 'user';
-  moderator: 'moderator';
-  admin: 'admin';
-  superAdmin: 'superAdmin';
-} = {
-  user: 'user',
-  moderator: 'moderator',
-  admin: 'admin',
-  superAdmin: 'superAdmin',
+export const userRoles = {
+  user: 'user' as const,
+  moderator: 'moderator' as const,
+  admin: 'admin' as const,
+  superAdmin: 'superAdmin' as const,
 };
+
+export const queryPaths = Object.freeze({
+  myList: 'myList',
+  continueWatching: 'continueWatching',
+  watchAged: 'watchAged',
+  becauseYouWatch: 'becauseYouWatch',
+  becauseYouLiked: 'becauseYouLiked',
+  forYou: 'forYou',
+  newlyAdded: 'newlyAdded',
+  popular: 'popular',
+  top10movies: 'top10movies',
+  top10series: 'top10series',
+  randomMovie: 'randomMovie',
+  randomSeries: 'randomSeries',
+});
+
+export type queryPathsString =
+  | 'myList'
+  | 'continueWatching'
+  | 'watchAged'
+  | 'becauseYouWatch'
+  | 'becauseYouLiked'
+  | 'forYou'
+  | 'newlyAdded'
+  | 'popular'
+  | 'top10movies'
+  | 'top10series'
+  | 'randomMovie'
+  | 'randomSeries';
 
 export type UsersRolesType = 'user' | 'moderator' | 'admin' | 'superAdmin';
 export type UserStatusType = 'active' | 'disabled';
+
+export type returnVideosArray = {
+  _id: Types.ObjectId;
+  title: string;
+  displayPicture: string;
+}[];
 
 export type ReturnedVideoData = {
   _id: Types.ObjectId;
@@ -75,15 +90,16 @@ export type ReturnedVideoData = {
   seriesId: Types.ObjectId | undefined;
 };
 
-export interface SeriesInfoType {
+export interface SeriesSchemaType {
   _id: Types.ObjectId;
   title: string;
-  categories: string[];
   displayPicture: string;
-  description: string;
   views: number;
   monthlyViews: number;
   public: boolean;
+  categories: string[];
+  franchise: string[];
+  description: string;
   uploadDate: string;
   creationDate: string;
   latestDate: string;
@@ -92,7 +108,7 @@ export interface SeriesInfoType {
   creatorsId: Types.ObjectId;
 }
 
-export interface SeriesEpisodeType {
+export interface EpisodeSchemaType {
   _id: Types.ObjectId;
   sessionNr: number;
   episodeNr: number;
@@ -117,6 +133,7 @@ export interface MovieSchemaType {
   displayPicture: string;
   public: boolean;
   categories: string[];
+  franchise: string[];
   description: string;
   views: number;
   monthlyViews: number;
@@ -130,9 +147,14 @@ export interface CategorySchemaType {
   name: string;
 }
 
+export interface FranchiseSchemaType {
+  _id: Types.ObjectId;
+  name: string;
+}
+
 export interface AvatarSchemaType {
   _id: Types.ObjectId;
-  categories: string;
+  franchise: string;
   name: string;
   url: string;
 }
@@ -142,7 +164,9 @@ export type ProfileType =
       _id: Types.ObjectId;
       profileName: string;
       avatarURL: string;
-      savedList: Types.ObjectId[];
+      savedList?: Types.ObjectId[];
+      likedList?: Types.ObjectId[];
+      hasWatch?: Types.ObjectId[];
     }[]
   | undefined;
 

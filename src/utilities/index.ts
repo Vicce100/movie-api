@@ -6,7 +6,42 @@ import * as validate from 'email-validator';
 import { assertsIsString, assertNonNullish } from './assertions.js';
 import { UserType, errorCode } from './types.js';
 import db from './db/index.js';
-import { on } from 'events';
+
+export const routesString = {
+  video: 'video',
+  category: 'category',
+  franchise: 'franchise',
+  avatar: 'avatar',
+  user: 'user',
+  movie: 'movie',
+  episode: 'episode',
+  series: 'series',
+  upload: 'upload',
+  single: 'single',
+  multiple: 'multiple',
+  data: 'data',
+  addView: 'addView',
+  ffmpeg: 'ffmpeg',
+  create: 'create',
+  login: 'login',
+  logout: 'logout',
+  refreshToken: 'refreshToken',
+  addProfile: 'addProfile',
+  getCurrentUser: 'getCurrentUser',
+  checkAuth: 'checkAuth',
+  get: 'get',
+  delete: 'delete',
+  remove: 'remove',
+  videoId: 'videoId',
+  movieId: 'movieId',
+  episodeId: 'episodesId',
+  seriesId: 'seriesId',
+  categoryId: 'categoryId',
+  franchiseId: 'franchiseId',
+  avatarId: 'avatarId',
+  categoryName: 'categoryName',
+  roleType: 'roleType',
+};
 
 export const generateAccessToken = (user: UserType) => {
   try {

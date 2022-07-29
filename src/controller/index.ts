@@ -2,10 +2,11 @@ import { Request, Response } from 'express';
 import { CallbackError } from 'mongoose';
 
 import categorySchema from '../schemas/categorySchema.js';
+import franchiseSchema from '../schemas/franchiseSchema.js';
 import avatarSchema from '../schemas/avatarSchema.js';
 import db from '../utilities/db/index.js';
 import { errorCode } from '../utilities/types.js';
-import { assertNullish, assertNonNullish } from '../utilities/assertions.js';
+import { assertNonNullish } from '../utilities/assertions.js';
 import { errorHandler } from '../utilities/middleware.js';
 
 export const addSingleCategory = async (req: Request, res: Response) => {
@@ -24,26 +25,11 @@ export const addSingleCategory = async (req: Request, res: Response) => {
 
 export const addMultipleCategories = (req: Request, res: Response) => {
   const { categories }: { categories: string[] } = req.body;
-  categories.forEach(async (name) => {
+  categories.forEach((tempCategory) => {
     try {
-      const tempCategory = await db.getSingleCategoryBaName(name);
-      assertNullish(tempCategory, errorCode.VALUE_TAKEN);
-
-      categories.forEach((tempCategory: string) => {
-        try {
-          new categorySchema({ name: tempCategory }).save(
-            (err: CallbackError) => {
-              if (err) throw new Error(err.message);
-            }
-          );
-        } catch (error) {
-          if (error instanceof Error) {
-            const errorResponse = errorHandler(error);
-            return res.status(Number(errorResponse.status)).json(errorResponse);
-          }
-        }
+      new categorySchema({ name: tempCategory }).save((err: CallbackError) => {
+        if (err) throw new Error(err.message);
       });
-      res.status(201).json(`category's added successfully`);
     } catch (error) {
       if (error instanceof Error) {
         const errorResponse = errorHandler(error);
@@ -51,12 +37,13 @@ export const addMultipleCategories = (req: Request, res: Response) => {
       }
     }
   });
+  res.status(201).json({ success: true });
 };
 
 export const sendSingleCategory = async (req: Request, res: Response) => {
   const { categoryId } = req.params;
   try {
-    const data = await db.getSingleCategoryBaId(categoryId);
+    const data = await db.getSingleCategoryBayId(categoryId);
     res.status(200).json(data);
   } catch (error) {
     res.status(400).send(error);
@@ -66,7 +53,57 @@ export const sendSingleCategory = async (req: Request, res: Response) => {
 export const sendMultipleCategories = async (_req: Request, res: Response) => {
   try {
     const data = await db.getAllCategories();
-    res.json(data);
+    res.status(200).json(data);
+  } catch (error) {
+    res.status(400).json(error);
+  }
+};
+
+export const addSingleFranchise = async (req: Request, res: Response) => {
+  try {
+    const franchise = await new franchiseSchema({
+      name: req.body.franchise,
+    }).save();
+    res.status(201).json(franchise);
+  } catch (error) {
+    if (error instanceof Error) {
+      const errorResponse = errorHandler(error);
+      return res.status(Number(errorResponse.status)).json(errorResponse);
+    }
+  }
+};
+
+export const addMultipleFranchises = (req: Request, res: Response) => {
+  const { franchises }: { franchises: string[] } = req.body;
+  franchises.forEach((franchise) => {
+    try {
+      new franchiseSchema({ name: franchise }).save((err: CallbackError) => {
+        if (err) throw new Error(err.message);
+      });
+    } catch (error) {
+      if (error instanceof Error) {
+        const errorResponse = errorHandler(error);
+        return res.status(Number(errorResponse.status)).json(errorResponse);
+      }
+    }
+  });
+  res.status(201).json({ success: true });
+};
+
+export const sendSingleFranchise = async (req: Request, res: Response) => {
+  const { franchiseId } = req.params;
+  try {
+    const data = await db.getSingleFranchiseBayId(franchiseId);
+    res.status(200).json(data);
+  } catch (error) {
+    res.status(400).send(error);
+  }
+};
+
+export const sendMultipleFranchise = async (_req: Request, res: Response) => {
+  try {
+    const data = await db.getAllFranchises();
+    res.status(200).json(data);
   } catch (error) {
     res.status(400).json(error);
   }

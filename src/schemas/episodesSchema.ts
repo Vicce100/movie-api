@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 import dayjs from 'dayjs';
-import { SeriesEpisodeType } from '../utilities/types.js';
+import { EpisodeSchemaType } from '../utilities/types.js';
 
 const reqString = { type: String, require: true };
 const ShortString = { type: String, minLength: 1, maxLength: 255 };
@@ -28,4 +28,4 @@ const episodesSchema = new mongoose.Schema({
   creatorsId: { type: mongoose.SchemaTypes.ObjectId, ref: 'users' },
 });
 
-export default mongoose.model<SeriesEpisodeType>('series', episodesSchema);
+export default mongoose.model<EpisodeSchemaType>('episode', episodesSchema);
