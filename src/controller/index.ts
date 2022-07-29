@@ -6,7 +6,7 @@ import franchiseSchema from '../schemas/franchiseSchema.js';
 import avatarSchema from '../schemas/avatarSchema.js';
 import db from '../utilities/db/index.js';
 import { errorCode } from '../utilities/types.js';
-import { assertNullish, assertNonNullish } from '../utilities/assertions.js';
+import { assertNonNullish } from '../utilities/assertions.js';
 import { errorHandler } from '../utilities/middleware.js';
 
 export const addSingleCategory = async (req: Request, res: Response) => {
@@ -53,7 +53,7 @@ export const sendSingleCategory = async (req: Request, res: Response) => {
 export const sendMultipleCategories = async (_req: Request, res: Response) => {
   try {
     const data = await db.getAllCategories();
-    res.json(data);
+    res.status(200).json(data);
   } catch (error) {
     res.status(400).json(error);
   }
@@ -103,7 +103,7 @@ export const sendSingleFranchise = async (req: Request, res: Response) => {
 export const sendMultipleFranchise = async (_req: Request, res: Response) => {
   try {
     const data = await db.getAllFranchises();
-    res.json(data);
+    res.status(200).json(data);
   } catch (error) {
     res.status(400).json(error);
   }

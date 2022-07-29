@@ -14,7 +14,7 @@ import {
   getVideosData,
   getMoviesDataByCategory,
   getSeriesDataByCategory,
-  postSingleVideo,
+  postSingleMovie,
   deleteMovie,
   deleteEpisode,
   generateFFmpegToMovie,
@@ -72,24 +72,24 @@ router.delete(`/${rs.movie}/${rs.delete}/:${rs.movieId}`, deleteMovie);
 router.delete(`/${rs.episode}/${rs.delete}/:${rs.episodeId}`, deleteEpisode);
 
 router.post(
-  `/${rs.upload}/${rs.single}/public`,
+  `/${rs.movie}/${rs.upload}`,
   publicVideoUpload.fields([
     { name: 'videoFile', maxCount: 1 },
     { name: 'displayPicture', maxCount: 1 },
   ]),
   multerErrorHandler,
-  postSingleVideo
+  postSingleMovie
 );
 
-router.post(
-  `/${rs.upload}/${rs.single}/private`,
-  privateVideoUpload.fields([
-    { name: 'videoFile', maxCount: 1 },
-    { name: 'displayPicture', maxCount: 1 },
-  ]),
-  multerErrorHandler,
-  postSingleVideo
-);
+// router.post(
+//   `/${rs.series}/${rs.upload}`,
+//   privateVideoUpload.fields([
+//     { name: 'videoFile', maxCount: 1 },
+//     { name: 'displayPicture', maxCount: 1 },
+//   ]),
+//   multerErrorHandler,
+//   postSingleVideo
+// );
 
 router.get(`/${rs.movie}/${rs.ffmpeg}/:${rs.movieId}`, generateFFmpegToMovie);
 

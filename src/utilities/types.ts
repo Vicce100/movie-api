@@ -28,7 +28,7 @@ export const errorCode = {
   PERMISSION_DENIED: 'permission denied' as const,
   VALUE_TAKEN: 'value already taken' as const,
   VALUE_EXISTS: 'value already exists' as const,
-  VALUE_MISSING: 'value missing' as const,
+  VALUE_MISSING: 'value is missing' as const,
   VALUE_NOT_EXISTING: 'value dose not exists' as const,
   INVALID_EMAIL: 'invalid email' as const,
   WRONG_VALUE: 'wrong value' as const,
@@ -72,6 +72,12 @@ export type queryPathsString =
 
 export type UsersRolesType = 'user' | 'moderator' | 'admin' | 'superAdmin';
 export type UserStatusType = 'active' | 'disabled';
+
+export type returnVideosArray = {
+  _id: Types.ObjectId;
+  title: string;
+  displayPicture: string;
+}[];
 
 export type ReturnedVideoData = {
   _id: Types.ObjectId;

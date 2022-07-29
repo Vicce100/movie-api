@@ -10,12 +10,15 @@ import {
   queryPaths,
   UserType,
   queryPathsString,
+  MovieSchemaType,
+  SeriesSchemaType,
 } from '../utilities/types.js';
 import {
   assertNonNullish,
   assertIsNonEmptyArray,
   assertsValueToType,
   assertsQueryPaths,
+  assertsIsString,
 } from '../utilities/assertions.js';
 import { errorHandler } from '../utilities/middleware.js';
 import { cleanString, generatePreviewImages } from '../utilities/index.js';
@@ -118,7 +121,7 @@ export const addView = async (req: Request, res: Response) => {
   res.status(200).json({ success: true });
 };
 
-export const postSingleVideo = async (req: Request, res: Response) => {
+export const postSingleMovie = async (req: Request, res: Response) => {
   const { files } = req;
   const {
     title,
@@ -152,13 +155,14 @@ export const postSingleVideo = async (req: Request, res: Response) => {
         description,
         creatorsId: req.user._id,
         releaseDate,
+        public: true,
       });
       const { _id, videoUrl } = newMovie;
       await newMovie.save();
       await db.addUsersMovie(req.user._id, _id);
 
       // send response to client before running ffmpeg so client gets a faster response time
-      res.status(201).json('video added');
+      res.status(201).json({ success: true });
 
       const previewImageArray = await generatePreviewImages({
         videoUrl: videoUrl,
@@ -261,7 +265,10 @@ const getMyList = async (profileId: string, user: UserType) => {
 
     const seriesList = await db.getMyListInSeries(activeProfile.savedList);
     assertNonNullish(movieList, errorCode.VALUE_MISSING);
-    return { movieList, seriesList };
+    return {
+      movieList: db.returnMoviesArray(movieList),
+      seriesList: db.returnSeriesArray(seriesList),
+    };
   } catch (error: any) {
     if (error) throw new Error(error.message || error);
   }
@@ -279,7 +286,10 @@ const getWatchAged = async (profileId: string, user: UserType) => {
 
     const seriesList = await db.getWatchAgedInSeries(activeProfile.hasWatch);
     assertNonNullish(movieList, errorCode.VALUE_MISSING);
-    return { movieList, seriesList };
+    return {
+      movieList: db.returnMoviesArray(movieList),
+      seriesList: db.returnSeriesArray(seriesList),
+    };
   } catch (error) {}
 };
 
@@ -288,7 +298,7 @@ const getTop10Movies = async () => {
     const res = await db.getTop10Movies();
     assertNonNullish(res, errorCode.VALUE_MISSING);
     if (!res.length) throw new Error(errorCode.VALUE_NOT_EXISTING);
-    return res;
+    return db.returnMoviesArray(res);
   } catch (error: any) {
     if (error) throw new Error(error.message || error);
   }
@@ -299,7 +309,7 @@ const getTop10Series = async () => {
     const res = await db.getTop10Series();
     assertNonNullish(res, errorCode.VALUE_MISSING);
     if (!res.length) throw new Error(errorCode.VALUE_NOT_EXISTING);
-    return res;
+    return db.returnSeriesArray(res);
   } catch (error: any) {
     if (error) throw new Error(error.message || error);
   }
@@ -310,7 +320,7 @@ const getRandomMovie = async () => {
     const res = await db.randomMovie();
     assertNonNullish(res, errorCode.VALUE_MISSING);
     if (!res.length) throw new Error(errorCode.VALUE_NOT_EXISTING);
-    return res;
+    return db.returnMoviesArray(res);
   } catch (error: any) {
     if (error) throw new Error(error.message || error);
   }
@@ -321,7 +331,7 @@ const getRandomSeries = async () => {
     const res = await db.randomSeries();
     assertNonNullish(res, errorCode.VALUE_MISSING);
     if (!res.length) throw new Error(errorCode.VALUE_NOT_EXISTING);
-    return res;
+    return db.returnSeriesArray(res);
   } catch (error: any) {
     if (error) throw new Error(error.message || error);
   }
@@ -342,7 +352,7 @@ export const getVideosData = async (req: Request, res: Response) => {
   const {
     queryName,
     profileId,
-  }: { queryName: queryPathsString; profileId: string } = req.body;
+  }: { queryName: queryPathsString; profileId?: string } = req.body;
   try {
     assertsQueryPaths(queryName, errorCode.WRONG_VALUE);
   } catch (error: any) {
@@ -369,8 +379,9 @@ export const getVideosData = async (req: Request, res: Response) => {
   const failedMsg = { message: 'route dose not exist', success: false };
   let resultData: unknown = null;
   try {
-    if (queryName === myList) resultData = await getMyList(profileId, req.user);
-    else if (queryName === watchAged)
+    if (queryName === myList && profileId)
+      resultData = await getMyList(profileId, req.user);
+    else if (queryName === watchAged && profileId)
       resultData = await getWatchAged(profileId, req.user);
     else if (queryName === top10movies) resultData = await getTop10Movies();
     else if (queryName === top10series) resultData = await getTop10Series();
@@ -387,14 +398,10 @@ export const getVideosData = async (req: Request, res: Response) => {
 };
 
 export const getMoviesDataByCategory = async (req: Request, res: Response) => {
-  const {
-    categoryName1,
-  }: {
-    categoryName1: string;
-  } = req.body;
+  const { categoryNames }: { categoryNames: string[] } = req.body;
 
   try {
-    const videosFromCategory = await db.randomMovieByCategory(categoryName1);
+    let videosFromCategory = await db.randomMovieByCategory(categoryNames);
     assertIsNonEmptyArray(videosFromCategory, errorCode.VALUE_MISSING);
 
     res.status(200).json(
@@ -413,22 +420,10 @@ export const getMoviesDataByCategory = async (req: Request, res: Response) => {
 };
 
 export const getSeriesDataByCategory = async (req: Request, res: Response) => {
-  const {
-    categoryName1,
-    categoryName2,
-    categoryName3,
-  }: {
-    categoryName1: string;
-    categoryName2?: string;
-    categoryName3?: string;
-  } = req.body;
+  const { categoryNames }: { categoryNames: string[] } = req.body;
 
   try {
-    const videosFromCategory = await db.randomSeriesByCategory(
-      categoryName1,
-      categoryName2,
-      categoryName3
-    );
+    let videosFromCategory = await db.randomSeriesByCategory(categoryNames);
     assertIsNonEmptyArray(videosFromCategory, errorCode.VALUE_MISSING);
 
     res.status(200).json(
