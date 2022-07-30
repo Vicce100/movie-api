@@ -103,8 +103,13 @@ export interface SeriesSchemaType {
   uploadDate: string;
   creationDate: string;
   latestDate: string;
-  episodesId: Types.ObjectId[];
+  episodes: {
+    episodeId: Types.ObjectId;
+    seasonNr: Number;
+    episodeNr: Number;
+  }[];
   amountOfSessions: number;
+  amountOfEpisodes: number;
   creatorsId: Types.ObjectId;
 }
 
@@ -115,9 +120,9 @@ export interface EpisodeSchemaType {
   seriesId: Types.ObjectId;
   seriesTitle: string;
   episodeTitle: string;
-  public: boolean;
   videoUrl: string;
   previewImagesUrl: string[];
+  views: number;
   displayPicture: string;
   description: string;
   creatorsId: Types.ObjectId;

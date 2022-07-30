@@ -22,6 +22,8 @@ import franchiseSchema from '../../schemas/franchiseSchema.js';
 
 /* ----------------------- local ----------------------- */
 
+const querySize = 30;
+
 const setFieldWithId = <T>(
   dataPoint: Model<T>,
   userId: Types.ObjectId | string,
@@ -199,25 +201,25 @@ const addMonthlyViewToSeries = (seriesId: Types.ObjectId | string) =>
 // https://www.mongodb.com/docs/upcoming/reference/operator/aggregation/sample/#pipe._S_sample
 const getMyListInMovie = (MyListIds: Types.ObjectId[] | string[]) =>
   movieSchema.aggregate<MovieSchemaType>([
-    { $match: { _id: { $in: MyListIds } } },
+    { $match: { _id: { $in: [...MyListIds] } } },
     { $sample: { size: MyListIds.length } },
   ]);
 
 const getMyListInSeries = (MyListIds: Types.ObjectId[] | string[]) =>
   seriesSchema.aggregate<SeriesSchemaType>([
-    { $match: { _id: { $in: MyListIds } } },
+    { $match: { _id: { $in: [...MyListIds] } } },
     { $sample: { size: MyListIds.length } },
   ]);
 
 const getWatchAgedInMovies = (hasWatchIds: Types.ObjectId[] | string[]) =>
   movieSchema.aggregate<MovieSchemaType>([
-    { $match: { _id: { $in: hasWatchIds } } },
+    { $match: { _id: { $in: [...hasWatchIds] } } },
     { $sample: { size: hasWatchIds.length } },
   ]);
 
 const getWatchAgedInSeries = (hasWatchIds: Types.ObjectId[] | string[]) =>
   seriesSchema.aggregate<SeriesSchemaType>([
-    { $match: { _id: { $in: hasWatchIds } } },
+    { $match: { _id: { $in: [...hasWatchIds] } } },
     { $sample: { size: hasWatchIds.length } },
   ]);
 
@@ -231,19 +233,19 @@ const randomMovie = (_movieId?: Types.ObjectId[] | string[]) =>
   movieSchema
     .aggregate<MovieSchemaType>([
       // { $match: { _id: { $in: movieId } } },
-      { $sample: { size: 25 } },
+      { $sample: { size: querySize } },
       // { $sort: { monthlyViews: -1 } }, //  -1 highest value first | 1 lowest value first
     ])
-    .limit(25);
+    .limit(querySize);
 
 const randomSeries = (_seriesId?: Types.ObjectId[] | string[]) =>
   seriesSchema
     .aggregate<SeriesSchemaType>([
       // { $match: { _id: { $in: seriesId } } },
-      { $sample: { size: 25 } },
+      { $sample: { size: querySize } },
       // { $sort: { monthlyViews: -1 } },
     ])
-    .limit(25);
+    .limit(querySize);
 
 // array
 // const randomMovieByCategory3 = (categoryName1 string[]) =>
@@ -258,33 +260,33 @@ const randomMovieByCategory = (categoryNames: string[]) =>
           },
         },
       },
-      { $sample: { size: 25 } },
+      { $sample: { size: querySize } },
     ])
-    .limit(25);
+    .limit(querySize);
 
 const randomSeriesByCategory = (categoryNames: string[]) =>
   seriesSchema
     .aggregate<SeriesSchemaType>([
       { $match: { categories: { $all: [...categoryNames] } } },
-      { $sample: { size: 25 } },
+      { $sample: { size: querySize } },
     ])
-    .limit(25);
+    .limit(querySize);
 
 const randomMovieByFranchise = (franchise: string) =>
   movieSchema
     .aggregate<MovieSchemaType>([
       { $match: { franchise: franchise } },
-      { $sample: { size: 25 } },
+      { $sample: { size: querySize } },
     ])
-    .limit(25);
+    .limit(querySize);
 
 const randomSeriesByFranchise = (franchise: string) =>
   seriesSchema
     .aggregate<SeriesSchemaType>([
       { $match: { franchise: franchise } },
-      { $sample: { size: 25 } },
+      { $sample: { size: querySize } },
     ])
-    .limit(25);
+    .limit(querySize);
 
 /* ----------------------- returned values ----------------------- */
 

@@ -127,11 +127,13 @@ export const postSingleMovie = async (req: Request, res: Response) => {
     title,
     description,
     categories,
+    franchise,
     releaseDate,
   }: {
     title: string;
     description: string;
     categories: string[] | string;
+    franchise: string[] | string;
     releaseDate: string;
   } = req.body;
 
@@ -140,9 +142,13 @@ export const postSingleMovie = async (req: Request, res: Response) => {
 
   if (!Array.isArray(files)) {
     let tempCategory: string[] | null = null;
-    if (Array.isArray(categories))
-      tempCategory = categories.map((tempCategory) => tempCategory);
-    else tempCategory = [categories];
+    let tempFranchises: string[] | null = null;
+
+    if (!Array.isArray(categories)) tempCategory = [categories];
+    else tempCategory = categories.map((tempCategory) => tempCategory);
+
+    if (!Array.isArray(franchise)) tempFranchises = [franchise];
+    else tempFranchises = franchise.map((tempFranchise) => tempFranchise);
 
     try {
       const newMovie = new movieSchema({
@@ -150,8 +156,8 @@ export const postSingleMovie = async (req: Request, res: Response) => {
         videoUrl: files.videoFile[0].path,
         displayPicture: files.displayPicture[0].path,
         previewImagesUrl: [],
-        // album: files.album.map((file) => file.path) || [],
         categories: tempCategory,
+        franchise: tempFranchises,
         description,
         creatorsId: req.user._id,
         releaseDate,
@@ -381,6 +387,8 @@ export const getVideosData = async (req: Request, res: Response) => {
   try {
     if (queryName === myList && profileId)
       resultData = await getMyList(profileId, req.user);
+    // if (queryName === continueWatching && profileId)
+    //   resultData = await getContinueWatching(profileId, req.user);
     else if (queryName === watchAged && profileId)
       resultData = await getWatchAged(profileId, req.user);
     else if (queryName === top10movies) resultData = await getTop10Movies();

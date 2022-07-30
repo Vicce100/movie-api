@@ -26,8 +26,15 @@ const seriesSchema = new mongoose.Schema({
   uploadDate: date,
   creationDate: date,
   latestDate: date,
-  episodesId: [{ type: mongoose.Types.ObjectId }],
-  amountOfSessions: { type: Number },
+  episodes: [
+    {
+      episodeId: { type: mongoose.Types.ObjectId, require: true },
+      seasonNr: { type: Number, require: true },
+      episodeNr: { type: Number, require: true },
+    },
+  ],
+  amountOfSessions: { type: Number, require: true },
+  amountOfEpisodes: { type: Number, require: true },
   creatorsId: { type: mongoose.SchemaTypes.ObjectId, ref: 'Users' },
 });
 

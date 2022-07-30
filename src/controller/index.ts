@@ -111,16 +111,16 @@ export const sendMultipleFranchise = async (_req: Request, res: Response) => {
 
 export const addSingleAvatar = async (req: Request, res: Response) => {
   const { file } = req;
-  const { name, category }: { name: string; category: string[] | string } =
+  const { name, franchise }: { name: string; franchise: string[] | string } =
     req.body;
   if (!file) return res.status(400).send('No file or wrong file was uploaded!');
-  let tempCategory: string[] | null = null;
-  if (Array.isArray(category))
-    tempCategory = category.map((tempCategory) => tempCategory);
-  else tempCategory = [category];
+  let tempFranchise: string[] | null = null;
+  if (!Array.isArray(franchise)) tempFranchise = [franchise];
+  else tempFranchise = franchise.map((value) => value);
+
   try {
     const tempAvatar = await new avatarSchema({
-      categories: tempCategory,
+      franchise: tempFranchise,
       name,
       url: file.path.replaceAll(' ', '-'),
     }).save();
