@@ -2,6 +2,8 @@ import { Request, Response } from 'express';
 import fs from 'fs';
 
 import movieSchema from '../schemas/movieSchema.js';
+import seriesSchema from '../schemas/seriesSchema.js';
+import episodesSchema from '../schemas/episodeSchema.js';
 import db from '../utilities/db/index.js';
 import {
   errorCode,
@@ -110,18 +112,26 @@ export const getEpisode = async (req: Request, res: Response) => {
 
 export const addView = async (req: Request, res: Response) => {
   const { videoId, isMovie }: { videoId: string; isMovie: boolean } = req.body;
-  if (isMovie) {
-    try {
+  try {
+    if (isMovie) {
       await db.addViewToMovie(videoId);
       await db.addMonthlyViewToMovie(videoId);
-    } catch (error) {
-      console.log(error);
+    } else {
+      const episode = await db.findEpisodeById(videoId);
+      assertNonNullish(episode, errorCode.VALUE_MISSING);
+
+      await db.addViewToEpisode(videoId);
+      await db.addViewToSeries(episode.seriesId);
+      await db.addMonthlyViewToSeries(episode.seriesId);
     }
+  } catch (error: any) {
+    console.log(error);
+    res.status(400).json({ success: false, message: error.message || error });
   }
   res.status(200).json({ success: true });
 };
 
-export const postSingleMovie = async (req: Request, res: Response) => {
+export const uploadMovie = async (req: Request, res: Response) => {
   const { files } = req;
   const {
     title,
@@ -162,6 +172,7 @@ export const postSingleMovie = async (req: Request, res: Response) => {
         creatorsId: req.user._id,
         releaseDate,
         public: true,
+        views: 0,
       });
       const { _id, videoUrl } = newMovie;
       await newMovie.save();
@@ -184,6 +195,125 @@ export const postSingleMovie = async (req: Request, res: Response) => {
   } else {
     const message = 'number of files dose not match number of titles';
     return res.status(400).json(db.returnErrorData(message, 400));
+  }
+};
+
+export const createSeries = async (req: Request, res: Response) => {
+  const { file } = req;
+  const {
+    title,
+    description,
+    categories,
+    franchise,
+    creationDate,
+    latestDate,
+    isPublic,
+  }: {
+    title: string;
+    description: string;
+    categories: string[] | string;
+    franchise: string[] | string;
+    creationDate: string;
+    latestDate: string;
+    isPublic?: boolean;
+  } = req.body;
+
+  let tempCategory: string[] | null = null;
+  let tempFranchises: string[] | null = null;
+
+  if (!Array.isArray(categories)) tempCategory = [categories];
+  else tempCategory = categories.map((tempCategory) => tempCategory);
+
+  if (!Array.isArray(franchise)) tempFranchises = [franchise];
+  else tempFranchises = franchise.map((tempFranchise) => tempFranchise);
+
+  try {
+    assertNonNullish(file, errorCode.VALUE_MISSING);
+    const series = new seriesSchema({
+      title,
+      displayPicture: file.path,
+      views: 0,
+      categories: tempCategory,
+      franchise: tempFranchises,
+      description,
+      creatorsId: req.user._id,
+      creationDate,
+      latestDate,
+      public: isPublic || true,
+      amountOfSessions: 0,
+      amountOfEpisodes: 0,
+      episodes: [],
+    });
+    await series.save();
+    await db.addUsersSeries(req.user._id, series._id);
+
+    res.status(201).json({ success: true });
+  } catch (error) {
+    if (error instanceof Error) {
+      const errorResponse = errorHandler(error);
+      return res.status(Number(errorResponse.status)).json(errorResponse);
+    }
+  }
+};
+
+export const addEpisodesTOSeries = async (req: Request, res: Response) => {
+  const { files } = req;
+  const {
+    seriesTitle,
+    seriesId,
+    episodeTitle,
+    description,
+    releaseDate,
+    sessionNr,
+    episodeNr,
+  }: {
+    seriesTitle: string;
+    seriesId: string;
+    episodeTitle: string;
+    description: string;
+    releaseDate: string;
+    sessionNr: number;
+    episodeNr: number;
+  } = req.body;
+  assertNonNullish(files, errorCode.WRONG_VALUE);
+
+  try {
+    if (Array.isArray(files)) throw new Error(errorCode.WRONG_VALUE);
+
+    const series = new episodesSchema({
+      seriesTitle,
+      episodeTitle,
+      seriesId,
+      videoUrl: files.videoFile[0].path,
+      displayPicture: files.displayPicture[0].path,
+      previewImagesUrl: [],
+      views: 0,
+      description,
+      releaseDate,
+      sessionNr,
+      episodeNr,
+      creatorsId: req.user._id,
+    });
+
+    await series.save();
+
+    res.status(201).json({ success: true });
+
+    const previewImageArray = await generatePreviewImages({
+      videoUrl: series.videoUrl,
+      outputPathAndFileName: `uploads/images/ffmpeg/${cleanString(
+        series.episodeTitle
+      )}`, // no increment or extension
+      fps: 1 / 10,
+      resolution: '1920x1080',
+    });
+
+    await db.updateEpisodesPreviewImages(series._id, previewImageArray);
+  } catch (error) {
+    if (error instanceof Error) {
+      const errorResponse = errorHandler(error);
+      return res.status(Number(errorResponse.status)).json(errorResponse);
+    }
   }
 };
 
@@ -227,7 +357,7 @@ export const deleteEpisode = async (req: Request, res: Response) => {
   }
 };
 
-export const getSingleMovieData = async (req: Request, res: Response) => {
+export const getMovieData = async (req: Request, res: Response) => {
   const { movieId } = req.params;
 
   try {
@@ -243,7 +373,22 @@ export const getSingleMovieData = async (req: Request, res: Response) => {
   }
 };
 
-export const getSingleEpisodeData = async (req: Request, res: Response) => {
+export const getSeriesData = async (req: Request, res: Response) => {
+  const { seriesId } = req.params;
+  try {
+    const series = await db.findSeriesById(seriesId);
+    assertNonNullish(series, errorCode.VALUE_MISSING);
+
+    res.status(200).json(db.returnSeries(series));
+  } catch (error) {
+    if (error instanceof Error) {
+      const errorResponse = errorHandler(error);
+      return res.status(Number(errorResponse.status)).json(errorResponse);
+    }
+  }
+};
+
+export const getEpisodeData = async (req: Request, res: Response) => {
   const { episodeId } = req.params;
 
   try {

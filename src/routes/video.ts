@@ -9,18 +9,21 @@ import {
   getMovie,
   getEpisode,
   addView,
-  getSingleMovieData,
-  getSingleEpisodeData,
+  getMovieData,
+  getSeriesData,
+  getEpisodeData,
   getVideosData,
   getMoviesDataByCategory,
   getSeriesDataByCategory,
-  postSingleMovie,
+  uploadMovie,
+  createSeries,
   deleteMovie,
   deleteEpisode,
   generateFFmpegToMovie,
   generateFFmpegToEpisode,
   removeFFmpegFromMovie,
   removeFFmpegFromEpisode,
+  addEpisodesTOSeries,
 } from '../controller/video.js';
 import { cleanString, routesString as rs } from '../utilities/index.js';
 
@@ -57,9 +60,11 @@ router.get(`/${rs.episode}/:${rs.episodeId}`, getEpisode);
 
 router.post(`/${rs.addView}`, addView);
 
-router.get(`/${rs.movie}/${rs.data}/:${rs.movieId}`, getSingleMovieData);
+router.get(`/${rs.movie}/${rs.data}/:${rs.movieId}`, getMovieData);
 
-router.get(`/${rs.episode}/${rs.data}/:${rs.episodeId}`, getSingleEpisodeData);
+router.get(`/${rs.series}/${rs.data}/:${rs.seriesId}`, getSeriesData);
+
+router.get(`/${rs.episode}/${rs.data}/:${rs.episodeId}`, getEpisodeData);
 
 router.post(`/${rs.data}`, getVideosData);
 
@@ -72,24 +77,31 @@ router.delete(`/${rs.movie}/${rs.delete}/:${rs.movieId}`, deleteMovie);
 router.delete(`/${rs.episode}/${rs.delete}/:${rs.episodeId}`, deleteEpisode);
 
 router.post(
-  `/${rs.movie}/${rs.upload}`,
+  `/${rs.movie}/${rs.create}`,
   publicVideoUpload.fields([
     { name: 'videoFile', maxCount: 1 },
     { name: 'displayPicture', maxCount: 1 },
   ]),
   multerErrorHandler,
-  postSingleMovie
+  uploadMovie
 );
 
-// router.post(
-//   `/${rs.series}/${rs.upload}`,
-//   privateVideoUpload.fields([
-//     { name: 'videoFile', maxCount: 1 },
-//     { name: 'displayPicture', maxCount: 1 },
-//   ]),
-//   multerErrorHandler,
-//   postSingleVideo
-// );
+router.post(
+  `/${rs.series}/${rs.create}`,
+  privateVideoUpload.single('displayPicture'),
+  multerErrorHandler,
+  createSeries
+);
+
+router.post(
+  `/${rs.episode}/${rs.add}`,
+  privateVideoUpload.fields([
+    { name: 'videoFile', maxCount: 1 },
+    { name: 'displayPicture', maxCount: 1 },
+  ]),
+  multerErrorHandler,
+  addEpisodesTOSeries
+);
 
 router.get(`/${rs.movie}/${rs.ffmpeg}/:${rs.movieId}`, generateFFmpegToMovie);
 

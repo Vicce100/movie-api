@@ -105,8 +105,8 @@ export interface SeriesSchemaType {
   latestDate: string;
   episodes: {
     episodeId: Types.ObjectId;
-    seasonNr: Number;
-    episodeNr: Number;
+    seasonNr: number;
+    episodeNr: number;
   }[];
   amountOfSessions: number;
   amountOfEpisodes: number;

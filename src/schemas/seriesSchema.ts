@@ -24,8 +24,8 @@ const seriesSchema = new mongoose.Schema({
   views: { type: Number, require: true },
   monthlyViews: { type: Number, require: true },
   uploadDate: date,
-  creationDate: date,
-  latestDate: date,
+  creationDate: { type: String, imitable: true, require: true },
+  latestDate: { type: String, imitable: false, require: true },
   episodes: [
     {
       episodeId: { type: mongoose.Types.ObjectId, require: true },

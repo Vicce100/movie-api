@@ -17,7 +17,7 @@ import categorySchema from '../../schemas/categorySchema.js';
 import avatarSchema from '../../schemas/avatarSchema.js';
 import movieSchema from '../../schemas/movieSchema.js';
 import seriesSchema from '../../schemas/seriesSchema.js';
-import episodesSchema from '../../schemas/episodesSchema.js';
+import episodeSchema from '../../schemas/episodeSchema.js';
 import franchiseSchema from '../../schemas/franchiseSchema.js';
 
 /* ----------------------- local ----------------------- */
@@ -130,7 +130,7 @@ const findSeriesById = (seriesId: Types.ObjectId | string) =>
   seriesSchema.findOne({ _id: seriesId });
 
 const findEpisodeById = (episodeId: Types.ObjectId | string) =>
-  episodesSchema.findOne({ _id: episodeId });
+  episodeSchema.findOne({ _id: episodeId });
 
 const findMovieByName = (videoTitle: string) =>
   movieSchema.findOne({ title: videoTitle });
@@ -139,7 +139,7 @@ const findSeriesByName = (videoTitle: string) =>
   seriesSchema.findOne({ title: videoTitle });
 
 const findEpisodeByName = (videoTitle: string) =>
-  episodesSchema.findOne({ seriesTitle: videoTitle });
+  episodeSchema.findOne({ seriesTitle: videoTitle });
 
 const getMovieDataByCategory = (categoryName: string) =>
   movieSchema.find(
@@ -166,7 +166,7 @@ const updateEpisodesPreviewImages = (
   seriesId: Types.ObjectId | string,
   imageArray: string[]
 ) =>
-  episodesSchema.updateOne(
+  episodeSchema.updateOne(
     { _id: seriesId },
     { $push: { previewImagesUrl: { $each: imageArray } } }
   );
@@ -175,7 +175,7 @@ const deleteMoviePreviewImages = (movieId: Types.ObjectId | string) =>
   movieSchema.updateOne({ _id: movieId }, { $unset: { previewImagesUrl: '' } });
 
 const deleteEpisodePreviewImages = (episodeId: Types.ObjectId | string) =>
-  episodesSchema.updateOne(
+  episodeSchema.updateOne(
     { _id: episodeId },
     { $unset: { previewImagesUrl: '' } }
   );
@@ -191,6 +191,9 @@ const addViewToMovie = (movieId: Types.ObjectId | string) =>
 
 const addViewToSeries = (seriesId: Types.ObjectId | string) =>
   seriesSchema.updateOne({ _id: seriesId }, { $inc: { views: 1 } });
+
+const addViewToEpisode = (seriesId: Types.ObjectId | string) =>
+  episodeSchema.updateOne({ _id: seriesId }, { $inc: { views: 1 } });
 
 const addMonthlyViewToMovie = (movieId: Types.ObjectId | string) =>
   movieSchema.updateOne({ _id: movieId }, { $inc: { monthlyViews: 1 } });
@@ -360,12 +363,33 @@ const returnVideo = (
   }
 };
 
-const returnMovie = (movie: MovieSchemaType) => {
-  return {
-    _id: movie._id,
-    previewImagesUrl: movie.previewImagesUrl.map((image) => `${url}/${image}`),
-    title: movie.title,
-  };
+const returnMovie = (movie: MovieSchemaType) => ({
+  ...movie,
+  previewImagesUrl: movie.previewImagesUrl.map((image) => `${url}/${image}`),
+});
+
+const returnEpisode = (episode: EpisodeSchemaType) => ({
+  ...episode,
+  previewImagesUrl: episode.previewImagesUrl.map((image) => `${url}/${image}`),
+});
+
+const returnSeries = (series: SeriesSchemaType) => {
+  if (!series.episodes) return { ...series };
+
+  const episodes: {
+    episodeId: Types.ObjectId;
+    seasonNr: number;
+    episodeNr: number;
+  }[][] = [];
+
+  for (let index = 0; index < series.amountOfSessions; index++)
+    episodes.push(
+      series.episodes
+        .filter(({ seasonNr }) => seasonNr === index)
+        .sort((a, b) => a.episodeNr - b.episodeNr)
+    );
+
+  return { ...series, episodes: episodes.flat() };
 };
 
 const returnMoviesArray = (movie: MovieSchemaType[]): returnVideosArray => {
@@ -382,20 +406,6 @@ const returnSeriesArray = (series: SeriesSchemaType[]): returnVideosArray => {
     title,
     displayPicture: `${url}/${displayPicture}`,
   }));
-};
-
-const returnEpisode = (episode: EpisodeSchemaType) => {
-  return {
-    _id: episode._id,
-    previewImagesUrl: episode.previewImagesUrl.map(
-      (image) => `${url}/${image}`
-    ),
-    title: episode.seriesTitle,
-    episodeTitle: episode.episodeTitle,
-    session: episode.sessionNr,
-    episode: episode.episodeNr,
-    seriesId: episode.seriesId,
-  };
 };
 
 export default {
@@ -434,6 +444,7 @@ export default {
   resetSeriesMonthlyViews,
   addViewToMovie,
   addViewToSeries,
+  addViewToEpisode,
   addMonthlyViewToMovie,
   addMonthlyViewToSeries,
   getMyListInMovie,
@@ -454,7 +465,8 @@ export default {
   returnAvatar,
   returnVideo,
   returnMovie,
+  returnEpisode,
+  returnSeries,
   returnMoviesArray,
   returnSeriesArray,
-  returnEpisode,
 };
