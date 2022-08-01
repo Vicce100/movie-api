@@ -23,11 +23,21 @@ const seriesSchema = new mongoose.Schema({
   description: { type: String, require: false, maxLength: 1225 },
   views: { type: Number, require: true },
   monthlyViews: { type: Number, require: true },
+  // uploaded to servers
   uploadDate: date,
-  creationDate: date,
-  latestDate: date,
-  episodesId: [{ type: mongoose.Types.ObjectId }],
-  amountOfSessions: { type: Number },
+  // first release
+  creationDate: { type: String, imitable: true, require: true },
+  // last release
+  latestDate: { type: String, imitable: false, require: true },
+  episodes: [
+    {
+      episodeId: { type: mongoose.Types.ObjectId, require: true },
+      seasonNr: { type: Number, require: true },
+      episodeNr: { type: Number, require: true },
+    },
+  ],
+  amountOfSessions: { type: Number, require: true },
+  amountOfEpisodes: { type: Number, require: true },
   creatorsId: { type: mongoose.SchemaTypes.ObjectId, ref: 'Users' },
 });
 

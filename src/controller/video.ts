@@ -23,6 +23,8 @@ import {
 import { errorHandler } from '../utilities/middleware.js';
 import { cleanString, generatePreviewImages } from '../utilities/index.js';
 import { Types } from 'mongoose';
+import seriesSchema from '../schemas/seriesSchema.js';
+import episodesSchema from '../schemas/episodesSchema.js';
 
 export const getMovie = async (req: Request, res: Response) => {
   const { range } = req.headers;
@@ -110,29 +112,39 @@ export const getEpisode = async (req: Request, res: Response) => {
 
 export const addView = async (req: Request, res: Response) => {
   const { videoId, isMovie }: { videoId: string; isMovie: boolean } = req.body;
-  if (isMovie) {
-    try {
+  try {
+    if (isMovie) {
       await db.addViewToMovie(videoId);
       await db.addMonthlyViewToMovie(videoId);
-    } catch (error) {
-      console.log(error);
+    } else {
+      // videoId === episodeId
+      const episode = await db.findEpisodeById(videoId);
+      assertNonNullish(episode, errorCode.VALUE_MISSING);
+
+      await db.addViewToEpisode(videoId);
+      await db.addViewToSeries(episode.seriesId);
+      await db.addMonthlyViewToSeries(episode.seriesId);
     }
+  } catch (error) {
+    console.log(error);
   }
   res.status(200).json({ success: true });
 };
 
-export const postSingleMovie = async (req: Request, res: Response) => {
+export const uploadMovie = async (req: Request, res: Response) => {
   const { files } = req;
   const {
     title,
     description,
     categories,
     releaseDate,
+    isPublic,
   }: {
     title: string;
     description: string;
     categories: string[] | string;
     releaseDate: string;
+    isPublic?: boolean;
   } = req.body;
 
   if (!files || !categories || !title)
@@ -155,7 +167,8 @@ export const postSingleMovie = async (req: Request, res: Response) => {
         description,
         creatorsId: req.user._id,
         releaseDate,
-        public: true,
+        public: isPublic || true,
+        views: 0,
       });
       const { _id, videoUrl } = newMovie;
       await newMovie.save();
@@ -178,6 +191,125 @@ export const postSingleMovie = async (req: Request, res: Response) => {
   } else {
     const message = 'number of files dose not match number of titles';
     return res.status(400).json(db.returnErrorData(message, 400));
+  }
+};
+
+export const createSeries = async (req: Request, res: Response) => {
+  const { file } = req;
+  const {
+    title,
+    description,
+    categories,
+    franchise,
+    creationDate,
+    latestDate,
+    isPublic,
+  }: {
+    title: string;
+    description: string;
+    categories: string[] | string;
+    franchise: string[] | string;
+    creationDate: string;
+    latestDate: string;
+    isPublic?: string;
+  } = req.body;
+
+  let tempCategory: string[] | null = null;
+  let tempFranchises: string[] | null = null;
+
+  if (!Array.isArray(categories)) tempCategory = [categories];
+  else tempCategory = categories.map((tempCategory) => tempCategory);
+
+  if (!Array.isArray(franchise)) tempFranchises = [franchise];
+  else tempFranchises = franchise.map((tempFranchise) => tempFranchise);
+
+  try {
+    assertNonNullish(file, errorCode.VALUE_MISSING);
+    const series = new seriesSchema({
+      title,
+      displayPicture: file.path,
+      views: 0,
+      categories: tempCategory,
+      franchise: tempFranchises,
+      description,
+      creatorsId: req.user._id,
+      creationDate,
+      latestDate,
+      public: Boolean(isPublic) || true,
+      amountOfSessions: 0,
+      amountOfEpisodes: 0,
+      episodes: [],
+    });
+    await series.save();
+    await db.addUsersSeries(req.user._id, series._id);
+
+    res.status(201).json({ success: true });
+  } catch (error) {
+    if (error instanceof Error) {
+      const errorResponse = errorHandler(error);
+      return res.status(Number(errorResponse.status)).json(errorResponse);
+    }
+  }
+};
+
+export const addEpisodesTOSeries = async (req: Request, res: Response) => {
+  const { files } = req;
+  const {
+    seriesTitle,
+    seriesId,
+    episodeTitle,
+    description,
+    releaseDate,
+    sessionNr,
+    episodeNr,
+  }: {
+    seriesTitle: string;
+    seriesId: string;
+    episodeTitle: string;
+    description: string;
+    releaseDate: string;
+    sessionNr: number;
+    episodeNr: number;
+  } = req.body;
+  assertNonNullish(files, errorCode.WRONG_VALUE);
+
+  try {
+    if (Array.isArray(files)) throw new Error(errorCode.WRONG_VALUE);
+
+    const series = new episodesSchema({
+      seriesTitle,
+      episodeTitle,
+      seriesId,
+      videoUrl: files.videoFile[0].path,
+      displayPicture: files.displayPicture[0].path,
+      previewImagesUrl: [],
+      views: 0,
+      description,
+      releaseDate,
+      sessionNr,
+      episodeNr,
+      creatorsId: req.user._id,
+    });
+
+    await series.save();
+
+    res.status(201).json({ success: true });
+
+    const previewImageArray = await generatePreviewImages({
+      videoUrl: series.videoUrl,
+      outputPathAndFileName: `uploads/images/ffmpeg/${cleanString(
+        series.episodeTitle
+      )}`, // no increment or extension
+      fps: 1 / 10,
+      resolution: '1920x1080',
+    });
+
+    await db.updateEpisodesPreviewImages(series._id, previewImageArray);
+  } catch (error) {
+    if (error instanceof Error) {
+      const errorResponse = errorHandler(error);
+      return res.status(Number(errorResponse.status)).json(errorResponse);
+    }
   }
 };
 
@@ -261,13 +393,10 @@ const getMyList = async (profileId: string, user: UserType) => {
     if (!activeProfile.savedList) throw new Error(errorCode.VALUE_NOT_EXISTING);
 
     const movieList = await db.getMyListInMovie(activeProfile.savedList);
-    assertNonNullish(movieList, errorCode.VALUE_MISSING);
-
     const seriesList = await db.getMyListInSeries(activeProfile.savedList);
-    assertNonNullish(movieList, errorCode.VALUE_MISSING);
     return {
-      movieList: db.returnMoviesArray(movieList),
-      seriesList: db.returnSeriesArray(seriesList),
+      movieList: db.returnMoviesArray(movieList) || [],
+      seriesList: db.returnSeriesArray(seriesList) || [],
     };
   } catch (error: any) {
     if (error) throw new Error(error.message || error);
@@ -282,23 +411,20 @@ const getWatchAged = async (profileId: string, user: UserType) => {
     if (!activeProfile.hasWatch) throw new Error(errorCode.VALUE_NOT_EXISTING);
 
     const movieList = await db.getWatchAgedInMovies(activeProfile.hasWatch);
-    assertNonNullish(movieList, errorCode.VALUE_MISSING);
-
     const seriesList = await db.getWatchAgedInSeries(activeProfile.hasWatch);
-    assertNonNullish(movieList, errorCode.VALUE_MISSING);
     return {
-      movieList: db.returnMoviesArray(movieList),
-      seriesList: db.returnSeriesArray(seriesList),
+      movieList: db.returnMoviesArray(movieList) || [],
+      seriesList: db.returnSeriesArray(seriesList) || [],
     };
   } catch (error) {}
 };
 
 const getTop10Movies = async () => {
   try {
-    const res = await db.getTop10Movies();
-    assertNonNullish(res, errorCode.VALUE_MISSING);
-    if (!res.length) throw new Error(errorCode.VALUE_NOT_EXISTING);
-    return db.returnMoviesArray(res);
+    const result = await db.getTop10Movies();
+    assertNonNullish(result, errorCode.VALUE_MISSING);
+    if (!result.length) throw new Error(errorCode.VALUE_NOT_EXISTING);
+    return db.returnMoviesArray(result);
   } catch (error: any) {
     if (error) throw new Error(error.message || error);
   }
@@ -306,10 +432,10 @@ const getTop10Movies = async () => {
 
 const getTop10Series = async () => {
   try {
-    const res = await db.getTop10Series();
-    assertNonNullish(res, errorCode.VALUE_MISSING);
-    if (!res.length) throw new Error(errorCode.VALUE_NOT_EXISTING);
-    return db.returnSeriesArray(res);
+    const result = await db.getTop10Series();
+    assertNonNullish(result, errorCode.VALUE_MISSING);
+    if (!result.length) throw new Error(errorCode.VALUE_NOT_EXISTING);
+    return db.returnSeriesArray(result);
   } catch (error: any) {
     if (error) throw new Error(error.message || error);
   }
@@ -317,10 +443,10 @@ const getTop10Series = async () => {
 
 const getRandomMovie = async () => {
   try {
-    const res = await db.randomMovie();
-    assertNonNullish(res, errorCode.VALUE_MISSING);
-    if (!res.length) throw new Error(errorCode.VALUE_NOT_EXISTING);
-    return db.returnMoviesArray(res);
+    const result = await db.randomMovie();
+    assertNonNullish(result, errorCode.VALUE_MISSING);
+    if (!result.length) throw new Error(errorCode.VALUE_NOT_EXISTING);
+    return db.returnMoviesArray(result);
   } catch (error: any) {
     if (error) throw new Error(error.message || error);
   }
@@ -328,10 +454,10 @@ const getRandomMovie = async () => {
 
 const getRandomSeries = async () => {
   try {
-    const res = await db.randomSeries();
-    assertNonNullish(res, errorCode.VALUE_MISSING);
-    if (!res.length) throw new Error(errorCode.VALUE_NOT_EXISTING);
-    return db.returnSeriesArray(res);
+    const result = await db.randomSeries();
+    assertNonNullish(result, errorCode.VALUE_MISSING);
+    if (!result.length) throw new Error(errorCode.VALUE_NOT_EXISTING);
+    return db.returnSeriesArray(result);
   } catch (error: any) {
     if (error) throw new Error(error.message || error);
   }
@@ -433,6 +559,26 @@ export const getSeriesDataByCategory = async (req: Request, res: Response) => {
         displayPicture: `${url}/${displayPicture}`,
       }))
     );
+  } catch (error) {
+    if (error instanceof Error) {
+      const errorResponse = errorHandler(error);
+      return res.status(Number(errorResponse.status)).json(errorResponse);
+    }
+  }
+};
+
+export const getSearchData = async (req: Request, res: Response) => {
+  const { value } = req.query;
+  console.log(value);
+  try {
+    assertsIsString(value);
+    const movies = await db.searchForMovies(value);
+    const series = await db.searchForSeries(value);
+
+    res.status(200).json({
+      movies: db.returnMoviesArray(movies) || [],
+      series: db.returnSeriesArray(series) || [],
+    });
   } catch (error) {
     if (error instanceof Error) {
       const errorResponse = errorHandler(error);

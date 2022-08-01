@@ -19,6 +19,7 @@ const episodesSchema = new mongoose.Schema({
   videoUrl: { ...reqString, unique: true },
   displayPicture: { ...reqString },
   previewImagesUrl: [{ type: String, require: true }],
+  views: { type: Number, require: true },
   public: { type: Boolean, default: () => false, require: true },
   description: { type: String, require: false, maxLength: 1225 },
   uploadDate: date,

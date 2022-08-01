@@ -14,13 +14,16 @@ import {
   getVideosData,
   getMoviesDataByCategory,
   getSeriesDataByCategory,
-  postSingleMovie,
+  uploadMovie,
+  createSeries,
   deleteMovie,
   deleteEpisode,
   generateFFmpegToMovie,
   generateFFmpegToEpisode,
   removeFFmpegFromMovie,
   removeFFmpegFromEpisode,
+  addEpisodesTOSeries,
+  getSearchData,
 } from '../controller/video.js';
 import { cleanString, routesString as rs } from '../utilities/index.js';
 
@@ -67,6 +70,8 @@ router.post(`/${rs.movie}/${rs.data}/${rs.category}`, getMoviesDataByCategory);
 
 router.post(`/${rs.series}/${rs.data}/${rs.category}`, getSeriesDataByCategory);
 
+router.get(`/${rs.search}`, getSearchData);
+
 router.delete(`/${rs.movie}/${rs.delete}/:${rs.movieId}`, deleteMovie);
 
 router.delete(`/${rs.episode}/${rs.delete}/:${rs.episodeId}`, deleteEpisode);
@@ -78,18 +83,25 @@ router.post(
     { name: 'displayPicture', maxCount: 1 },
   ]),
   multerErrorHandler,
-  postSingleMovie
+  uploadMovie
 );
 
-// router.post(
-//   `/${rs.series}/${rs.upload}`,
-//   privateVideoUpload.fields([
-//     { name: 'videoFile', maxCount: 1 },
-//     { name: 'displayPicture', maxCount: 1 },
-//   ]),
-//   multerErrorHandler,
-//   postSingleVideo
-// );
+router.post(
+  `/${rs.series}/${rs.create}`,
+  publicVideoUpload.single('displayPicture'),
+  multerErrorHandler,
+  createSeries
+);
+
+router.post(
+  `/${rs.episode}/${rs.add}`,
+  publicVideoUpload.fields([
+    { name: 'videoFile', maxCount: 1 },
+    { name: 'displayPicture', maxCount: 1 },
+  ]),
+  multerErrorHandler,
+  addEpisodesTOSeries
+);
 
 router.get(`/${rs.movie}/${rs.ffmpeg}/:${rs.movieId}`, generateFFmpegToMovie);
 

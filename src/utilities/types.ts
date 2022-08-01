@@ -32,6 +32,7 @@ export const errorCode = {
   VALUE_NOT_EXISTING: 'value dose not exists' as const,
   INVALID_EMAIL: 'invalid email' as const,
   WRONG_VALUE: 'wrong value' as const,
+  EMPTY_VALUE: 'empty value' as const,
 };
 
 export const userRoles = {
@@ -103,7 +104,11 @@ export interface SeriesSchemaType {
   uploadDate: string;
   creationDate: string;
   latestDate: string;
-  episodesId: Types.ObjectId[];
+  episodes: {
+    episodeId: Types.ObjectId;
+    seasonNr: number;
+    episodeNr: number;
+  }[];
   amountOfSessions: number;
   creatorsId: Types.ObjectId;
 }
@@ -116,6 +121,7 @@ export interface EpisodeSchemaType {
   seriesTitle: string;
   episodeTitle: string;
   public: boolean;
+  views: number;
   videoUrl: string;
   previewImagesUrl: string[];
   displayPicture: string;
@@ -181,20 +187,22 @@ export interface UserType {
   role: UsersRolesType;
   userStatus: UserStatusType;
   createdAt: string;
-  moviesUploaded: Types.ObjectId[]; // videosUploaded
+  moviesUploaded: Types.ObjectId[];
   seriesUploaded: Types.ObjectId[];
 }
 
 export type CurrentUserType = {
   id: Types.ObjectId;
   email: string;
-  createdAt: string;
   refreshToken: string;
   firstName: string;
   lastName: string;
   profiles: ProfileType;
   role: UsersRolesType;
   userStatus: UserStatusType;
+  createdAt: string;
+  moviesUploaded: Types.ObjectId[]; // videosUploaded
+  seriesUploaded: Types.ObjectId[];
 };
 
 export interface AuthRequestType extends Omit<Request, 'user'> {
