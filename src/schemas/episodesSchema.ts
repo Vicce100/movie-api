@@ -20,11 +20,10 @@ const episodesSchema = new mongoose.Schema({
   displayPicture: { ...reqString },
   previewImagesUrl: [{ type: String, require: true }],
   views: { type: Number, require: true },
-  public: { type: Boolean, default: () => false, require: true },
   description: { type: String, require: false, maxLength: 1225 },
   uploadDate: date,
-  releaseDate: date,
-  sessionNr: { type: Number, require: true },
+  releaseDate: { type: String, imitable: false, require: true },
+  seasonNr: { type: Number, require: true },
   episodeNr: { type: Number, require: true },
   creatorsId: { type: mongoose.SchemaTypes.ObjectId, ref: 'users' },
 });

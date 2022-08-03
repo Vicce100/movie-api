@@ -24,6 +24,9 @@ import {
   removeFFmpegFromEpisode,
   addEpisodesTOSeries,
   getSearchData,
+  getSearchMovieData,
+  getSearchSeresData,
+  getSingleSeriesData,
 } from '../controller/video.js';
 import { cleanString, routesString as rs } from '../utilities/index.js';
 
@@ -62,6 +65,8 @@ router.post(`/${rs.addView}`, addView);
 
 router.get(`/${rs.movie}/${rs.data}/:${rs.movieId}`, getSingleMovieData);
 
+router.get(`/${rs.series}/${rs.data}/:${rs.seriesId}`, getSingleSeriesData);
+
 router.get(`/${rs.episode}/${rs.data}/:${rs.episodeId}`, getSingleEpisodeData);
 
 router.post(`/${rs.data}`, getVideosData);
@@ -71,6 +76,10 @@ router.post(`/${rs.movie}/${rs.data}/${rs.category}`, getMoviesDataByCategory);
 router.post(`/${rs.series}/${rs.data}/${rs.category}`, getSeriesDataByCategory);
 
 router.get(`/${rs.search}`, getSearchData);
+
+router.get(`/${rs.movie}/${rs.search}`, getSearchMovieData);
+
+router.get(`/${rs.series}/${rs.search}`, getSearchSeresData);
 
 router.delete(`/${rs.movie}/${rs.delete}/:${rs.movieId}`, deleteMovie);
 
