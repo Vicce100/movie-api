@@ -229,25 +229,25 @@ const addEpisodeToSeriesField = (
 // https://www.mongodb.com/docs/upcoming/reference/operator/aggregation/sample/#pipe._S_sample
 const getMyListInMovie = (MyListIds: Types.ObjectId[] | string[]) =>
   movieSchema.aggregate<MovieSchemaType>([
-    { $match: { _id: { $in: MyListIds } } },
+    { $match: { _id: { $in: [...MyListIds] } } },
     { $sample: { size: MyListIds.length } },
   ]);
 
 const getMyListInSeries = (MyListIds: Types.ObjectId[] | string[]) =>
   seriesSchema.aggregate<SeriesSchemaType>([
-    { $match: { _id: { $in: MyListIds } } },
+    { $match: { _id: { $in: [...MyListIds] } } },
     { $sample: { size: MyListIds.length } },
   ]);
 
 const getWatchAgedInMovies = (hasWatchIds: Types.ObjectId[] | string[]) =>
   movieSchema.aggregate<MovieSchemaType>([
-    { $match: { _id: { $in: hasWatchIds } } },
+    { $match: { _id: { $in: [...hasWatchIds] } } },
     { $sample: { size: hasWatchIds.length } },
   ]);
 
 const getWatchAgedInSeries = (hasWatchIds: Types.ObjectId[] | string[]) =>
   seriesSchema.aggregate<SeriesSchemaType>([
-    { $match: { _id: { $in: hasWatchIds } } },
+    { $match: { _id: { $in: [...hasWatchIds] } } },
     { $sample: { size: hasWatchIds.length } },
   ]);
 

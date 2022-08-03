@@ -86,7 +86,7 @@ router.delete(`/${rs.movie}/${rs.delete}/:${rs.movieId}`, deleteMovie);
 router.delete(`/${rs.episode}/${rs.delete}/:${rs.episodeId}`, deleteEpisode);
 
 router.post(
-  `/${rs.movie}/${rs.upload}`,
+  `/${rs.movie}/${rs.create}`,
   publicVideoUpload.fields([
     { name: 'videoFile', maxCount: 1 },
     { name: 'displayPicture', maxCount: 1 },

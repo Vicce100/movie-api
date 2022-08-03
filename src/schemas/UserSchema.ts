@@ -25,6 +25,8 @@ const userSchema = new mongoose.Schema({
       profileName: requiredShortString,
       avatarURL: reqString,
       savedList: [{ type: mongoose.SchemaTypes.ObjectId, ref: 'video' }],
+      likedList: [{ type: mongoose.SchemaTypes.ObjectId, ref: 'video' }],
+      hasWatch: [{ type: mongoose.SchemaTypes.ObjectId, ref: 'video' }],
     },
   ],
   role: { type: String, require: true, default: 'user' },

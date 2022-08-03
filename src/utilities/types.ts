@@ -134,6 +134,7 @@ export interface SeriesSchemaType {
   latestDate: string;
   episodes: EpisodesInSeriesSchema[];
   amountOfSessions: number;
+  amountOfEpisodes: number;
   creatorsId: Types.ObjectId;
 }
 
@@ -145,6 +146,7 @@ export interface EpisodeSchemaType {
   views: number;
   videoUrl: string;
   previewImagesUrl: string[];
+  views: number;
   displayPicture: string;
   description: string;
   creatorsId: Types.ObjectId;

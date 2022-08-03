@@ -2,6 +2,8 @@ import { Request, Response } from 'express';
 import fs from 'fs';
 
 import movieSchema from '../schemas/movieSchema.js';
+import seriesSchema from '../schemas/seriesSchema.js';
+import episodesSchema from '../schemas/episodeSchema.js';
 import db from '../utilities/db/index.js';
 import {
   errorCode,
@@ -126,8 +128,9 @@ export const addView = async (req: Request, res: Response) => {
       await db.addViewToSeries(episode.seriesId);
       await db.addMonthlyViewToSeries(episode.seriesId);
     }
-  } catch (error) {
+  } catch (error: any) {
     console.log(error);
+    res.status(400).json({ success: false, message: error.message || error });
   }
   res.status(200).json({ success: true });
 };
@@ -138,12 +141,14 @@ export const uploadMovie = async (req: Request, res: Response) => {
     title,
     description,
     categories,
+    franchise,
     releaseDate,
     isPublic,
   }: {
     title: string;
     description: string;
     categories: string[] | string;
+    franchise: string[] | string;
     releaseDate: string;
     isPublic?: boolean;
   } = req.body;
@@ -153,9 +158,13 @@ export const uploadMovie = async (req: Request, res: Response) => {
 
   if (!Array.isArray(files)) {
     let tempCategory: string[] | null = null;
-    if (Array.isArray(categories))
-      tempCategory = categories.map((tempCategory) => tempCategory);
-    else tempCategory = [categories];
+    let tempFranchises: string[] | null = null;
+
+    if (!Array.isArray(categories)) tempCategory = [categories];
+    else tempCategory = categories.map((tempCategory) => tempCategory);
+
+    if (!Array.isArray(franchise)) tempFranchises = [franchise];
+    else tempFranchises = franchise.map((tempFranchise) => tempFranchise);
 
     try {
       const newMovie = new movieSchema({
@@ -163,8 +172,8 @@ export const uploadMovie = async (req: Request, res: Response) => {
         videoUrl: files.videoFile[0].path,
         displayPicture: files.displayPicture[0].path,
         previewImagesUrl: [],
-        // album: files.album.map((file) => file.path) || [],
         categories: tempCategory,
+        franchise: tempFranchises,
         description,
         creatorsId: req.user._id,
         releaseDate,
@@ -262,7 +271,6 @@ export const addEpisodesTOSeries = async (req: Request, res: Response) => {
     releaseDate,
     seasonNr,
     episodeNr,
-  }: {
     seriesId: string;
     episodeTitle: string;
     description: string;
@@ -539,6 +547,8 @@ export const getVideosData = async (req: Request, res: Response) => {
   try {
     if (queryName === myList && profileId)
       resultData = await getMyList(profileId, req.user);
+    // if (queryName === continueWatching && profileId)
+    //   resultData = await getContinueWatching(profileId, req.user);
     else if (queryName === watchAged && profileId)
       resultData = await getWatchAged(profileId, req.user);
     else if (queryName === top10movies) resultData = await getTop10Movies();
