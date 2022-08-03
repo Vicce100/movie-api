@@ -143,7 +143,6 @@ export interface EpisodeSchemaType {
   seriesId: Types.ObjectId;
   seriesTitle: string;
   episodeTitle: string;
-  views: number;
   videoUrl: string;
   previewImagesUrl: string[];
   views: number;

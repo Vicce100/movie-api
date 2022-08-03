@@ -8,12 +8,9 @@ import db from '../utilities/db/index.js';
 import {
   errorCode,
   mp4,
-  url,
   queryPaths,
   UserType,
   queryPathsString,
-  MovieSchemaType,
-  SeriesSchemaType,
   EpisodesInSeriesSchema,
 } from '../utilities/types.js';
 import {
@@ -26,8 +23,6 @@ import {
 import { errorHandler } from '../utilities/middleware.js';
 import { cleanString, generatePreviewImages } from '../utilities/index.js';
 import { Types } from 'mongoose';
-import seriesSchema from '../schemas/seriesSchema.js';
-import episodesSchema from '../schemas/episodeSchema.js';
 
 export const getMovie = async (req: Request, res: Response) => {
   const { range } = req.headers;
@@ -271,6 +266,7 @@ export const addEpisodesTOSeries = async (req: Request, res: Response) => {
     releaseDate,
     seasonNr,
     episodeNr,
+  }: {
     seriesId: string;
     episodeTitle: string;
     description: string;

@@ -437,12 +437,10 @@ const returnEpisode = (episode: EpisodeSchemaType) => ({
   releaseDate: episode.releaseDate,
 });
 
-const returnSeries = (
-  series: SeriesSchemaType
-): ReturnedSeriesSchemaType | SeriesSchemaType => {
+const returnSeries = (series: SeriesSchemaType): ReturnedSeriesSchemaType => {
   const value = {
     _id: series._id,
-    episodes: series.episodes,
+    episodes: [series.episodes],
     title: series.title,
     displayPicture: `${url}/${series.displayPicture}`,
     views: series.views,
