@@ -14,21 +14,25 @@ const date = {
 
 const seriesSchema = new mongoose.Schema({
   title: requiredShortString,
-  videoUrl: { ...reqString, unique: true },
   displayPicture: { ...reqString },
-  previewImagesUrl: [{ type: String, require: true }],
   public: { type: Boolean, default: () => false, require: true },
   categories: [{ ...reqString }],
   franchise: [{ ...reqString }],
   description: { type: String, require: false, maxLength: 1225 },
   views: { type: Number, require: true },
   monthlyViews: { type: Number, require: true },
+  // uploaded to servers
   uploadDate: date,
+  // first release
   creationDate: { type: String, imitable: true, require: true },
+  // last release
   latestDate: { type: String, imitable: false, require: true },
   episodes: [
     {
       episodeId: { type: mongoose.Types.ObjectId, require: true },
+      episodeTitle: { type: String, require: true },
+      episodeDisplayPicture: { type: String, require: true },
+      episodeDescription: { type: String, require: true },
       seasonNr: { type: Number, require: true },
       episodeNr: { type: Number, require: true },
     },

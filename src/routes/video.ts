@@ -10,8 +10,8 @@ import {
   getEpisode,
   addView,
   getMovieData,
-  getSeriesData,
   getEpisodeData,
+  getSeriesData,
   getVideosData,
   getMoviesDataByCategory,
   getSeriesDataByCategory,
@@ -24,6 +24,9 @@ import {
   removeFFmpegFromMovie,
   removeFFmpegFromEpisode,
   addEpisodesTOSeries,
+  getSearchData,
+  getSearchMovieData,
+  getSearchSeresData,
 } from '../controller/video.js';
 import { cleanString, routesString as rs } from '../utilities/index.js';
 
@@ -72,6 +75,12 @@ router.post(`/${rs.movie}/${rs.data}/${rs.category}`, getMoviesDataByCategory);
 
 router.post(`/${rs.series}/${rs.data}/${rs.category}`, getSeriesDataByCategory);
 
+router.get(`/${rs.search}`, getSearchData);
+
+router.get(`/${rs.movie}/${rs.search}`, getSearchMovieData);
+
+router.get(`/${rs.series}/${rs.search}`, getSearchSeresData);
+
 router.delete(`/${rs.movie}/${rs.delete}/:${rs.movieId}`, deleteMovie);
 
 router.delete(`/${rs.episode}/${rs.delete}/:${rs.episodeId}`, deleteEpisode);
@@ -88,14 +97,14 @@ router.post(
 
 router.post(
   `/${rs.series}/${rs.create}`,
-  privateVideoUpload.single('displayPicture'),
+  publicVideoUpload.single('displayPicture'),
   multerErrorHandler,
   createSeries
 );
 
 router.post(
   `/${rs.episode}/${rs.add}`,
-  privateVideoUpload.fields([
+  publicVideoUpload.fields([
     { name: 'videoFile', maxCount: 1 },
     { name: 'displayPicture', maxCount: 1 },
   ]),

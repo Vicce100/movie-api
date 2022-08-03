@@ -10,6 +10,8 @@ import {
   ReturnedVideoData,
   SeriesSchemaType,
   returnVideosArray,
+  ReturnedSeriesSchemaType,
+  EpisodesInSeriesSchema,
 } from '../types.js';
 import { assertsValueToType } from '../assertions.js';
 import userSchema from '../../schemas/UserSchema.js';
@@ -201,6 +203,29 @@ const addMonthlyViewToMovie = (movieId: Types.ObjectId | string) =>
 const addMonthlyViewToSeries = (seriesId: Types.ObjectId | string) =>
   seriesSchema.updateOne({ _id: seriesId }, { $inc: { monthlyViews: 1 } });
 
+const addAmountOfSessions = (
+  seriesId: Types.ObjectId | string,
+  amount?: number
+) =>
+  seriesSchema.updateOne(
+    { _id: seriesId },
+    { $inc: { amountOfSessions: amount || 1 } }
+  );
+
+const addAmountOfEpisodes = (
+  seriesId: Types.ObjectId | string,
+  amount?: number
+) =>
+  seriesSchema.updateOne(
+    { _id: seriesId },
+    { $inc: { amountOfEpisodes: amount || 1 } }
+  );
+
+const addEpisodeToSeriesField = (
+  seriesId: Types.ObjectId | string,
+  data: EpisodesInSeriesSchema
+) => seriesSchema.updateOne({ _id: seriesId }, { $push: { episodes: data } });
+
 // https://www.mongodb.com/docs/upcoming/reference/operator/aggregation/sample/#pipe._S_sample
 const getMyListInMovie = (MyListIds: Types.ObjectId[] | string[]) =>
   movieSchema.aggregate<MovieSchemaType>([
@@ -291,15 +316,24 @@ const randomSeriesByFranchise = (franchise: string) =>
     ])
     .limit(querySize);
 
+const searchForMovies = (text: string) =>
+  movieSchema
+    .find({ title: { $regex: text, $options: '$i' } })
+    .limit(querySize);
+
+const searchForSeries = (text: string) =>
+  seriesSchema
+    .find({ title: { $regex: text, $options: '$i' } })
+    .limit(querySize);
+
 /* ----------------------- returned values ----------------------- */
 
 const returnAvatar = (data: AvatarSchemaType) => {
   return {
-    id: data?._id,
-    name: data?.name,
-    url: `${url}/${data?.url}`,
-    urlPath: data?.url,
-    franchise: data?.franchise,
+    id: data._id,
+    name: data.name,
+    url: `${url}/${data.url}`,
+    franchise: data.franchise,
   };
 };
 
@@ -319,14 +353,20 @@ const returnCurrentUser = (
     firstName: user.firstName,
     lastName: user.lastName,
     profiles:
-      user?.profiles?.map(({ _id, profileName, avatarURL, savedList }) => ({
-        _id,
-        profileName,
-        avatarURL: `${url}/${avatarURL}`,
-        savedList,
-      })) || undefined,
+      user?.profiles?.map(
+        ({ _id, profileName, avatarURL, savedList, likedList, hasWatch }) => ({
+          _id,
+          profileName,
+          avatarURL: `${url}/${avatarURL}`,
+          savedList: savedList || [],
+          likedList: likedList || [],
+          hasWatch: hasWatch || [],
+        })
+      ) || undefined,
     role: user.role,
     userStatus: user.userStatus,
+    moviesUploaded: user.moviesUploaded,
+    seriesUploaded: user.seriesUploaded,
   },
 });
 
@@ -356,7 +396,7 @@ const returnVideo = (
       previewImagesUrl: video.previewImagesUrl,
       title: video.seriesTitle,
       episodeTitle: video.episodeTitle,
-      session: video.sessionNr,
+      session: video.seasonNr,
       episode: video.episodeNr,
       seriesId: video.seriesId,
     };
@@ -364,38 +404,87 @@ const returnVideo = (
 };
 
 const returnMovie = (movie: MovieSchemaType) => ({
-  ...movie,
+  _id: movie._id,
+  title: movie.title,
+  videoUrl: movie.videoUrl,
+  displayPicture: `${url}/${movie.displayPicture}`,
   previewImagesUrl: movie.previewImagesUrl.map((image) => `${url}/${image}`),
+  public: movie.public,
+  categories: movie.categories,
+  franchise: movie.franchise,
+  description: movie.description,
+  views: movie.views,
+  monthlyViews: movie.monthlyViews,
+  creatorsId: movie.creatorsId,
+  uploadDate: movie.uploadDate,
+  releaseDate: movie.releaseDate,
 });
 
 const returnEpisode = (episode: EpisodeSchemaType) => ({
-  ...episode,
+  _id: episode._id,
+  seasonNr: episode.seasonNr,
+  episodeNr: episode.episodeNr,
+  seriesId: episode.seriesId,
+  seriesTitle: episode.seriesTitle,
+  episodeTitle: episode.episodeTitle,
+  videoUrl: episode.videoUrl,
   previewImagesUrl: episode.previewImagesUrl.map((image) => `${url}/${image}`),
+  views: episode.views,
+  displayPicture: `${url}/${episode.displayPicture}`,
+  description: episode.description,
+  creatorsId: episode.creatorsId,
+  uploadDate: episode.uploadDate,
+  releaseDate: episode.releaseDate,
 });
 
-const returnSeries = (series: SeriesSchemaType) => {
-  if (!series.episodes) return { ...series };
+const returnSeries = (
+  series: SeriesSchemaType
+): ReturnedSeriesSchemaType | SeriesSchemaType => {
+  const value = {
+    _id: series._id,
+    episodes: series.episodes,
+    title: series.title,
+    displayPicture: `${url}/${series.displayPicture}`,
+    views: series.views,
+    monthlyViews: series.monthlyViews,
+    public: series.public,
+    categories: series.categories,
+    franchise: series.franchise,
+    description: series.description,
+    uploadDate: series.uploadDate,
+    creationDate: series.creationDate,
+    latestDate: series.latestDate,
+    amountOfSessions: series.amountOfSessions,
+    creatorsId: series.creatorsId,
+  };
 
-  const episodes: {
-    episodeId: Types.ObjectId;
-    seasonNr: number;
-    episodeNr: number;
-  }[][] = [];
+  if (!series.episodes) return value;
+
+  const episodes: EpisodesInSeriesSchema[][] = [];
 
   for (let index = 0; index < series.amountOfSessions; index++)
     episodes.push(
       series.episodes
-        .filter(({ seasonNr }) => seasonNr === index)
+        .filter(({ seasonNr }) => seasonNr === index + 1)
         .sort((a, b) => a.episodeNr - b.episodeNr)
+        .map((episode) => ({
+          episodeId: episode.episodeId,
+          episodeTitle: episode.episodeTitle,
+          episodeDisplayPicture: `${url}/${episode.episodeDisplayPicture}`,
+          episodeDescription: episode.episodeDescription,
+          seasonNr: episode.seasonNr,
+          episodeNr: episode.episodeNr,
+        }))
     );
 
-  return { ...series, episodes: episodes.flat() };
+  return { ...value, episodes: episodes };
 };
 
 const returnMoviesArray = (movie: MovieSchemaType[]): returnVideosArray => {
   return movie.map((movie) => ({
     _id: movie._id,
     title: movie.title,
+    isMovie: true,
     displayPicture: `${url}/${movie.displayPicture}`,
   }));
 };
@@ -404,6 +493,7 @@ const returnSeriesArray = (series: SeriesSchemaType[]): returnVideosArray => {
   return series.map(({ _id, title, displayPicture }) => ({
     _id,
     title,
+    isMovie: false,
     displayPicture: `${url}/${displayPicture}`,
   }));
 };
@@ -428,6 +518,7 @@ export default {
   getSingleFranchiseBayName,
   getAllFranchises,
   getSingleAvatarById,
+  getAllAvatars,
   findMovieById,
   findSeriesById,
   findEpisodeById,
@@ -447,6 +538,9 @@ export default {
   addViewToEpisode,
   addMonthlyViewToMovie,
   addMonthlyViewToSeries,
+  addAmountOfSessions,
+  addAmountOfEpisodes,
+  addEpisodeToSeriesField,
   getMyListInMovie,
   getMyListInSeries,
   getWatchAgedInMovies,
@@ -459,7 +553,8 @@ export default {
   randomSeriesByCategory,
   randomMovieByFranchise,
   randomSeriesByFranchise,
-  getAllAvatars,
+  searchForMovies,
+  searchForSeries,
   returnErrorData,
   returnCurrentUser,
   returnAvatar,

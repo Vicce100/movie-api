@@ -32,6 +32,7 @@ export const errorCode = {
   VALUE_NOT_EXISTING: 'value dose not exists' as const,
   INVALID_EMAIL: 'invalid email' as const,
   WRONG_VALUE: 'wrong value' as const,
+  EMPTY_VALUE: 'empty value' as const,
 };
 
 export const userRoles = {
@@ -76,6 +77,7 @@ export type UserStatusType = 'active' | 'disabled';
 export type returnVideosArray = {
   _id: Types.ObjectId;
   title: string;
+  isMovie: boolean;
   displayPicture: string;
 }[];
 
@@ -90,6 +92,33 @@ export type ReturnedVideoData = {
   seriesId: Types.ObjectId | undefined;
 };
 
+export type EpisodesInSeriesSchema = {
+  episodeId: Types.ObjectId;
+  episodeTitle: string;
+  episodeDisplayPicture: string;
+  episodeDescription: string;
+  seasonNr: number;
+  episodeNr: number;
+};
+
+export interface ReturnedSeriesSchemaType {
+  _id: Types.ObjectId;
+  title: string;
+  displayPicture: string;
+  views: number;
+  monthlyViews: number;
+  public: boolean;
+  categories: string[];
+  franchise: string[];
+  description: string;
+  uploadDate: string;
+  creationDate: string;
+  latestDate: string;
+  episodes: EpisodesInSeriesSchema[][];
+  amountOfSessions: number;
+  creatorsId: Types.ObjectId;
+}
+
 export interface SeriesSchemaType {
   _id: Types.ObjectId;
   title: string;
@@ -103,11 +132,7 @@ export interface SeriesSchemaType {
   uploadDate: string;
   creationDate: string;
   latestDate: string;
-  episodes: {
-    episodeId: Types.ObjectId;
-    seasonNr: number;
-    episodeNr: number;
-  }[];
+  episodes: EpisodesInSeriesSchema[];
   amountOfSessions: number;
   amountOfEpisodes: number;
   creatorsId: Types.ObjectId;
@@ -115,11 +140,10 @@ export interface SeriesSchemaType {
 
 export interface EpisodeSchemaType {
   _id: Types.ObjectId;
-  sessionNr: number;
-  episodeNr: number;
   seriesId: Types.ObjectId;
   seriesTitle: string;
   episodeTitle: string;
+  views: number;
   videoUrl: string;
   previewImagesUrl: string[];
   views: number;
@@ -128,6 +152,8 @@ export interface EpisodeSchemaType {
   creatorsId: Types.ObjectId;
   uploadDate: string;
   releaseDate: string;
+  seasonNr: number;
+  episodeNr: number;
 }
 
 export interface MovieSchemaType {
@@ -186,20 +212,22 @@ export interface UserType {
   role: UsersRolesType;
   userStatus: UserStatusType;
   createdAt: string;
-  moviesUploaded: Types.ObjectId[]; // videosUploaded
+  moviesUploaded: Types.ObjectId[];
   seriesUploaded: Types.ObjectId[];
 }
 
 export type CurrentUserType = {
   id: Types.ObjectId;
   email: string;
-  createdAt: string;
   refreshToken: string;
   firstName: string;
   lastName: string;
   profiles: ProfileType;
   role: UsersRolesType;
   userStatus: UserStatusType;
+  createdAt: string;
+  moviesUploaded: Types.ObjectId[];
+  seriesUploaded: Types.ObjectId[];
 };
 
 export interface AuthRequestType extends Omit<Request, 'user'> {

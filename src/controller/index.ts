@@ -114,6 +114,7 @@ export const addSingleAvatar = async (req: Request, res: Response) => {
   const { name, franchise }: { name: string; franchise: string[] | string } =
     req.body;
   if (!file) return res.status(400).send('No file or wrong file was uploaded!');
+
   let tempFranchise: string[] | null = null;
   if (!Array.isArray(franchise)) tempFranchise = [franchise];
   else tempFranchise = franchise.map((value) => value);
@@ -137,6 +138,7 @@ export const addSingleAvatar = async (req: Request, res: Response) => {
 export const addMultipleAvatars = (req: Request, res: Response) => {
   if (!Array.isArray(req.files))
     return res.status(400).send('No file or wrong file was uploaded!');
+
   const { name, categories }: { name: string[]; categories: string[] } =
     req.body;
 
@@ -173,7 +175,7 @@ export const sendSingleAvatar = async (req: Request, res: Response) => {
 export const sendMultipleAvatars = async (_req: Request, res: Response) => {
   try {
     const data = await db.getAllAvatars();
-    res.json(data.map((d) => db.returnAvatar(d)));
+    res.status(200).json(data.map((d) => db.returnAvatar(d)));
   } catch (error) {
     res.status(400).json(error);
   }
