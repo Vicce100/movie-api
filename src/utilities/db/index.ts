@@ -19,7 +19,7 @@ import categorySchema from '../../schemas/categorySchema.js';
 import avatarSchema from '../../schemas/avatarSchema.js';
 import movieSchema from '../../schemas/movieSchema.js';
 import seriesSchema from '../../schemas/seriesSchema.js';
-import episodesSchema from '../../schemas/episodesSchema.js';
+import episodeSchema from '../../schemas/episodeSchema.js';
 import franchiseSchema from '../../schemas/franchiseSchema.js';
 
 /* ----------------------- local ----------------------- */
@@ -132,7 +132,7 @@ const findSeriesById = (seriesId: Types.ObjectId | string) =>
   seriesSchema.findOne({ _id: seriesId });
 
 const findEpisodeById = (episodeId: Types.ObjectId | string) =>
-  episodesSchema.findOne({ _id: episodeId });
+  episodeSchema.findOne({ _id: episodeId });
 
 const findMovieByName = (videoTitle: string) =>
   movieSchema.findOne({ title: videoTitle });
@@ -141,7 +141,7 @@ const findSeriesByName = (videoTitle: string) =>
   seriesSchema.findOne({ title: videoTitle });
 
 const findEpisodeByName = (videoTitle: string) =>
-  episodesSchema.findOne({ seriesTitle: videoTitle });
+  episodeSchema.findOne({ seriesTitle: videoTitle });
 
 const getMovieDataByCategory = (categoryName: string) =>
   movieSchema.find(
@@ -168,7 +168,7 @@ const updateEpisodesPreviewImages = (
   seriesId: Types.ObjectId | string,
   imageArray: string[]
 ) =>
-  episodesSchema.updateOne(
+  episodeSchema.updateOne(
     { _id: seriesId },
     { $push: { previewImagesUrl: { $each: imageArray } } }
   );
@@ -177,7 +177,7 @@ const deleteMoviePreviewImages = (movieId: Types.ObjectId | string) =>
   movieSchema.updateOne({ _id: movieId }, { $unset: { previewImagesUrl: '' } });
 
 const deleteEpisodePreviewImages = (episodeId: Types.ObjectId | string) =>
-  episodesSchema.updateOne(
+  episodeSchema.updateOne(
     { _id: episodeId },
     { $unset: { previewImagesUrl: '' } }
   );
@@ -195,7 +195,7 @@ const addViewToSeries = (seriesId: Types.ObjectId | string) =>
   seriesSchema.updateOne({ _id: seriesId }, { $inc: { views: 1 } });
 
 const addViewToEpisode = (seriesId: Types.ObjectId | string) =>
-  episodesSchema.updateOne({ _id: seriesId }, { $inc: { views: 1 } });
+  episodeSchema.updateOne({ _id: seriesId }, { $inc: { views: 1 } });
 
 const addMonthlyViewToMovie = (movieId: Types.ObjectId | string) =>
   movieSchema.updateOne({ _id: movieId }, { $inc: { monthlyViews: 1 } });

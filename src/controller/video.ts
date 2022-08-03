@@ -25,7 +25,7 @@ import { errorHandler } from '../utilities/middleware.js';
 import { cleanString, generatePreviewImages } from '../utilities/index.js';
 import { Types } from 'mongoose';
 import seriesSchema from '../schemas/seriesSchema.js';
-import episodesSchema from '../schemas/episodesSchema.js';
+import episodesSchema from '../schemas/episodeSchema.js';
 
 export const getMovie = async (req: Request, res: Response) => {
   const { range } = req.headers;
@@ -369,7 +369,7 @@ export const deleteEpisode = async (req: Request, res: Response) => {
   }
 };
 
-export const getSingleMovieData = async (req: Request, res: Response) => {
+export const getMovieData = async (req: Request, res: Response) => {
   const { movieId } = req.params;
 
   try {
@@ -385,7 +385,7 @@ export const getSingleMovieData = async (req: Request, res: Response) => {
   }
 };
 
-export const getSingleSeriesData = async (req: Request, res: Response) => {
+export const getSeriesData = async (req: Request, res: Response) => {
   const { seriesId } = req.params;
 
   try {
@@ -401,7 +401,7 @@ export const getSingleSeriesData = async (req: Request, res: Response) => {
   }
 };
 
-export const getSingleEpisodeData = async (req: Request, res: Response) => {
+export const getEpisodeData = async (req: Request, res: Response) => {
   const { episodeId } = req.params;
 
   try {

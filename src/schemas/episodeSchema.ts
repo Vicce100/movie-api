@@ -12,7 +12,7 @@ const date = {
   require: true,
 };
 
-const episodesSchema = new mongoose.Schema({
+const episodeSchema = new mongoose.Schema({
   seriesTitle: requiredShortString,
   episodeTitle: requiredShortString,
   seriesId: { type: mongoose.SchemaTypes.ObjectId, ref: 'series' },
@@ -28,4 +28,4 @@ const episodesSchema = new mongoose.Schema({
   creatorsId: { type: mongoose.SchemaTypes.ObjectId, ref: 'users' },
 });
 
-export default mongoose.model<EpisodeSchemaType>('episode', episodesSchema);
+export default mongoose.model<EpisodeSchemaType>('episode', episodeSchema);

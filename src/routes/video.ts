@@ -9,8 +9,9 @@ import {
   getMovie,
   getEpisode,
   addView,
-  getSingleMovieData,
-  getSingleEpisodeData,
+  getMovieData,
+  getEpisodeData,
+  getSeriesData,
   getVideosData,
   getMoviesDataByCategory,
   getSeriesDataByCategory,
@@ -26,7 +27,6 @@ import {
   getSearchData,
   getSearchMovieData,
   getSearchSeresData,
-  getSingleSeriesData,
 } from '../controller/video.js';
 import { cleanString, routesString as rs } from '../utilities/index.js';
 
@@ -63,11 +63,11 @@ router.get(`/${rs.episode}/:${rs.episodeId}`, getEpisode);
 
 router.post(`/${rs.addView}`, addView);
 
-router.get(`/${rs.movie}/${rs.data}/:${rs.movieId}`, getSingleMovieData);
+router.get(`/${rs.movie}/${rs.data}/:${rs.movieId}`, getMovieData);
 
-router.get(`/${rs.series}/${rs.data}/:${rs.seriesId}`, getSingleSeriesData);
+router.get(`/${rs.series}/${rs.data}/:${rs.seriesId}`, getSeriesData);
 
-router.get(`/${rs.episode}/${rs.data}/:${rs.episodeId}`, getSingleEpisodeData);
+router.get(`/${rs.episode}/${rs.data}/:${rs.episodeId}`, getEpisodeData);
 
 router.post(`/${rs.data}`, getVideosData);
 
