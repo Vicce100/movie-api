@@ -143,6 +143,7 @@ export interface EpisodeSchemaType {
   seriesId: Types.ObjectId;
   seriesTitle: string;
   episodeTitle: string;
+  durationInMs: number;
   videoUrl: string;
   previewImagesUrl: string[];
   views: number;
@@ -161,6 +162,7 @@ export interface MovieSchemaType {
   videoUrl: string;
   previewImagesUrl: string[];
   displayPicture: string;
+  durationInMs: number;
   public: boolean;
   categories: string[];
   franchise: string[];

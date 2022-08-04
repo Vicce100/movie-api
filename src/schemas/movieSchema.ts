@@ -17,6 +17,7 @@ const MovieSchema = new mongoose.Schema({
   videoUrl: { ...reqString, unique: true },
   displayPicture: { ...reqString },
   previewImagesUrl: [{ type: String, require: true }],
+  durationInMs: { type: Number, require: true },
   public: { type: Boolean, default: () => false, require: true },
   categories: [{ ...reqString }],
   franchise: [{ ...reqString }],

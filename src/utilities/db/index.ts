@@ -226,6 +226,16 @@ const addEpisodeToSeriesField = (
   data: EpisodesInSeriesSchema
 ) => seriesSchema.updateOne({ _id: seriesId }, { $push: { episodes: data } });
 
+const addIdToSavedList = (
+  userId: string | Types.ObjectId,
+  profileId: string | Types.ObjectId,
+  videoId: string | Types.ObjectId
+) =>
+  userSchema.updateOne(
+    { _id: userId, 'profiles._id': profileId },
+    { $push: { 'profiles.$.savedList': videoId } }
+  );
+
 // https://www.mongodb.com/docs/upcoming/reference/operator/aggregation/sample/#pipe._S_sample
 const getMyListInMovie = (MyListIds: Types.ObjectId[] | string[]) =>
   movieSchema.aggregate<MovieSchemaType>([
@@ -275,27 +285,35 @@ const randomSeries = (_seriesId?: Types.ObjectId[] | string[]) =>
     ])
     .limit(querySize);
 
-// array
-// const randomMovieByCategory3 = (categoryName1 string[]) =>
-
-const randomMovieByCategory = (categoryNames: string[]) =>
+const randomMovieByCategory = (
+  categoryNames: string[],
+  exudeArray?: string[]
+) =>
   movieSchema
     .aggregate<MovieSchemaType>([
       {
         $match: {
-          categories: {
-            $all: [...categoryNames],
-          },
+          $and: [
+            { categories: { $all: [...categoryNames] } },
+            { categories: { $nin: exudeArray || [] } },
+          ],
         },
       },
       { $sample: { size: querySize } },
     ])
     .limit(querySize);
 
-const randomSeriesByCategory = (categoryNames: string[]) =>
+const randomSeriesByCategory = (
+  categoryNames: string[],
+  exudeArray?: string[]
+) =>
   seriesSchema
     .aggregate<SeriesSchemaType>([
-      { $match: { categories: { $all: [...categoryNames] } } },
+      {
+        $match: {
+          categories: { $all: [...categoryNames], $nin: exudeArray || [] },
+        },
+      },
       { $sample: { size: querySize } },
     ])
     .limit(querySize);
@@ -539,6 +557,7 @@ export default {
   addAmountOfSessions,
   addAmountOfEpisodes,
   addEpisodeToSeriesField,
+  addIdToSavedList,
   getMyListInMovie,
   getMyListInSeries,
   getWatchAgedInMovies,

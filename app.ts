@@ -1,5 +1,5 @@
 // https://stackoverflow.com/questions/15809611/bcrypt-invalid-elf-header-when-running-node-app
-// to get bcrypt to work on windows jus install it like "npm i bcrypt"
+// to get bcrypt to work on windows just install it like "npm i bcrypt"
 // to get bcrypt to work on linux you need to run the
 // following command as root "npm i bcrypt --unsafe-perm=true --allow-root --save"
 
@@ -31,7 +31,6 @@ app.use('/user', userRoutes);
 app.use('/video', videoRoutes);
 app.use(indexRouter);
 
-// connect to db
 const dbConnectionString =
   process.env.DB_connectionLocal || 'mongodb://localhost/MovieDB';
 mongoose

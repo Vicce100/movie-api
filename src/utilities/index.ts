@@ -27,6 +27,7 @@ export const routesString = {
   ffmpeg: 'ffmpeg' as const,
   create: 'create' as const,
   add: 'add' as const,
+  savedList: 'savedList' as const,
   login: 'login' as const,
   logout: 'logout' as const,
   refreshToken: 'refreshToken' as const,

@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import fs from 'fs';
+import { getVideoDurationInSeconds } from 'get-video-duration';
 
 import movieSchema from '../schemas/movieSchema.js';
 import seriesSchema from '../schemas/seriesSchema.js';
@@ -161,12 +162,15 @@ export const uploadMovie = async (req: Request, res: Response) => {
     if (!Array.isArray(franchise)) tempFranchises = [franchise];
     else tempFranchises = franchise.map((tempFranchise) => tempFranchise);
 
+    const duration = await getVideoDurationInSeconds(files.videoFile[0].path);
+
     try {
       const newMovie = new movieSchema({
         title,
         videoUrl: files.videoFile[0].path,
         displayPicture: files.displayPicture[0].path,
         previewImagesUrl: [],
+        durationInMs: duration / 1000,
         categories: tempCategory,
         franchise: tempFranchises,
         description,
@@ -178,6 +182,8 @@ export const uploadMovie = async (req: Request, res: Response) => {
       const { _id, videoUrl } = newMovie;
       await newMovie.save();
       await db.addUsersMovie(req.user._id, _id);
+
+      console.log(duration);
 
       // send response to client before running ffmpeg so client gets a faster response time
       res.status(201).json({ success: true });
@@ -282,10 +288,13 @@ export const addEpisodesTOSeries = async (req: Request, res: Response) => {
     const series = await db.findSeriesById(seriesId);
     assertNonNullish(series, errorCode.VALUE_MISSING);
 
+    const duration = await getVideoDurationInSeconds(files.videoFile[0].path);
+
     const episode = new episodesSchema({
       seriesTitle: series.title,
       episodeTitle,
       seriesId,
+      durationInMs: duration / 1000,
       videoUrl: files.videoFile[0].path,
       displayPicture: files.displayPicture[0].path,
       previewImagesUrl: [],
@@ -562,10 +571,16 @@ export const getVideosData = async (req: Request, res: Response) => {
 };
 
 export const getMoviesDataByCategory = async (req: Request, res: Response) => {
-  const { categoryNames }: { categoryNames: string[] } = req.body;
+  const {
+    categoryNames,
+    exudeArray,
+  }: { categoryNames: string[]; exudeArray?: string[] } = req.body;
 
   try {
-    let videosFromCategory = await db.randomMovieByCategory(categoryNames);
+    const videosFromCategory = await db.randomMovieByCategory(
+      categoryNames,
+      exudeArray ? exudeArray : undefined
+    );
     assertIsNonEmptyArray(videosFromCategory, errorCode.VALUE_MISSING);
 
     res.status(200).json(db.returnMoviesArray(videosFromCategory));
@@ -578,10 +593,16 @@ export const getMoviesDataByCategory = async (req: Request, res: Response) => {
 };
 
 export const getSeriesDataByCategory = async (req: Request, res: Response) => {
-  const { categoryNames }: { categoryNames: string[] } = req.body;
+  const {
+    categoryNames,
+    exudeArray,
+  }: { categoryNames: string[]; exudeArray: string[] } = req.body;
 
   try {
-    let videosFromCategory = await db.randomSeriesByCategory(categoryNames);
+    const videosFromCategory = await db.randomSeriesByCategory(
+      categoryNames,
+      exudeArray
+    );
     assertIsNonEmptyArray(videosFromCategory, errorCode.VALUE_MISSING);
 
     res.status(200).json(db.returnSeriesArray(videosFromCategory));
@@ -634,6 +655,22 @@ export const getSearchSeresData = async (req: Request, res: Response) => {
     const series = await db.searchForSeries(value);
 
     res.status(200).json(db.returnSeriesArray(series) || undefined);
+  } catch (error) {
+    if (error instanceof Error) {
+      const errorResponse = errorHandler(error);
+      return res.status(Number(errorResponse.status)).json(errorResponse);
+    }
+  }
+};
+
+export const addIdToSavedList = async (req: Request, res: Response) => {
+  const { profileId, videoId }: { profileId: string; videoId: string } =
+    req.body;
+
+  try {
+    const result = await db.addIdToSavedList(req.user._id, profileId, videoId);
+
+    res.send(200).json({ success: result.acknowledged });
   } catch (error) {
     if (error instanceof Error) {
       const errorResponse = errorHandler(error);

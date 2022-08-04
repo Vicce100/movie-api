@@ -16,6 +16,7 @@ const episodeSchema = new mongoose.Schema({
   seriesTitle: requiredShortString,
   episodeTitle: requiredShortString,
   seriesId: { type: mongoose.SchemaTypes.ObjectId, ref: 'series' },
+  durationInMs: { type: Number, require: true },
   videoUrl: { ...reqString, unique: true },
   displayPicture: { ...reqString },
   previewImagesUrl: [{ type: String, require: true }],

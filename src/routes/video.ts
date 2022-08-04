@@ -27,6 +27,7 @@ import {
   getSearchData,
   getSearchMovieData,
   getSearchSeresData,
+  addIdToSavedList,
 } from '../controller/video.js';
 import { cleanString, routesString as rs } from '../utilities/index.js';
 
@@ -84,6 +85,8 @@ router.get(`/${rs.series}/${rs.search}`, getSearchSeresData);
 router.delete(`/${rs.movie}/${rs.delete}/:${rs.movieId}`, deleteMovie);
 
 router.delete(`/${rs.episode}/${rs.delete}/:${rs.episodeId}`, deleteEpisode);
+
+router.post(`/${rs.add}/${rs.savedList}`, addIdToSavedList);
 
 router.post(
   `/${rs.movie}/${rs.create}`,
