@@ -170,7 +170,7 @@ export const uploadMovie = async (req: Request, res: Response) => {
         videoUrl: files.videoFile[0].path,
         displayPicture: files.displayPicture[0].path,
         previewImagesUrl: [],
-        durationInMs: duration / 1000,
+        durationInMs: duration * 1000,
         categories: tempCategory,
         franchise: tempFranchises,
         description,
@@ -182,8 +182,6 @@ export const uploadMovie = async (req: Request, res: Response) => {
       const { _id, videoUrl } = newMovie;
       await newMovie.save();
       await db.addUsersMovie(req.user._id, _id);
-
-      console.log(duration);
 
       // send response to client before running ffmpeg so client gets a faster response time
       res.status(201).json({ success: true });
@@ -294,7 +292,7 @@ export const addEpisodesTOSeries = async (req: Request, res: Response) => {
       seriesTitle: series.title,
       episodeTitle,
       seriesId,
-      durationInMs: duration / 1000,
+      durationInMs: duration * 1000,
       videoUrl: files.videoFile[0].path,
       displayPicture: files.displayPicture[0].path,
       previewImagesUrl: [],
