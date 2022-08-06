@@ -13,6 +13,7 @@ import {
   UserType,
   queryPathsString,
   EpisodesInSeriesSchema,
+  returnVideosArray,
 } from '../utilities/types.js';
 import {
   assertNonNullish,
@@ -428,28 +429,42 @@ export const getEpisodeData = async (req: Request, res: Response) => {
   }
 };
 
-const getMyList = async (profileId: string, user: UserType) => {
+const getMyList = async (
+  profileId: string,
+  userId: string | Types.ObjectId
+) => {
   try {
-    assertsValueToType<Types.ObjectId>(profileId);
-    const activeProfile = user.profiles?.find(({ _id }) => _id === profileId);
+    const user = await db.findUserById(userId);
+    assertNonNullish(user, errorCode.VALUE_MISSING);
+    const activeProfile = user.profiles?.find(
+      ({ _id }) => String(_id) === profileId
+    );
     assertNonNullish(activeProfile, errorCode.VALUE_MISSING);
     if (!activeProfile.savedList) throw new Error(errorCode.VALUE_NOT_EXISTING);
 
     const movieList = await db.getMyListInMovie(activeProfile.savedList);
     const seriesList = await db.getMyListInSeries(activeProfile.savedList);
-    return {
-      movieList: db.returnMoviesArray(movieList) || [],
-      seriesList: db.returnSeriesArray(seriesList) || [],
-    };
+    let videoArray: returnVideosArray = [];
+    const movieArray = db.returnMoviesArray(movieList) || [];
+    if (movieArray.length) videoArray = videoArray.concat(movieArray);
+    const seriesArray = db.returnSeriesArray(seriesList) || [];
+    if (seriesArray.length) videoArray = videoArray.concat(seriesArray);
+    return videoArray;
   } catch (error: any) {
     if (error) throw new Error(error.message || error);
   }
 };
 
-const getWatchAged = async (profileId: string, user: UserType) => {
+const getWatchAged = async (
+  profileId: string,
+  userId: string | Types.ObjectId
+) => {
   try {
-    assertsValueToType<Types.ObjectId>(profileId);
-    const activeProfile = user.profiles?.find(({ _id }) => _id === profileId);
+    const user = await db.findUserById(userId);
+    assertNonNullish(user, errorCode.VALUE_MISSING);
+    const activeProfile = user.profiles?.find(
+      ({ _id }) => String(_id) === profileId
+    );
     assertNonNullish(activeProfile, errorCode.VALUE_MISSING);
     if (!activeProfile.hasWatch) throw new Error(errorCode.VALUE_NOT_EXISTING);
 
@@ -549,11 +564,11 @@ export const getVideosData = async (req: Request, res: Response) => {
   let resultData: unknown = null;
   try {
     if (queryName === myList && profileId)
-      resultData = await getMyList(profileId, req.user);
+      resultData = await getMyList(profileId, req.user._id);
     // if (queryName === continueWatching && profileId)
     //   resultData = await getContinueWatching(profileId, req.user);
     else if (queryName === watchAged && profileId)
-      resultData = await getWatchAged(profileId, req.user);
+      resultData = await getWatchAged(profileId, req.user._id);
     else if (queryName === top10movies) resultData = await getTop10Movies();
     else if (queryName === top10series) resultData = await getTop10Series();
     else if (queryName === randomMovie) resultData = await getRandomMovie();
@@ -668,7 +683,7 @@ export const addIdToSavedList = async (req: Request, res: Response) => {
   try {
     const result = await db.addIdToSavedList(req.user._id, profileId, videoId);
 
-    res.send(200).json({ success: result.acknowledged });
+    res.status(200).json({ success: result.acknowledged });
   } catch (error) {
     if (error instanceof Error) {
       const errorResponse = errorHandler(error);

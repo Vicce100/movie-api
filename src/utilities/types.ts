@@ -202,6 +202,11 @@ export type ProfileType =
     }[]
   | undefined;
 
+export interface UserAsCookie {
+  _id: Types.ObjectId;
+  role: UsersRolesType;
+}
+
 export interface UserType {
   _id: Types.ObjectId;
   email: string;

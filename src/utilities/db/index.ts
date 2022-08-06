@@ -348,7 +348,7 @@ const searchForSeries = (text: string) =>
 
 const returnAvatar = (data: AvatarSchemaType) => {
   return {
-    id: data._id,
+    _id: data._id,
     name: data.name,
     url: `${url}/${data.url}`,
     franchise: data.franchise,

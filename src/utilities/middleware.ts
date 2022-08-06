@@ -3,7 +3,12 @@ import multer, { FileFilterCallback, MulterError } from 'multer';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 
-import { MulterErrorCode, userRoles, UserType, errorCode } from './types.js';
+import {
+  MulterErrorCode,
+  userRoles,
+  UserAsCookie,
+  errorCode,
+} from './types.js';
 import { assertNonNullish } from './assertions.js';
 import db from './db/index.js';
 
@@ -23,7 +28,7 @@ export const checkAuth = (cookies: any) => {
           tempUser = user;
         }
       );
-      return tempUser as UserType;
+      return tempUser as UserAsCookie;
     } catch (error: any) {
       throw new Error(error.message);
     }

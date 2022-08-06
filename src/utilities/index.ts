@@ -4,7 +4,7 @@ import ffmpeg from 'fluent-ffmpeg';
 import * as validate from 'email-validator';
 
 import { assertsIsString, assertNonNullish } from './assertions.js';
-import { UserType, errorCode } from './types.js';
+import { UserAsCookie, errorCode } from './types.js';
 import db from './db/index.js';
 
 export const routesString = {
@@ -48,7 +48,7 @@ export const routesString = {
   roleType: 'roleType' as const,
 };
 
-export const generateAccessToken = (user: UserType) => {
+export const generateAccessToken = (user: UserAsCookie) => {
   try {
     assertNonNullish(
       process.env.SECRET_ACCESS_TOKEN,

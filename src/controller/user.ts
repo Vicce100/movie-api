@@ -7,7 +7,7 @@ import db from '../utilities/db/index.js';
 import userSchema from '../schemas/UserSchema.js';
 import { generateAccessToken, emailIsValid } from '../utilities/index.js';
 import { checkAuth, errorHandler } from '../utilities/middleware.js';
-import { userRoles, UsersRolesType } from '../utilities/types.js';
+import { UserAsCookie, userRoles, UsersRolesType } from '../utilities/types.js';
 import { assertsValueToType } from '../utilities/assertions.js';
 
 dotenv.config();
@@ -79,7 +79,12 @@ export const login = async (req: Request, res: Response) => {
           .status(404)
           .json(db.returnErrorData('cannot find user', 404));
 
-      res.cookie('SSID', generateAccessToken(latestUser), {
+      const userAsCookie: UserAsCookie = {
+        _id: latestUser._id,
+        role: latestUser.role,
+      };
+      console.log(generateAccessToken(userAsCookie));
+      res.cookie('SSID', generateAccessToken(userAsCookie), {
         sameSite: 'strict', // lax, none
         path: '/',
         expires: date,
@@ -129,7 +134,12 @@ export const refreshToken = async (req: Request, res: Response) => {
       if (err)
         return res.sendStatus(403).json(db.returnErrorData(err.message, 403));
 
-      res.cookie('SSID', generateAccessToken(tempUser), {
+      const userAsCookie: UserAsCookie = {
+        _id: tempUser._id,
+        role: tempUser.role,
+      };
+
+      res.cookie('SSID', generateAccessToken(userAsCookie), {
         sameSite: 'strict', // lax, none
         path: '/',
         expires: date,
