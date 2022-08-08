@@ -29,6 +29,13 @@ export function assertNullish(
   if (value !== null) throw new Error(msg);
 }
 
+export function assertUndefined(
+  value: unknown,
+  msg: string
+): asserts value is null {
+  if (value !== undefined) throw new Error(msg);
+}
+
 export function assertIsNotNullOrUndefined(
   value: unknown | undefined,
   msg: string

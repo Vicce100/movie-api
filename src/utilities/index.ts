@@ -39,7 +39,7 @@ export const routesString = {
   remove: 'remove' as const,
   videoId: 'videoId' as const,
   movieId: 'movieId' as const,
-  episodeId: 'episodesId' as const,
+  episodeId: 'episodeId' as const,
   seriesId: 'seriesId' as const,
   categoryId: 'categoryId' as const,
   franchiseId: 'franchiseId' as const,
@@ -159,3 +159,9 @@ export const convertToMp4 = ({
       .run();
   });
 };
+
+export const shuffleArray = <T>(array: T[]): T[] =>
+  array
+    .map((value) => ({ value, sort: Math.random() }))
+    .sort((a, b) => a.sort - b.sort)
+    .map(({ value }) => value);

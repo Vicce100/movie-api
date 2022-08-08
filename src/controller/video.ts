@@ -21,9 +21,15 @@ import {
   assertsValueToType,
   assertsQueryPaths,
   assertsIsString,
+  assertNullish,
+  assertUndefined,
 } from '../utilities/assertions.js';
 import { errorHandler } from '../utilities/middleware.js';
-import { cleanString, generatePreviewImages } from '../utilities/index.js';
+import {
+  cleanString,
+  generatePreviewImages,
+  shuffleArray,
+} from '../utilities/index.js';
 import { Types } from 'mongoose';
 
 export const getMovie = async (req: Request, res: Response) => {
@@ -311,6 +317,7 @@ export const addEpisodesTOSeries = async (req: Request, res: Response) => {
       episodeTitle,
       episodeDisplayPicture: episode.displayPicture,
       episodeDescription: episode.description,
+      durationInMs: episode.durationInMs,
       seasonNr: episode.seasonNr,
       episodeNr: episode.episodeNr,
     };
@@ -474,7 +481,9 @@ const getWatchAged = async (
       movieList: db.returnMoviesArray(movieList) || [],
       seriesList: db.returnSeriesArray(seriesList) || [],
     };
-  } catch (error) {}
+  } catch (error: any) {
+    return new Error(error.message || error);
+  }
 };
 
 const getTop10Movies = async () => {
@@ -634,10 +643,11 @@ export const getSearchData = async (req: Request, res: Response) => {
     const movies = await db.searchForMovies(value);
     const series = await db.searchForSeries(value);
 
-    res.status(200).json({
-      movies: db.returnMoviesArray(movies) || undefined,
-      series: db.returnSeriesArray(series) || undefined,
-    });
+    const valueArray: returnVideosArray = db
+      .returnMoviesArray(movies)
+      .concat(db.returnSeriesArray(series));
+
+    res.status(200).json(shuffleArray(valueArray));
   } catch (error) {
     if (error instanceof Error) {
       const errorResponse = errorHandler(error);
@@ -681,6 +691,13 @@ export const addIdToSavedList = async (req: Request, res: Response) => {
     req.body;
 
   try {
+    const user = await db.findUserById(req.user._id);
+    assertNonNullish(user, errorCode.NOT_AUTHENTICATED);
+    const valueInList = user.profiles
+      ?.find(({ _id }) => String(_id) === profileId)
+      ?.savedList?.find((v) => String(v) === videoId);
+    assertUndefined(valueInList, errorCode.VALUE_EXISTS);
+
     const result = await db.addIdToSavedList(req.user._id, profileId, videoId);
 
     res.status(200).json({ success: result.acknowledged });
@@ -691,6 +708,44 @@ export const addIdToSavedList = async (req: Request, res: Response) => {
     }
   }
 };
+
+export const removeIdFromSavedList = async (req: Request, res: Response) => {
+  const { profileId, videoId }: { profileId: string; videoId: string } =
+    req.body;
+
+  try {
+    const result = await db.removeIdFromSavedList(
+      req.user._id,
+      profileId,
+      videoId
+    );
+
+    res.status(200).json({ success: result.acknowledged });
+  } catch (error) {
+    if (error instanceof Error) {
+      const errorResponse = errorHandler(error);
+      return res.status(Number(errorResponse.status)).json(errorResponse);
+    }
+  }
+};
+
+// genera purpose for fixing things
+// export const fix = async (_req: Request, res: Response) => {
+//   const episodes = await episodesSchema.find();
+//   assertIsNonEmptyArray(episodes, 'error in this thing');
+
+//   for (let index = 0; index < episodes.length; index++) {
+//     const episode = episodes[index];
+
+//     const duration = await getVideoDurationInSeconds(episode.videoUrl);
+//     const response = await episode.updateOne({
+//       $set: { durationInMs: duration },
+//     });
+//     console.log(response);
+//   }
+
+//   res.status(200).json({ success: true });
+// };
 
 export const generateFFmpegToMovie = async (req: Request, res: Response) => {
   const { movieId } = req.params;

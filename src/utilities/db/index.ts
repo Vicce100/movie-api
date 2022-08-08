@@ -236,6 +236,16 @@ const addIdToSavedList = (
     { $push: { 'profiles.$.savedList': videoId } }
   );
 
+const removeIdFromSavedList = (
+  userId: string | Types.ObjectId,
+  profileId: string | Types.ObjectId,
+  videoId: string | Types.ObjectId
+) =>
+  userSchema.updateOne(
+    { _id: userId, 'profiles._id': profileId },
+    { $pull: { 'profiles.$.savedList': videoId } }
+  );
+
 // https://www.mongodb.com/docs/upcoming/reference/operator/aggregation/sample/#pipe._S_sample
 const getMyListInMovie = (MyListIds: Types.ObjectId[] | string[]) =>
   movieSchema.aggregate<MovieSchemaType>([
@@ -421,13 +431,14 @@ const returnVideo = (
   }
 };
 
-const returnMovie = (movie: MovieSchemaType) => ({
+const returnMovie = (movie: MovieSchemaType): MovieSchemaType => ({
   _id: movie._id,
   title: movie.title,
   videoUrl: movie.videoUrl,
   displayPicture: `${url}/${movie.displayPicture}`,
   previewImagesUrl: movie.previewImagesUrl.map((image) => `${url}/${image}`),
   public: movie.public,
+  durationInMs: movie.durationInMs,
   categories: movie.categories,
   franchise: movie.franchise,
   description: movie.description,
@@ -438,13 +449,14 @@ const returnMovie = (movie: MovieSchemaType) => ({
   releaseDate: movie.releaseDate,
 });
 
-const returnEpisode = (episode: EpisodeSchemaType) => ({
+const returnEpisode = (episode: EpisodeSchemaType): EpisodeSchemaType => ({
   _id: episode._id,
   seasonNr: episode.seasonNr,
   episodeNr: episode.episodeNr,
   seriesId: episode.seriesId,
   seriesTitle: episode.seriesTitle,
   episodeTitle: episode.episodeTitle,
+  durationInMs: episode.durationInMs,
   videoUrl: episode.videoUrl,
   previewImagesUrl: episode.previewImagesUrl.map((image) => `${url}/${image}`),
   views: episode.views,
@@ -471,6 +483,7 @@ const returnSeries = (series: SeriesSchemaType): ReturnedSeriesSchemaType => {
     creationDate: series.creationDate,
     latestDate: series.latestDate,
     amountOfSessions: series.amountOfSessions,
+    amountOfEpisodes: series.amountOfEpisodes,
     creatorsId: series.creatorsId,
   };
 
@@ -483,16 +496,21 @@ const returnSeries = (series: SeriesSchemaType): ReturnedSeriesSchemaType => {
       series.episodes
         .filter(({ seasonNr }) => seasonNr === index + 1)
         .sort((a, b) => a.episodeNr - b.episodeNr)
-        .map((episode) => ({
-          episodeId: episode.episodeId,
-          episodeTitle: episode.episodeTitle,
-          episodeDisplayPicture: `${url}/${episode.episodeDisplayPicture}`,
-          episodeDescription: episode.episodeDescription,
-          seasonNr: episode.seasonNr,
-          episodeNr: episode.episodeNr,
-        }))
+        .map((episode) => {
+          // console.log(episode);
+          return {
+            episodeId: episode.episodeId,
+            episodeTitle: episode.episodeTitle,
+            episodeDisplayPicture: `${url}/${episode.episodeDisplayPicture}`,
+            episodeDescription: episode.episodeDescription,
+            durationInMs: episode.durationInMs,
+            seasonNr: episode.seasonNr,
+            episodeNr: episode.episodeNr,
+          };
+        })
     );
 
+  // console.log(episodes);
   return { ...value, episodes: episodes };
 };
 
@@ -558,6 +576,7 @@ export default {
   addAmountOfEpisodes,
   addEpisodeToSeriesField,
   addIdToSavedList,
+  removeIdFromSavedList,
   getMyListInMovie,
   getMyListInSeries,
   getWatchAgedInMovies,

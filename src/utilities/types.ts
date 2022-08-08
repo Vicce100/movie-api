@@ -4,7 +4,9 @@ import { Types } from 'mongoose';
 const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
 const host = process.env.NODE_ENV === 'production' ? 'localhost' : 'localhost';
 const port = process.env.NODE_ENV === 'production' ? '3000' : '5050';
-export const url = `${protocol}://${host}:${port}`;
+const ip =
+  process.env.IP_ADDR !== 'localhost' ? process.env.IP_ADDR : undefined;
+export const url = `${protocol}://${ip ? ip : host}:${port}`;
 
 export const jpeg = 'image/jpeg';
 export const jpg = 'image/jpg';
@@ -97,6 +99,7 @@ export type EpisodesInSeriesSchema = {
   episodeTitle: string;
   episodeDisplayPicture: string;
   episodeDescription: string;
+  durationInMs: number;
   seasonNr: number;
   episodeNr: number;
 };
@@ -116,6 +119,7 @@ export interface ReturnedSeriesSchemaType {
   latestDate: string;
   episodes: EpisodesInSeriesSchema[][];
   amountOfSessions: number;
+  amountOfEpisodes: number;
   creatorsId: Types.ObjectId;
 }
 
