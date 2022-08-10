@@ -65,7 +65,7 @@ export const errorHandler = (error: Error) => {
   }
 };
 
-export const isAuthenticate = (
+export const isAuthenticate = async (
   req: Request,
   res: Response,
   next: NextFunction
@@ -74,7 +74,10 @@ export const isAuthenticate = (
     const user = checkAuth(req.cookies);
     assertNonNullish(user, errorCode.NOT_AUTHENTICATED);
 
-    req.user = user;
+    const importedUser = await db.findUserById(user._id);
+    assertNonNullish(importedUser, errorCode.NOT_AUTHENTICATED);
+
+    req.user = importedUser;
     next();
   } catch (error) {
     if (error instanceof Error) {
@@ -84,7 +87,11 @@ export const isAuthenticate = (
   }
 };
 
-export const isModerator = (req: any, res: Response, next: NextFunction) => {
+export const isModerator = async (
+  req: any,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const user = checkAuth(req.cookies);
     assertNonNullish(user, errorCode.NOT_AUTHENTICATED);
@@ -92,7 +99,10 @@ export const isModerator = (req: any, res: Response, next: NextFunction) => {
     if (user.role !== userRoles.moderator)
       return res.status(403).json({ message: 'You are not an moderator' });
 
-    req.user = user;
+    const importedUser = await db.findUserById(user._id);
+    assertNonNullish(importedUser, errorCode.NOT_AUTHENTICATED);
+
+    req.user = importedUser;
     next();
   } catch (error) {
     if (error instanceof Error) {
@@ -102,7 +112,7 @@ export const isModerator = (req: any, res: Response, next: NextFunction) => {
   }
 };
 
-export const isAdmin = (req: any, res: Response, next: NextFunction) => {
+export const isAdmin = async (req: any, res: Response, next: NextFunction) => {
   try {
     const user = checkAuth(req.cookies);
     assertNonNullish(user, errorCode.NOT_AUTHENTICATED);
@@ -110,7 +120,10 @@ export const isAdmin = (req: any, res: Response, next: NextFunction) => {
     if (user.role !== userRoles.admin)
       return res.status(403).json({ message: 'You are not an admin' });
 
-    req.user = user;
+    const importedUser = await db.findUserById(user._id);
+    assertNonNullish(importedUser, errorCode.NOT_AUTHENTICATED);
+
+    req.user = importedUser;
     next();
   } catch (error) {
     if (error instanceof Error) {
@@ -120,7 +133,7 @@ export const isAdmin = (req: any, res: Response, next: NextFunction) => {
   }
 };
 
-export const isSuperAdmin = (
+export const isSuperAdmin = async (
   req: any,
   res: Response<any, Record<string, any>>,
   next: NextFunction
@@ -132,7 +145,10 @@ export const isSuperAdmin = (
     if (user.role !== userRoles.superAdmin)
       return res.status(403).json({ message: 'You are not an super admin' });
 
-    req.user = user;
+    const importedUser = await db.findUserById(user._id);
+    assertNonNullish(importedUser, errorCode.NOT_AUTHENTICATED);
+
+    req.user = importedUser;
     next();
   } catch (error) {
     if (error instanceof Error) {
