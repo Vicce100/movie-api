@@ -28,14 +28,7 @@ const seriesSchema = new mongoose.Schema({
   // last release
   latestDate: { type: String, imitable: false, require: true },
   episodes: [
-    {
-      episodeId: { type: mongoose.Types.ObjectId, require: true },
-      episodeTitle: { type: String, require: true },
-      episodeDisplayPicture: { type: String, require: true },
-      episodeDescription: { type: String, require: true },
-      seasonNr: { type: Number, require: true },
-      episodeNr: { type: Number, require: true },
-    },
+    { type: mongoose.SchemaTypes.ObjectId, require: true, ref: 'episode' },
   ],
   amountOfSessions: { type: Number, require: true },
   amountOfEpisodes: { type: Number, require: true },

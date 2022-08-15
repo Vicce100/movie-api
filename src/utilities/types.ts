@@ -35,6 +35,7 @@ export const errorCode = {
   INVALID_EMAIL: 'invalid email' as const,
   WRONG_VALUE: 'wrong value' as const,
   EMPTY_VALUE: 'empty value' as const,
+  REQUEST_PARAMS_MISSING: 'request params missing' as const,
 };
 
 export const userRoles = {
@@ -94,35 +95,6 @@ export type ReturnedVideoData = {
   seriesId: Types.ObjectId | undefined;
 };
 
-export type EpisodesInSeriesSchema = {
-  episodeId: Types.ObjectId;
-  episodeTitle: string;
-  episodeDisplayPicture: string;
-  episodeDescription: string;
-  durationInMs: number;
-  seasonNr: number;
-  episodeNr: number;
-};
-
-export interface ReturnedSeriesSchemaType {
-  _id: Types.ObjectId;
-  title: string;
-  displayPicture: string;
-  views: number;
-  monthlyViews: number;
-  public: boolean;
-  categories: string[];
-  franchise: string[];
-  description: string;
-  uploadDate: string;
-  creationDate: string;
-  latestDate: string;
-  episodes: EpisodesInSeriesSchema[][];
-  amountOfSessions: number;
-  amountOfEpisodes: number;
-  creatorsId: Types.ObjectId;
-}
-
 export interface SeriesSchemaType {
   _id: Types.ObjectId;
   title: string;
@@ -136,7 +108,7 @@ export interface SeriesSchemaType {
   uploadDate: string;
   creationDate: string;
   latestDate: string;
-  episodes: EpisodesInSeriesSchema[];
+  episodes: Types.ObjectId[];
   amountOfSessions: number;
   amountOfEpisodes: number;
   creatorsId: Types.ObjectId;

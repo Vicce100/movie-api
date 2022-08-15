@@ -10,9 +10,7 @@ import {
   errorCode,
   mp4,
   queryPaths,
-  UserType,
   queryPathsString,
-  EpisodesInSeriesSchema,
   returnVideosArray,
 } from '../utilities/types.js';
 import {
@@ -312,17 +310,7 @@ export const addEpisodesTOSeries = async (req: Request, res: Response) => {
     });
     await episode.save();
 
-    const episodeData: EpisodesInSeriesSchema = {
-      episodeId: episode._id,
-      episodeTitle,
-      episodeDisplayPicture: episode.displayPicture,
-      episodeDescription: episode.description,
-      durationInMs: episode.durationInMs,
-      seasonNr: episode.seasonNr,
-      episodeNr: episode.episodeNr,
-    };
-
-    const response = await db.addEpisodeToSeriesField(seriesId, episodeData);
+    const response = await db.addEpisodeToSeriesField(seriesId, episode._id);
 
     if (Number(seasonNr) > series.amountOfSessions)
       await db.addAmountOfSessions(series._id, Number(seasonNr));
@@ -414,6 +402,26 @@ export const getSeriesData = async (req: Request, res: Response) => {
     res.status(200).json(db.returnSeries(series));
   } catch (error) {
     if (error instanceof Error) {
+      const errorResponse = errorHandler(error);
+      return res.status(Number(errorResponse.status)).json(errorResponse);
+    }
+  }
+};
+
+export const getSeriesEpisodes = async (req: Request, res: Response) => {
+  const { seriesId } = req.params;
+  try {
+    assertNonNullish(seriesId, errorCode.REQUEST_PARAMS_MISSING);
+    const series = await db.findSeriesById(seriesId);
+    assertNonNullish(series, errorCode.VALUE_MISSING);
+    const episodes = await db.getSeriesEpisodes(series.episodes);
+    assertIsNonEmptyArray(episodes, 'No episodes here');
+    return res
+      .status(200)
+      .json(db.sortEpisodesArray(episodes, series.amountOfSessions));
+  } catch (error) {
+    if (error instanceof Error) {
+      if (error.message === 'No episodes here') return res.status(200).json([]);
       const errorResponse = errorHandler(error);
       return res.status(Number(errorResponse.status)).json(errorResponse);
     }

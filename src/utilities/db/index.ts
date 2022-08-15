@@ -10,8 +10,6 @@ import {
   ReturnedVideoData,
   SeriesSchemaType,
   returnVideosArray,
-  ReturnedSeriesSchemaType,
-  EpisodesInSeriesSchema,
 } from '../types.js';
 import { assertsValueToType } from '../assertions.js';
 import userSchema from '../../schemas/UserSchema.js';
@@ -155,6 +153,9 @@ const getSeriesDataByCategory = (categoryName: string) =>
     { _id: 1, title: 1, displayPicture: 1 }
   );
 
+const getSeriesEpisodes = (episodesIds: Types.ObjectId[]) =>
+  episodeSchema.find({ _id: { $in: [...episodesIds] } });
+
 const updateMoviePreviewImages = (
   movieId: Types.ObjectId | string,
   imageArray: string[]
@@ -223,8 +224,9 @@ const addAmountOfEpisodes = (
 
 const addEpisodeToSeriesField = (
   seriesId: Types.ObjectId | string,
-  data: EpisodesInSeriesSchema
-) => seriesSchema.updateOne({ _id: seriesId }, { $push: { episodes: data } });
+  episodeId: Types.ObjectId | string
+) =>
+  seriesSchema.updateOne({ _id: seriesId }, { $push: { episodes: episodeId } });
 
 const addIdToSavedList = (
   userId: string | Types.ObjectId,
@@ -356,14 +358,12 @@ const searchForSeries = (text: string) =>
 
 /* ----------------------- returned values ----------------------- */
 
-const returnAvatar = (data: AvatarSchemaType) => {
-  return {
-    _id: data._id,
-    name: data.name,
-    url: `${url}/${data.url}`,
-    franchise: data.franchise,
-  };
-};
+const returnAvatar = (data: AvatarSchemaType) => ({
+  _id: data._id,
+  name: data.name,
+  url: `${url}/${data.url}`,
+  franchise: data.franchise,
+});
 
 const returnErrorData = (message: string, status: string | number) => ({
   message,
@@ -451,13 +451,11 @@ const returnMovie = (movie: MovieSchemaType): MovieSchemaType => ({
 
 const returnEpisode = (episode: EpisodeSchemaType): EpisodeSchemaType => ({
   _id: episode._id,
-  seasonNr: episode.seasonNr,
-  episodeNr: episode.episodeNr,
   seriesId: episode.seriesId,
   seriesTitle: episode.seriesTitle,
   episodeTitle: episode.episodeTitle,
   durationInMs: episode.durationInMs,
-  videoUrl: episode.videoUrl,
+  videoUrl: `${url}/${episode.videoUrl}`,
   previewImagesUrl: episode.previewImagesUrl.map((image) => `${url}/${image}`),
   views: episode.views,
   displayPicture: `${url}/${episode.displayPicture}`,
@@ -465,72 +463,82 @@ const returnEpisode = (episode: EpisodeSchemaType): EpisodeSchemaType => ({
   creatorsId: episode.creatorsId,
   uploadDate: episode.uploadDate,
   releaseDate: episode.releaseDate,
+  seasonNr: episode.seasonNr,
+  episodeNr: episode.episodeNr,
 });
 
-const returnSeries = (series: SeriesSchemaType): ReturnedSeriesSchemaType => {
-  const value = {
-    _id: series._id,
-    episodes: [series.episodes],
-    title: series.title,
-    displayPicture: `${url}/${series.displayPicture}`,
-    views: series.views,
-    monthlyViews: series.monthlyViews,
-    public: series.public,
-    categories: series.categories,
-    franchise: series.franchise,
-    description: series.description,
-    uploadDate: series.uploadDate,
-    creationDate: series.creationDate,
-    latestDate: series.latestDate,
-    amountOfSessions: series.amountOfSessions,
-    amountOfEpisodes: series.amountOfEpisodes,
-    creatorsId: series.creatorsId,
-  };
+const returnSeries = (series: SeriesSchemaType): SeriesSchemaType => ({
+  _id: series._id,
+  title: series.title,
+  displayPicture: `${url}/${series.displayPicture}`,
+  views: series.views,
+  monthlyViews: series.monthlyViews,
+  public: series.public,
+  categories: series.categories,
+  franchise: series.franchise,
+  description: series.description,
+  uploadDate: series.uploadDate,
+  creationDate: series.creationDate,
+  latestDate: series.latestDate,
+  episodes: series.episodes,
+  amountOfSessions: series.amountOfSessions,
+  amountOfEpisodes: series.amountOfEpisodes,
+  creatorsId: series.creatorsId,
+});
 
-  if (!series.episodes) return value;
+const sortEpisodesArray = (
+  episodes: EpisodeSchemaType[],
+  amountOfSessions: number
+): EpisodeSchemaType[][] => {
+  const episodesArray: EpisodeSchemaType[][] = [];
 
-  const episodes: EpisodesInSeriesSchema[][] = [];
-
-  for (let index = 0; index < series.amountOfSessions; index++)
-    episodes.push(
-      series.episodes
+  for (let index = 0; index < amountOfSessions; index++) {
+    episodesArray.push(
+      episodes
         .filter(({ seasonNr }) => seasonNr === index + 1)
-        .sort((a, b) => a.episodeNr - b.episodeNr)
-        .map((episode) => {
-          // console.log(episode);
+        .map((episode): EpisodeSchemaType => {
           return {
-            episodeId: episode.episodeId,
+            _id: episode._id,
+            seriesId: episode.seriesId,
+            seriesTitle: episode.seriesTitle,
             episodeTitle: episode.episodeTitle,
-            episodeDisplayPicture: `${url}/${episode.episodeDisplayPicture}`,
-            episodeDescription: episode.episodeDescription,
             durationInMs: episode.durationInMs,
+            videoUrl: `${url}/${episode.videoUrl}`,
+            previewImagesUrl: episode.previewImagesUrl.map(
+              (image) => `${url}/${image}`
+            ),
+            views: episode.views,
+            displayPicture: `${url}/${episode.displayPicture}`,
+            description: episode.description,
+            creatorsId: episode.creatorsId,
+            uploadDate: episode.uploadDate,
+            releaseDate: episode.releaseDate,
             seasonNr: episode.seasonNr,
             episodeNr: episode.episodeNr,
           };
         })
+        .sort((a, b) => a.episodeNr - b.episodeNr)
     );
+  }
 
-  // console.log(episodes);
-  return { ...value, episodes: episodes };
+  return episodesArray;
 };
 
-const returnMoviesArray = (movie: MovieSchemaType[]): returnVideosArray => {
-  return movie.map((movie) => ({
+const returnMoviesArray = (movie: MovieSchemaType[]): returnVideosArray =>
+  movie.map((movie) => ({
     _id: movie._id,
     title: movie.title,
     isMovie: true,
     displayPicture: `${url}/${movie.displayPicture}`,
   }));
-};
 
-const returnSeriesArray = (series: SeriesSchemaType[]): returnVideosArray => {
-  return series.map(({ _id, title, displayPicture }) => ({
+const returnSeriesArray = (series: SeriesSchemaType[]): returnVideosArray =>
+  series.map(({ _id, title, displayPicture }) => ({
     _id,
     title,
     isMovie: false,
     displayPicture: `${url}/${displayPicture}`,
   }));
-};
 
 export default {
   findUserByEmail,
@@ -561,6 +569,7 @@ export default {
   findEpisodeByName,
   getMovieDataByCategory,
   getSeriesDataByCategory,
+  getSeriesEpisodes,
   updateMoviePreviewImages,
   updateEpisodesPreviewImages,
   deleteMoviePreviewImages,
@@ -597,6 +606,7 @@ export default {
   returnVideo,
   returnMovie,
   returnEpisode,
+  sortEpisodesArray,
   returnSeries,
   returnMoviesArray,
   returnSeriesArray,
