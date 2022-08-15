@@ -12,6 +12,7 @@ import {
   getMovieData,
   getEpisodeData,
   getSeriesData,
+  getSeriesEpisodes,
   getVideosData,
   getMoviesDataByCategory,
   getSeriesDataByCategory,
@@ -69,6 +70,8 @@ router.post(`/${rs.addView}`, addView);
 router.get(`/${rs.movie}/${rs.data}/:${rs.movieId}`, getMovieData);
 
 router.get(`/${rs.series}/${rs.data}/:${rs.seriesId}`, getSeriesData);
+
+router.get(`/${rs.episodes}/${rs.all}/:${rs.seriesId}`, getSeriesEpisodes);
 
 router.get(`/${rs.episode}/${rs.data}/:${rs.episodeId}`, getEpisodeData);
 
