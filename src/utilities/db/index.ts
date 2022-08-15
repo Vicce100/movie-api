@@ -207,20 +207,21 @@ const addMonthlyViewToSeries = (seriesId: Types.ObjectId | string) =>
 const addAmountOfSessions = (
   seriesId: Types.ObjectId | string,
   amount?: number
-) =>
-  seriesSchema.updateOne(
+) => {
+  if (amount) {
+    return seriesSchema.updateOne(
+      { _id: seriesId },
+      { $set: { amountOfSessions: amount } }
+    );
+  }
+  return seriesSchema.updateOne(
     { _id: seriesId },
-    { $inc: { amountOfSessions: amount || 1 } }
+    { $inc: { amountOfSessions: 1 } }
   );
+};
 
-const addAmountOfEpisodes = (
-  seriesId: Types.ObjectId | string,
-  amount?: number
-) =>
-  seriesSchema.updateOne(
-    { _id: seriesId },
-    { $inc: { amountOfEpisodes: amount || 1 } }
-  );
+const addAmountOfEpisodes = (seriesId: Types.ObjectId | string) =>
+  seriesSchema.updateOne({ _id: seriesId }, { $inc: { amountOfEpisodes: 1 } });
 
 const addEpisodeToSeriesField = (
   seriesId: Types.ObjectId | string,
