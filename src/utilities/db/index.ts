@@ -76,6 +76,15 @@ const removeUsersVideoRef = (
     { $pullAll: { videosUploaded: videoId } }
   );
 
+const removeEpisodeRef = (
+  userId: Types.ObjectId | string,
+  episodeId: Types.ObjectId | string
+) =>
+  userSchema.updateOne(
+    { _id: userId },
+    { $pullAll: { seriesUploaded: episodeId } }
+  );
+
 const addProfileToUser = (userId: Types.ObjectId | string, data: ProfileType) =>
   userSchema.updateOne({ _id: userId }, { $push: { profiles: data } });
 
@@ -553,6 +562,7 @@ export default {
   updateRefreshToken,
   removeRefreshToken,
   removeUsersVideoRef,
+  removeEpisodeRef,
   EmailTaken,
   getSingleCategoryBayId,
   getSingleCategoryBayName,

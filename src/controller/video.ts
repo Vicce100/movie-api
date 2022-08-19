@@ -25,6 +25,7 @@ import {
 import { errorHandler } from '../utilities/middleware.js';
 import {
   cleanString,
+  deleteFile,
   generatePreviewImages,
   shuffleArray,
 } from '../utilities/index.js';
@@ -346,8 +347,49 @@ export const deleteMovie = async (req: Request, res: Response) => {
     if (userId !== movie.creatorsId)
       throw new Error(errorCode.PERMISSION_DENIED);
 
+    deleteFile(movie.videoUrl);
+    deleteFile(movie.displayPicture);
+
+    for (let index = 0; index < movie.previewImagesUrl.length; index++) {
+      deleteFile(movie.previewImagesUrl[index]);
+    }
+
     (await movie.remove()).save();
     await db.removeUsersVideoRef(req.user._id, movieId);
+  } catch (error) {
+    if (error instanceof Error) {
+      const errorResponse = errorHandler(error);
+      return res.status(Number(errorResponse.status)).json(errorResponse);
+    }
+  }
+};
+
+export const deleteSeries = async (req: Request, res: Response) => {
+  const { seriesId } = req.params;
+  const { _id: userId } = req.user;
+
+  try {
+    const series = await db.findSeriesById(seriesId);
+    assertNonNullish(series, errorCode.VALUE_MISSING);
+    if (userId !== series.creatorsId)
+      throw new Error(errorCode.PERMISSION_DENIED);
+
+    deleteFile(series.displayPicture);
+
+    one: for (let index1 = 0; index1 < series.episodes.length; index1++) {
+      const episode = await episodesSchema.findOne(
+        { _id: series.episodes[index1] },
+        { videoUrl: 1, previewImagesUrl: 1, displayPicture: 1 }
+      );
+      if (episode === null) continue one;
+      deleteFile(episode.videoUrl);
+      deleteFile(episode.displayPicture);
+
+      episode.previewImagesUrl.forEach((value) => deleteFile(value));
+    }
+
+    (await series.remove()).save();
+    await db.removeEpisodeRef(userId, seriesId);
   } catch (error) {
     if (error instanceof Error) {
       const errorResponse = errorHandler(error);
@@ -361,13 +403,18 @@ export const deleteEpisode = async (req: Request, res: Response) => {
   const { _id: userId } = req.user;
 
   try {
-    const movie = await db.findEpisodeById(episodeId);
-    assertNonNullish(movie, errorCode.VALUE_MISSING);
-    if (userId !== movie.creatorsId)
+    const episode = await db.findEpisodeById(episodeId);
+    assertNonNullish(episode, errorCode.VALUE_MISSING);
+    if (userId !== episode.creatorsId)
       throw new Error(errorCode.PERMISSION_DENIED);
 
-    (await movie.remove()).save();
-    await db.removeUsersVideoRef(req.user._id, episodeId);
+    deleteFile(episode.videoUrl);
+    deleteFile(episode.displayPicture);
+
+    episode.previewImagesUrl.forEach((value) => deleteFile(value));
+
+    (await episode.remove()).save();
+    await db.removeUsersVideoRef(userId, episodeId);
   } catch (error) {
     if (error instanceof Error) {
       const errorResponse = errorHandler(error);

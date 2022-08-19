@@ -167,3 +167,10 @@ export const shuffleArray = <T>(array: T[]): T[] =>
     .map((value) => ({ value, sort: Math.random() }))
     .sort((a, b) => a.sort - b.sort)
     .map(({ value }) => value);
+
+export const deleteFile = (filePath: string) => {
+  if (!filePath || !fs.existsSync(filePath))
+    throw new Error(errorCode.VALUE_MISSING);
+  fs.rmSync(filePath);
+  return true;
+};
