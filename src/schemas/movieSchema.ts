@@ -2,6 +2,8 @@ import mongoose from 'mongoose';
 import dayjs from 'dayjs';
 import { MovieSchemaType } from '../utilities/types.js';
 
+const idRefs = { type: mongoose.SchemaTypes.ObjectId };
+const reqMongoId = { ...idRefs, require: true };
 const reqString = { type: String, require: true };
 const ShortString = { type: String, minLength: 1, maxLength: 255 };
 const requiredShortString = { ...ShortString, require: true };
@@ -24,7 +26,7 @@ const MovieSchema = new mongoose.Schema({
   description: { type: String, require: false, maxLength: 1225 },
   views: { type: Number, require: true },
   monthlyViews: { type: Number, require: true },
-  creatorsId: { type: mongoose.SchemaTypes.ObjectId, ref: 'users' },
+  creatorsId: { ...reqMongoId, ref: 'users' },
   uploadDate: date,
   releaseDate: { type: String, imitable: true, require: true },
 });

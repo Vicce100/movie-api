@@ -74,6 +74,29 @@ export type queryPathsString =
   | 'randomMovie'
   | 'randomSeries';
 
+export const isWatchingPaths = Object.freeze({
+  addToMoviesWatched: 'addToMoviesWatched',
+  addToSeriesWatched: 'addToSeriesWatched',
+  removeEpisodeWatched: 'removeEpisodeWatched',
+  setSeriesWatchedActiveEpisode: 'setSeriesWatchedActiveEpisode',
+  updateSeriesWatchedActiveEpisode: 'updateSeriesWatchedActiveEpisode',
+  addToSeriesWatchedEpisodes: 'addToSeriesWatchedEpisodes',
+  updateSeriesWatchedEpisode: 'updateSeriesWatchedEpisode',
+  updateMoviesWatched: 'updateMoviesWatched',
+  removeMovieWatched: 'removeMovieWatched',
+});
+
+export type isWatchingPathsString =
+  | 'addToMoviesWatched'
+  | 'addToSeriesWatched'
+  | 'removeEpisodeWatched'
+  | 'setSeriesWatchedActiveEpisode'
+  | 'updateSeriesWatchedActiveEpisode'
+  | 'addToSeriesWatchedEpisodes'
+  | 'updateSeriesWatchedEpisode'
+  | 'updateMoviesWatched'
+  | 'removeMovieWatched';
+
 export type UsersRolesType = 'user' | 'moderator' | 'admin' | 'superAdmin';
 export type UserStatusType = 'active' | 'disabled';
 
@@ -175,6 +198,21 @@ export type ProfileType =
       savedList?: Types.ObjectId[];
       likedList?: Types.ObjectId[];
       hasWatch?: Types.ObjectId[];
+      isWatchingMovie?: {
+        movieId: Types.ObjectId;
+        trackId: number;
+      }[];
+      isWatchingSeries?: {
+        seriesId: Types.ObjectId;
+        activeEpisode: {
+          episodeId: Types.ObjectId;
+          trackId: number;
+        };
+        watchedEpisodes: {
+          episodeId: Types.ObjectId;
+          trackId: number;
+        }[];
+      }[];
     }[]
   | undefined;
 

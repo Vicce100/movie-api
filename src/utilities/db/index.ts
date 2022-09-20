@@ -258,6 +258,172 @@ const removeIdFromSavedList = (
     { $pull: { 'profiles.$.savedList': videoId } }
   );
 
+const addToMoviesWatched = (
+  userId: string | Types.ObjectId,
+  profileId: string | Types.ObjectId,
+  data: {
+    movieId: Types.ObjectId | string;
+    trackId: number;
+  }
+) =>
+  userSchema.updateOne(
+    {
+      _id: userId,
+      'profiles._id': profileId,
+    },
+    { $push: { 'profiles.$.isWatchingMovie': data } }
+  );
+
+const updateMoviesWatched = (
+  userId: string | Types.ObjectId,
+  profileId: string | Types.ObjectId,
+  movieId: string | Types.ObjectId,
+  trackId: number
+) =>
+  userSchema.updateOne(
+    {
+      _id: userId,
+      'profiles._id': profileId,
+      'profiles.$.isWatchingMovie': movieId,
+    },
+    { $set: { 'profiles.$.isWatchingMovie.$.trackId': trackId } }
+  );
+
+const removeMovieWatched = (
+  userId: string | Types.ObjectId,
+  profileId: string | Types.ObjectId,
+  movieId: string | Types.ObjectId
+) =>
+  userSchema.updateOne(
+    {
+      _id: userId,
+      'profiles._id': profileId,
+      'profiles.$.isWatchingMovie': movieId,
+    },
+    { $unset: { 'profiles.$.isWatchingMovie.$': '' } }
+  );
+
+const addToSeriesWatched = (
+  userId: string | Types.ObjectId,
+  profileId: string | Types.ObjectId,
+  data: {
+    seriesId: Types.ObjectId | string;
+    activeEpisode:
+      | {
+          episodeId: Types.ObjectId | string;
+          trackId: number;
+        }
+      | {};
+    watchedEpisodes:
+      | {
+          episodeId: Types.ObjectId | string;
+          trackId: number;
+        }[]
+      | [];
+  }
+) =>
+  userSchema.updateOne(
+    {
+      _id: userId,
+      'profiles._id': profileId,
+    },
+    { $push: { 'profiles.$.isWatchingSeries': data } }
+  );
+
+const removeEpisodeWatched = (
+  userId: string | Types.ObjectId,
+  profileId: string | Types.ObjectId,
+  seriesId: Types.ObjectId | string
+) =>
+  userSchema.updateOne(
+    {
+      _id: userId,
+      'profiles._id': profileId,
+      'profiles.$.isWatchingSeries': seriesId,
+    },
+    { $unset: { 'profiles.$.isWatchingSeries.$.activeEpisode': '' } }
+  );
+
+const setSeriesWatchedActiveEpisode = (
+  userId: string | Types.ObjectId,
+  profileId: string | Types.ObjectId,
+  seriesId: Types.ObjectId | string,
+  activeEpisode: {
+    episodeId: Types.ObjectId | string;
+    trackId: number;
+  }
+) =>
+  userSchema.updateOne(
+    {
+      _id: userId,
+      'profiles._id': profileId,
+      'profiles.$.isWatchingSeries': seriesId,
+    },
+    { $set: { 'profiles.$.isWatchingSeries.$.activeEpisode': activeEpisode } }
+  );
+
+const updateSeriesWatchedActiveEpisode = (
+  userId: string | Types.ObjectId,
+  profileId: string | Types.ObjectId,
+  seriesId: Types.ObjectId | string,
+  trackId: number
+) =>
+  userSchema.updateOne(
+    {
+      _id: userId,
+      'profiles._id': profileId,
+      'profiles.$.isWatchingSeries': seriesId,
+    },
+    {
+      $set: {
+        'profiles.$.isWatchingSeries.$.activeEpisode.trackId': trackId,
+      },
+    }
+  );
+
+const addToSeriesWatchedEpisodes = (
+  userId: string | Types.ObjectId,
+  profileId: string | Types.ObjectId,
+  seriesId: Types.ObjectId | string,
+  data: {
+    episodeId: Types.ObjectId | string;
+    trackId: number;
+  }
+) =>
+  userSchema.updateOne(
+    {
+      _id: userId,
+      'profiles._id': profileId,
+      'profiles.$.isWatchingSeries': seriesId,
+    },
+    {
+      $push: {
+        'profiles.$.isWatchingSeries.$.watchedEpisodes': data,
+      },
+    }
+  );
+
+const updateSeriesWatchedEpisode = (
+  userId: string | Types.ObjectId,
+  profileId: string | Types.ObjectId,
+  seriesId: Types.ObjectId | string,
+  episodeId: Types.ObjectId | string,
+  trackId: number
+) =>
+  userSchema.updateOne(
+    {
+      _id: userId,
+      'profiles._id': profileId,
+      'profiles.$.isWatchingSeries': seriesId,
+      'profiles.$.isWatchingSeries.$.watchedEpisodes': episodeId,
+    },
+    {
+      $set: {
+        'profiles.$.isWatchingSeries.$.watchedEpisodes.$.trackId': trackId,
+      },
+    }
+  );
+
 // https://www.mongodb.com/docs/upcoming/reference/operator/aggregation/sample/#pipe._S_sample
 const getMyListInMovie = (MyListIds: Types.ObjectId[] | string[]) =>
   movieSchema.aggregate<MovieSchemaType>([
@@ -281,6 +447,18 @@ const getWatchAgedInSeries = (hasWatchIds: Types.ObjectId[] | string[]) =>
   seriesSchema.aggregate<SeriesSchemaType>([
     { $match: { _id: { $in: [...hasWatchIds] } } },
     { $sample: { size: hasWatchIds.length } },
+  ]);
+
+const getLikedListIdsMovies = (likedListIds: Types.ObjectId[] | string[]) =>
+  movieSchema.aggregate<MovieSchemaType>([
+    { $match: { _id: { $in: [...likedListIds] } } },
+    { $sample: { size: likedListIds.length } },
+  ]);
+
+const getLikedListSeries = (likedListIds: Types.ObjectId[] | string[]) =>
+  seriesSchema.aggregate<SeriesSchemaType>([
+    { $match: { _id: { $in: [...likedListIds] } } },
+    { $sample: { size: likedListIds.length } },
   ]);
 
 const getTop10Movies = () =>
@@ -391,16 +569,15 @@ const returnCurrentUser = (
     firstName: user.firstName,
     lastName: user.lastName,
     profiles:
-      user?.profiles?.map(
-        ({ _id, profileName, avatarURL, savedList, likedList, hasWatch }) => ({
-          _id,
-          profileName,
-          avatarURL: `${url}/${avatarURL}`,
-          savedList: savedList || [],
-          likedList: likedList || [],
-          hasWatch: hasWatch || [],
-        })
-      ) || undefined,
+      user?.profiles?.map((profile) => ({
+        ...profile,
+        avatarURL: `${url}/${profile.avatarURL}`,
+        savedList: profile.savedList || [],
+        likedList: profile.likedList || [],
+        hasWatch: profile.hasWatch || [],
+        isWatchingMovie: profile.isWatchingMovie || [],
+        isWatchingSeries: profile.isWatchingSeries || [],
+      })) || undefined,
     role: user.role,
     userStatus: user.userStatus,
     moviesUploaded: user.moviesUploaded,
@@ -597,10 +774,21 @@ export default {
   addEpisodeToSeriesField,
   addIdToSavedList,
   removeIdFromSavedList,
+  addToMoviesWatched,
+  addToSeriesWatched,
+  removeEpisodeWatched,
+  setSeriesWatchedActiveEpisode,
+  updateSeriesWatchedActiveEpisode,
+  addToSeriesWatchedEpisodes,
+  updateSeriesWatchedEpisode,
+  updateMoviesWatched,
+  removeMovieWatched,
   getMyListInMovie,
   getMyListInSeries,
   getWatchAgedInMovies,
   getWatchAgedInSeries,
+  getLikedListIdsMovies,
+  getLikedListSeries,
   getTop10Movies,
   getTop10Series,
   randomMovie,
