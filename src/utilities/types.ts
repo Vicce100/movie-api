@@ -23,20 +23,20 @@ export const MulterErrorCode = {
   LIMIT_UNEXPECTED_FILE: 'LIMIT_UNEXPECTED_FILE' as 'LIMIT_UNEXPECTED_FILE',
 };
 
-export const errorCode = {
-  NOT_AUTHENTICATED: 'user not authenticated' as const,
-  ACCESS_WRONG_USER: 'trying to access wrong data' as const,
-  MISSING_ENV_TOKEN: 'missing env token' as const,
-  PERMISSION_DENIED: 'permission denied' as const,
-  VALUE_TAKEN: 'value already taken' as const,
-  VALUE_EXISTS: 'value already exists' as const,
-  VALUE_MISSING: 'value is missing' as const,
-  VALUE_NOT_EXISTING: 'value dose not exists' as const,
-  INVALID_EMAIL: 'invalid email' as const,
-  WRONG_VALUE: 'wrong value' as const,
-  EMPTY_VALUE: 'empty value' as const,
-  REQUEST_PARAMS_MISSING: 'request params missing' as const,
-};
+export const errorCode = Object.freeze({
+  NOT_AUTHENTICATED: 'user not authenticated',
+  ACCESS_WRONG_USER: 'trying to access wrong data',
+  MISSING_ENV_TOKEN: 'missing env token',
+  PERMISSION_DENIED: 'permission denied',
+  VALUE_TAKEN: 'value already taken',
+  VALUE_EXISTS: 'value already exists',
+  VALUE_MISSING: 'value is missing',
+  VALUE_NOT_EXISTING: 'value dose not exists',
+  INVALID_EMAIL: 'invalid email',
+  WRONG_VALUE: 'wrong value',
+  EMPTY_VALUE: 'empty value',
+  REQUEST_PARAMS_MISSING: 'request params missing',
+});
 
 export const userRoles = {
   user: 'user' as const,
@@ -85,17 +85,6 @@ export const isWatchingPaths = Object.freeze({
   updateMoviesWatched: 'updateMoviesWatched',
   removeMovieWatched: 'removeMovieWatched',
 });
-
-export type isWatchingPathsString =
-  | 'addToMoviesWatched'
-  | 'addToSeriesWatched'
-  | 'removeEpisodeWatched'
-  | 'setSeriesWatchedActiveEpisode'
-  | 'updateSeriesWatchedActiveEpisode'
-  | 'addToSeriesWatchedEpisodes'
-  | 'updateSeriesWatchedEpisode'
-  | 'updateMoviesWatched'
-  | 'removeMovieWatched';
 
 export type UsersRolesType = 'user' | 'moderator' | 'admin' | 'superAdmin';
 export type UserStatusType = 'active' | 'disabled';

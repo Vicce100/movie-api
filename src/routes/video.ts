@@ -110,33 +110,33 @@ router.post(`/${rs.remove}/${rs.savedList}`, removeIdFromSavedList);
 // videos watched -->
 router.post(`/${rs.movie}/${iw.addToMoviesWatched}`, addToMoviesWatched);
 
-router.post(`/${rs.movie}/${iw.addToSeriesWatched}`, addToSeriesWatched);
+router.post(`/${rs.movie}/${iw.updateMoviesWatched}`, updateMoviesWatched);
 
-router.post(`/${rs.movie}/${iw.removeEpisodeWatched}`, removeEpisodeWatched);
+router.post(`/${rs.movie}/${iw.removeMovieWatched}`, removeMovieWatched);
+
+router.post(`/${rs.series}/${iw.addToSeriesWatched}`, addToSeriesWatched);
+
+router.post(`/${rs.series}/${iw.removeEpisodeWatched}`, removeEpisodeWatched);
 
 router.post(
-  `/${rs.movie}/${iw.setSeriesWatchedActiveEpisode}`,
+  `/${rs.series}/${iw.setSeriesWatchedActiveEpisode}`,
   setSeriesWatchedActiveEpisode
 );
 
 router.post(
-  `/${rs.movie}/${iw.updateSeriesWatchedActiveEpisode}`,
+  `/${rs.series}/${iw.updateSeriesWatchedActiveEpisode}`,
   updateSeriesWatchedActiveEpisode
 );
 
 router.post(
-  `/${rs.movie}/${iw.addToSeriesWatchedEpisodes}`,
+  `/${rs.series}/${iw.addToSeriesWatchedEpisodes}`,
   addToSeriesWatchedEpisodes
 );
 
 router.post(
-  `/${rs.movie}/${iw.updateSeriesWatchedEpisode}`,
+  `/${rs.series}/${iw.updateSeriesWatchedEpisode}`,
   updateSeriesWatchedEpisode
 );
-
-router.post(`/${rs.movie}/${iw.updateMoviesWatched}`, updateMoviesWatched);
-
-router.post(`/${rs.movie}/${iw.removeMovieWatched}`, removeMovieWatched);
 
 // genera purpose for fixing things
 // router.get(`/fix`, fix);

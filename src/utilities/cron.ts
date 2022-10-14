@@ -1,8 +1,8 @@
 import cron from 'node-cron';
 import db from './db/index.js';
 
-const resetMonthlyViews = () => {
-  // run once every month
+// run once every month
+const resetMonthlyViews = () =>
   cron
     .schedule('0 0 0 1 * 0', async () => {
       await db.resetMoviesMonthlyViews();
@@ -10,6 +10,5 @@ const resetMonthlyViews = () => {
       console.log('update');
     })
     .start();
-};
 
 export { resetMonthlyViews };

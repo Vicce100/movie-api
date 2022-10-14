@@ -10,8 +10,6 @@ import {
   errorCode,
   mp4,
   queryPaths,
-  isWatchingPaths,
-  isWatchingPathsString,
   queryPathsString,
   returnVideosArray,
 } from '../utilities/types.js';
