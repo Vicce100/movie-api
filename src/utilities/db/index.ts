@@ -570,7 +570,8 @@ const returnCurrentUser = (
     lastName: user.lastName,
     profiles:
       user?.profiles?.map((profile) => ({
-        ...profile,
+        _id: profile._id,
+        profileName: profile.profileName,
         avatarURL: `${url}/${profile.avatarURL}`,
         savedList: profile.savedList || [],
         likedList: profile.likedList || [],
