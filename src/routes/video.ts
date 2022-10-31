@@ -4,7 +4,7 @@ import {
   multerErrorHandler,
   fileFilterAll as fileFilter,
 } from '../utilities/middleware.js';
-import multer from 'multer';
+import multer, { diskStorage } from 'multer';
 import {
   getMovie,
   getEpisode,
@@ -20,6 +20,17 @@ import {
   createSeries,
   deleteMovie,
   deleteEpisode,
+
+  // videos watched -->
+  addToMoviesWatched,
+  addToSeriesWatched,
+  removeEpisodeWatched,
+  setSeriesWatchedActiveEpisode,
+  updateSeriesWatchedActiveEpisode,
+  addToSeriesWatchedEpisodes,
+  updateSeriesWatchedEpisode,
+  updateMoviesWatched,
+  removeMovieWatched,
   generateFFmpegToMovie,
   generateFFmpegToEpisode,
   removeFFmpegFromMovie,
@@ -33,12 +44,13 @@ import {
   // fix,
 } from '../controller/video.js';
 import { cleanString, routesString as rs } from '../utilities/index.js';
+import { isWatchingPaths as iw } from '../utilities/types.js';
 
 const router = express.Router();
 
 router.use(isAuthenticate);
 
-const publicVideoStorage = multer.diskStorage({
+const publicVideoStorage = diskStorage({
   destination: (_req, file, cb) => {
     const fileType = file.mimetype.split('/')[0];
     if (fileType === 'video') return cb(null, 'uploads/videos/public/');
@@ -48,7 +60,7 @@ const publicVideoStorage = multer.diskStorage({
     cb(null, `${Date.now()}-${cleanString(file.originalname)}`),
 });
 
-const privateVideoStorage = multer.diskStorage({
+const privateVideoStorage = diskStorage({
   destination: (_req, file, cb) => {
     const fileType = file.mimetype.split('/')[0];
     if (fileType === 'video') return cb(null, 'uploads/videos/private/');
@@ -95,9 +107,39 @@ router.post(`/${rs.add}/${rs.savedList}`, addIdToSavedList);
 
 router.post(`/${rs.remove}/${rs.savedList}`, removeIdFromSavedList);
 
+// videos watched -->
+router.post(`/${rs.movie}/${iw.addToMoviesWatched}`, addToMoviesWatched);
+
+router.post(`/${rs.movie}/${iw.updateMoviesWatched}`, updateMoviesWatched);
+
+router.post(`/${rs.movie}/${iw.removeMovieWatched}`, removeMovieWatched);
+
+router.post(`/${rs.series}/${iw.addToSeriesWatched}`, addToSeriesWatched);
+
+router.post(`/${rs.series}/${iw.removeEpisodeWatched}`, removeEpisodeWatched);
+
+router.post(
+  `/${rs.series}/${iw.setSeriesWatchedActiveEpisode}`,
+  setSeriesWatchedActiveEpisode
+);
+
+router.post(
+  `/${rs.series}/${iw.updateSeriesWatchedActiveEpisode}`,
+  updateSeriesWatchedActiveEpisode
+);
+
+router.post(
+  `/${rs.series}/${iw.addToSeriesWatchedEpisodes}`,
+  addToSeriesWatchedEpisodes
+);
+
+router.post(
+  `/${rs.series}/${iw.updateSeriesWatchedEpisode}`,
+  updateSeriesWatchedEpisode
+);
+
 // genera purpose for fixing things
 // router.get(`/fix`, fix);
-
 router.post(
   `/${rs.movie}/${rs.create}`,
   publicVideoUpload.fields([

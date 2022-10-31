@@ -2,6 +2,8 @@ import mongoose from 'mongoose';
 import dayjs from 'dayjs';
 import { SeriesSchemaType } from '../utilities/types.js';
 
+const idRefs = { type: mongoose.SchemaTypes.ObjectId };
+const reqMongoId = { ...idRefs, require: true };
 const reqString = { type: String, require: true };
 const ShortString = { type: String, minLength: 1, maxLength: 255 };
 const requiredShortString = { ...ShortString, require: true };
@@ -27,12 +29,10 @@ const seriesSchema = new mongoose.Schema({
   creationDate: { type: String, imitable: true, require: true },
   // last release
   latestDate: { type: String, imitable: false, require: true },
-  episodes: [
-    { type: mongoose.SchemaTypes.ObjectId, require: true, ref: 'episode' },
-  ],
+  episodes: [{ ...reqMongoId, ref: 'episode' }],
   amountOfSessions: { type: Number, require: true },
   amountOfEpisodes: { type: Number, require: true },
-  creatorsId: { type: mongoose.SchemaTypes.ObjectId, ref: 'Users' },
+  creatorsId: { ...reqMongoId, ref: 'Users' },
 });
 
 export default mongoose.model<SeriesSchemaType>('series', seriesSchema);

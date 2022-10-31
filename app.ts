@@ -41,8 +41,7 @@ mongoose
 resetMonthlyViews();
 
 const uploads = './uploads';
-const images = `${uploads}/images`;
-const videos = `${uploads}/videos`;
+const [images, videos] = [`${uploads}/images`, `${uploads}/videos`];
 
 const imageCheck = () => {
   fs.mkdirSync(images);

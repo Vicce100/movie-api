@@ -7,48 +7,48 @@ import { assertsIsString, assertNonNullish } from './assertions.js';
 import { UserAsCookie, errorCode } from './types.js';
 import db from './db/index.js';
 
-export const routesString = {
-  video: 'video' as const,
-  category: 'category' as const,
-  franchise: 'franchise' as const,
-  avatar: 'avatar' as const,
-  user: 'user' as const,
-  movie: 'movie' as const,
-  episode: 'episode' as const,
-  episodes: 'episodes' as const,
-  series: 'series' as const,
-  upload: 'upload' as const,
-  single: 'single' as const,
-  multiple: 'multiple' as const,
-  data: 'data' as const,
-  search: 'search' as const,
-  searchId: 'searchId' as const,
-  searchText: 'searchText' as const,
-  addView: 'addView' as const,
-  ffmpeg: 'ffmpeg' as const,
-  create: 'create' as const,
-  add: 'add' as const,
-  all: 'all' as const,
-  savedList: 'savedList' as const,
-  login: 'login' as const,
-  logout: 'logout' as const,
-  refreshToken: 'refreshToken' as const,
-  addProfile: 'addProfile' as const,
-  getCurrentUser: 'getCurrentUser' as const,
-  checkAuth: 'checkAuth' as const,
-  get: 'get' as const,
-  delete: 'delete' as const,
-  remove: 'remove' as const,
-  videoId: 'videoId' as const,
-  movieId: 'movieId' as const,
-  episodeId: 'episodeId' as const,
-  seriesId: 'seriesId' as const,
-  categoryId: 'categoryId' as const,
-  franchiseId: 'franchiseId' as const,
-  avatarId: 'avatarId' as const,
-  categoryName: 'categoryName' as const,
-  roleType: 'roleType' as const,
-};
+export const routesString = Object.freeze({
+  video: 'video',
+  category: 'category',
+  franchise: 'franchise',
+  avatar: 'avatar',
+  user: 'user',
+  movie: 'movie',
+  episode: 'episode',
+  episodes: 'episodes',
+  series: 'series',
+  upload: 'upload',
+  single: 'single',
+  multiple: 'multiple',
+  data: 'data',
+  search: 'search',
+  searchId: 'searchId',
+  searchText: 'searchText',
+  addView: 'addView',
+  ffmpeg: 'ffmpeg',
+  create: 'create',
+  add: 'add',
+  all: 'all',
+  savedList: 'savedList',
+  login: 'login',
+  logout: 'logout',
+  refreshToken: 'refreshToken',
+  addProfile: 'addProfile',
+  getCurrentUser: 'getCurrentUser',
+  checkAuth: 'checkAuth',
+  get: 'get',
+  delete: 'delete',
+  remove: 'remove',
+  videoId: 'videoId',
+  movieId: 'movieId',
+  episodeId: 'episodeId',
+  seriesId: 'seriesId',
+  categoryId: 'categoryId',
+  franchiseId: 'franchiseId',
+  avatarId: 'avatarId',
+  categoryName: 'categoryName',
+  roleType: 'roleType',
+});
 
 export const generateAccessToken = (user: UserAsCookie) => {
   try {
@@ -114,11 +114,12 @@ export const generatePreviewImages = ({
 
   return new Promise<string[]>((resolve, reject) => {
     const cmd = ffmpeg(videoUrl);
+    const fileName = `${new Date().toISOString()}-${outputPathAndFileName}`;
 
     cmd
       .FPS(fps)
       .size(resolution)
-      .output(`${outputPathAndFileName}-%d.jpg`)
+      .output(`${fileName}-%d.jpg`)
       // .on('start', (cmd) => console.log({ cmd }))
       .on('error', (error) => reject(new Error(error.message)))
       // .on('codecData', (data) => console.log(JSON.stringify(data, undefined, 2)))
@@ -128,9 +129,8 @@ export const generatePreviewImages = ({
         const tempPreviewImageArray: string[] = [];
 
         one: for (let index = 0; index <= imagesNr; index++) {
-          if (!fs.existsSync(`${outputPathAndFileName}-${index}.jpg`))
-            continue one;
-          tempPreviewImageArray.push(`${outputPathAndFileName}-${index}.jpg`);
+          if (!fs.existsSync(`${fileName}-${index}.jpg`)) continue one;
+          tempPreviewImageArray.push(`${fileName}-${index}.jpg`);
         }
         resolve(tempPreviewImageArray);
       })

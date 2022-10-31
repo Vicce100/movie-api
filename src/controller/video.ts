@@ -585,17 +585,6 @@ const getRandomSeries = async () => {
   }
 };
 
-// categories to query
-/*
-Romantic movies
-Family movies
-Comedy + Crime series
-Teen + Comedy movies and series
-Action movie
-Documentary // should only be series
-History movies
-*/
-
 export const getVideosData = async (req: Request, res: Response) => {
   const {
     queryName,
@@ -646,6 +635,248 @@ export const getVideosData = async (req: Request, res: Response) => {
   }
   res.status(200).json(resultData);
 };
+
+// videos watched -->
+export const addToMoviesWatched = async (req: Request, res: Response) => {
+  const {
+    userId,
+    profileId,
+    data,
+  }: {
+    userId: string | Types.ObjectId;
+    profileId: string | Types.ObjectId;
+    data: {
+      movieId: Types.ObjectId | string;
+      trackId: number;
+    };
+  } = req.body;
+  try {
+    const response = await db.addToMoviesWatched(userId, profileId, data);
+    return res.status(200).send({ success: response.acknowledged });
+  } catch (error: any) {
+    const errorResponse = errorHandler(error);
+    return res.status(Number(errorResponse.status)).json(errorResponse);
+  }
+};
+
+export const updateMoviesWatched = async (req: Request, res: Response) => {
+  const {
+    userId,
+    profileId,
+    movieId,
+    trackId,
+  }: {
+    userId: string | Types.ObjectId;
+    profileId: string | Types.ObjectId;
+    movieId: string | Types.ObjectId;
+    trackId: number;
+  } = req.body;
+  try {
+    const response = await db.updateMoviesWatched(
+      userId,
+      profileId,
+      movieId,
+      trackId
+    );
+    return res.status(200).send({ success: response.acknowledged });
+  } catch (error: any) {
+    const errorResponse = errorHandler(error);
+    return res.status(Number(errorResponse.status)).json(errorResponse);
+  }
+};
+
+export const removeMovieWatched = async (req: Request, res: Response) => {
+  const {
+    userId,
+    profileId,
+    movieId,
+  }: {
+    userId: string | Types.ObjectId;
+    profileId: string | Types.ObjectId;
+    movieId: string | Types.ObjectId;
+  } = req.body;
+  try {
+    const response = await db.removeMovieWatched(userId, profileId, movieId);
+    return res.status(200).send({ success: response.acknowledged });
+  } catch (error: any) {
+    const errorResponse = errorHandler(error);
+    return res.status(Number(errorResponse.status)).json(errorResponse);
+  }
+};
+
+export const addToSeriesWatched = async (req: Request, res: Response) => {
+  const {
+    userId,
+    profileId,
+    data,
+  }: {
+    userId: string | Types.ObjectId;
+    profileId: string | Types.ObjectId;
+    data: {
+      seriesId: Types.ObjectId | string;
+      activeEpisode: {
+        episodeId: Types.ObjectId | string;
+        trackId: number;
+      };
+      watchedEpisodes: {
+        episodeId: Types.ObjectId | string;
+        trackId: number;
+      }[];
+    };
+  } = req.body;
+  try {
+    const response = await db.addToSeriesWatched(userId, profileId, data);
+    return res.status(200).send({ success: response.acknowledged });
+  } catch (error: any) {
+    const errorResponse = errorHandler(error);
+    return res.status(Number(errorResponse.status)).json(errorResponse);
+  }
+};
+
+export const removeEpisodeWatched = async (req: Request, res: Response) => {
+  const {
+    userId,
+    profileId,
+    seriesId,
+  }: {
+    userId: string | Types.ObjectId;
+    profileId: string | Types.ObjectId;
+    seriesId: Types.ObjectId | string;
+  } = req.body;
+  try {
+    const response = await db.removeEpisodeWatched(userId, profileId, seriesId);
+    return res.status(200).send({ success: response.acknowledged });
+  } catch (error: any) {
+    const errorResponse = errorHandler(error);
+    return res.status(Number(errorResponse.status)).json(errorResponse);
+  }
+};
+
+export const setSeriesWatchedActiveEpisode = async (
+  req: Request,
+  res: Response
+) => {
+  const {
+    userId,
+    profileId,
+    seriesId,
+    activeEpisode,
+  }: {
+    userId: string | Types.ObjectId;
+    profileId: string | Types.ObjectId;
+    seriesId: Types.ObjectId | string;
+    activeEpisode: {
+      episodeId: Types.ObjectId | string;
+      trackId: number;
+    };
+  } = req.body;
+  try {
+    const response = await db.setSeriesWatchedActiveEpisode(
+      userId,
+      profileId,
+      seriesId,
+      activeEpisode
+    );
+    return res.status(200).send({ success: response.acknowledged });
+  } catch (error: any) {
+    const errorResponse = errorHandler(error);
+    return res.status(Number(errorResponse.status)).json(errorResponse);
+  }
+};
+
+export const updateSeriesWatchedActiveEpisode = async (
+  req: Request,
+  res: Response
+) => {
+  const {
+    userId,
+    profileId,
+    seriesId,
+    trackId,
+  }: {
+    userId: string | Types.ObjectId;
+    profileId: string | Types.ObjectId;
+    seriesId: Types.ObjectId | string;
+    trackId: number;
+  } = req.body;
+  try {
+    const response = await db.updateSeriesWatchedActiveEpisode(
+      userId,
+      profileId,
+      seriesId,
+      trackId
+    );
+    return res.status(200).send({ success: response.acknowledged });
+  } catch (error: any) {
+    const errorResponse = errorHandler(error);
+    return res.status(Number(errorResponse.status)).json(errorResponse);
+  }
+};
+
+export const addToSeriesWatchedEpisodes = async (
+  req: Request,
+  res: Response
+) => {
+  const {
+    userId,
+    profileId,
+    seriesId,
+    data,
+  }: {
+    userId: string | Types.ObjectId;
+    profileId: string | Types.ObjectId;
+    seriesId: Types.ObjectId | string;
+    data: {
+      episodeId: Types.ObjectId | string;
+      trackId: number;
+    };
+  } = req.body;
+  try {
+    const response = await db.addToSeriesWatchedEpisodes(
+      userId,
+      profileId,
+      seriesId,
+      data
+    );
+    return res.status(200).send({ success: response.acknowledged });
+  } catch (error: any) {
+    const errorResponse = errorHandler(error);
+    return res.status(Number(errorResponse.status)).json(errorResponse);
+  }
+};
+
+export const updateSeriesWatchedEpisode = async (
+  req: Request,
+  res: Response
+) => {
+  const {
+    userId,
+    profileId,
+    seriesId,
+    episodeId,
+    trackId,
+  }: {
+    userId: string | Types.ObjectId;
+    profileId: string | Types.ObjectId;
+    seriesId: Types.ObjectId | string;
+    episodeId: Types.ObjectId | string;
+    trackId: number;
+  } = req.body;
+  try {
+    const response = await db.updateSeriesWatchedEpisode(
+      userId,
+      profileId,
+      seriesId,
+      episodeId,
+      trackId
+    );
+    return res.status(200).send({ success: response.acknowledged });
+  } catch (error: any) {
+    const errorResponse = errorHandler(error);
+    return res.status(Number(errorResponse.status)).json(errorResponse);
+  }
+};
+// end of videos watched -->
 
 export const getMoviesDataByCategory = async (req: Request, res: Response) => {
   const {
