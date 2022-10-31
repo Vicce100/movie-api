@@ -188,10 +188,12 @@ export type ProfileType =
       likedList?: Types.ObjectId[];
       hasWatch?: Types.ObjectId[];
       isWatchingMovie?: {
+        _id: Types.ObjectId;
         movieId: Types.ObjectId;
         trackId: number;
       }[];
       isWatchingSeries?: {
+        _id: Types.ObjectId;
         seriesId: Types.ObjectId;
         activeEpisode: {
           episodeId: Types.ObjectId;
@@ -200,6 +202,7 @@ export type ProfileType =
         watchedEpisodes: {
           episodeId: Types.ObjectId;
           trackId: number;
+          _id: Types.ObjectId;
         }[];
       }[];
     }[]

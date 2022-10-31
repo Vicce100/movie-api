@@ -281,12 +281,19 @@ const updateMoviesWatched = (
   trackId: number
 ) =>
   userSchema.updateOne(
+    { _id: userId },
     {
-      _id: userId,
-      'profiles._id': profileId,
-      'profiles.$.isWatchingMovie': movieId,
+      $set: {
+        'profiles.$[tempProfile].isWatchingMovie.$[watchingMovie].trackId':
+          trackId,
+      },
     },
-    { $set: { 'profiles.$.isWatchingMovie.$.trackId': trackId } }
+    {
+      arrayFilters: [
+        { 'tempProfile._id': profileId },
+        { 'watchingMovie.movieId': movieId },
+      ],
+    }
   );
 
 const removeMovieWatched = (
@@ -295,12 +302,16 @@ const removeMovieWatched = (
   movieId: string | Types.ObjectId
 ) =>
   userSchema.updateOne(
+    { _id: userId },
     {
-      _id: userId,
-      'profiles._id': profileId,
-      'profiles.$.isWatchingMovie': movieId,
+      $unset: { 'profiles.$[tempProfile].isWatchingMovie$[watchingMovie]': '' },
     },
-    { $unset: { 'profiles.$.isWatchingMovie.$': '' } }
+    {
+      arrayFilters: [
+        { 'tempProfile._id': profileId },
+        { 'watchingMovie.movieId': movieId },
+      ],
+    }
   );
 
 const addToSeriesWatched = (
@@ -336,12 +347,19 @@ const removeEpisodeWatched = (
   seriesId: Types.ObjectId | string
 ) =>
   userSchema.updateOne(
+    { _id: userId },
     {
-      _id: userId,
-      'profiles._id': profileId,
-      'profiles.$.isWatchingSeries': seriesId,
+      $unset: {
+        'profiles.$[tempProfile].isWatchingSeries.$[watchingMovie].activeEpisode':
+          '',
+      },
     },
-    { $unset: { 'profiles.$.isWatchingSeries.$.activeEpisode': '' } }
+    {
+      arrayFilters: [
+        { 'tempProfile._id': profileId },
+        { 'watchingMovie.seriesId': seriesId },
+      ],
+    }
   );
 
 const setSeriesWatchedActiveEpisode = (
@@ -354,12 +372,19 @@ const setSeriesWatchedActiveEpisode = (
   }
 ) =>
   userSchema.updateOne(
+    { _id: userId },
     {
-      _id: userId,
-      'profiles._id': profileId,
-      'profiles.$.isWatchingSeries': seriesId,
+      $set: {
+        'profiles.$[tempProfile].isWatchingSeries.$[watchingSeries].activeEpisode':
+          activeEpisode,
+      },
     },
-    { $set: { 'profiles.$.isWatchingSeries.$.activeEpisode': activeEpisode } }
+    {
+      arrayFilters: [
+        { 'tempProfile._id': profileId },
+        { 'watchingSeries.seriesId': seriesId },
+      ],
+    }
   );
 
 const updateSeriesWatchedActiveEpisode = (
@@ -369,15 +394,18 @@ const updateSeriesWatchedActiveEpisode = (
   trackId: number
 ) =>
   userSchema.updateOne(
-    {
-      _id: userId,
-      'profiles._id': profileId,
-      'profiles.$.isWatchingSeries': seriesId,
-    },
+    { _id: userId },
     {
       $set: {
-        'profiles.$.isWatchingSeries.$.activeEpisode.trackId': trackId,
+        'profiles.$[tempProfile].isWatchingSeries.$[watchingSeries].activeEpisode.trackId':
+          trackId,
       },
+    },
+    {
+      arrayFilters: [
+        { 'tempProfile._id': profileId },
+        { 'watchingSeries.seriesId': seriesId },
+      ],
     }
   );
 
@@ -391,15 +419,18 @@ const addToSeriesWatchedEpisodes = (
   }
 ) =>
   userSchema.updateOne(
-    {
-      _id: userId,
-      'profiles._id': profileId,
-      'profiles.$.isWatchingSeries': seriesId,
-    },
+    { _id: userId },
     {
       $push: {
-        'profiles.$.isWatchingSeries.$.watchedEpisodes': data,
+        'profiles.$[tempProfile].isWatchingSeries.$[watchingMovie].watchedEpisodes':
+          data,
       },
+    },
+    {
+      arrayFilters: [
+        { 'tempProfile._id': profileId },
+        { 'watchingMovie.seriesId': seriesId },
+      ],
     }
   );
 
@@ -411,16 +442,19 @@ const updateSeriesWatchedEpisode = (
   trackId: number
 ) =>
   userSchema.updateOne(
-    {
-      _id: userId,
-      'profiles._id': profileId,
-      'profiles.$.isWatchingSeries': seriesId,
-      'profiles.$.isWatchingSeries.$.watchedEpisodes': episodeId,
-    },
+    { _id: userId },
     {
       $set: {
-        'profiles.$.isWatchingSeries.$.watchedEpisodes.$.trackId': trackId,
+        'profiles.$[tempProfile].isWatchingSeries.$[watchingMovie].watchedEpisodes.$[watchEpisode].trackId':
+          trackId,
       },
+    },
+    {
+      arrayFilters: [
+        { 'tempProfile._id': profileId },
+        { 'watchingMovie.seriesId': seriesId },
+        { 'watchEpisode.episodeId': episodeId },
+      ],
     }
   );
 

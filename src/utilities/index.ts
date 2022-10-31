@@ -114,11 +114,12 @@ export const generatePreviewImages = ({
 
   return new Promise<string[]>((resolve, reject) => {
     const cmd = ffmpeg(videoUrl);
+    const fileName = `${new Date().toISOString()}-${outputPathAndFileName}`;
 
     cmd
       .FPS(fps)
       .size(resolution)
-      .output(`${outputPathAndFileName}-%d.jpg`)
+      .output(`${fileName}-%d.jpg`)
       // .on('start', (cmd) => console.log({ cmd }))
       .on('error', (error) => reject(new Error(error.message)))
       // .on('codecData', (data) => console.log(JSON.stringify(data, undefined, 2)))
@@ -128,9 +129,8 @@ export const generatePreviewImages = ({
         const tempPreviewImageArray: string[] = [];
 
         one: for (let index = 0; index <= imagesNr; index++) {
-          if (!fs.existsSync(`${outputPathAndFileName}-${index}.jpg`))
-            continue one;
-          tempPreviewImageArray.push(`${outputPathAndFileName}-${index}.jpg`);
+          if (!fs.existsSync(`${fileName}-${index}.jpg`)) continue one;
+          tempPreviewImageArray.push(`${fileName}-${index}.jpg`);
         }
         resolve(tempPreviewImageArray);
       })

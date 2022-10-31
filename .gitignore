@@ -1,6 +1,4 @@
 node_modules
 .env
-Blue.mp4
 *.js
 uploads
-*.html

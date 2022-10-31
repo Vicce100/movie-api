@@ -156,13 +156,13 @@ export const deleteUser = async (req: Request, res: Response) => {
   const { email, password, userId } = req.body;
   if (req.user._id === userId) {
     const tempUser = await db.findUserByEmail(email);
-    if (tempUser === null)
+    if (!tempUser)
       return res.status(404).json(db.returnErrorData('Cannot find user', 404));
 
     if (await bcrypt.compare(password, tempUser.password)) {
       try {
         // const remove user = await User.deleteOne({_id: req.params.UserId})
-        const removedUser = db.removeUser(userId);
+        const removedUser = await db.removeUser(userId);
         return res.status(204).json({ removedUser });
       } catch (error: any) {
         return res.status(500).json({ message: error.message });
