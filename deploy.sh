@@ -13,6 +13,6 @@ cp setup.sh build
 cp package.json build
 
 echo 'Deploying files to server...'
-scp -r build/* victor@192.168.0.144:/home/victor/movie-api/
+scp -i ~/.ssh/movie_rsa -r build/* victor@192.168.0.144:/home/victor/movie-api/
 
 echo 'Done!'
