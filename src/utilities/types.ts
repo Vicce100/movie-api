@@ -1,12 +1,17 @@
 import { Request } from 'express';
 import { Types } from 'mongoose';
 
-const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
-const host = process.env.NODE_ENV === 'production' ? 'localhost' : 'localhost';
-const port = process.env.NODE_ENV === 'production' ? '3000' : '5050';
-const ip =
-  process.env.IP_ADDR !== 'localhost' ? process.env.IP_ADDR : undefined;
-export const url = `${protocol}://${ip ? ip : host}:${port}`;
+export const [protocol, port, ip] = [
+  process.env.NODE_ENV === 'production' ? 'http' : 'http',
+  process.env.PORT || '17053', // should always use '17053' as the standard port
+  process.env.NODE_ENV === 'production' && process.env.IP_ADDR
+    ? process.env.IP_ADDR
+    : process.env.NODE_ENV === 'develop' && process.env.IP_LOCAL
+    ? process.env.IP_LOCAL
+    : 'localhost',
+];
+
+export const url = `${protocol}://${ip}:${port}`;
 
 export const jpeg = 'image/jpeg';
 export const jpg = 'image/jpg';

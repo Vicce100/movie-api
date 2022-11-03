@@ -1,4 +1,17 @@
-export const queryPathsArray = [
+export const queryPathsArray: [
+  'myList',
+  'continueWatching',
+  'watchAged',
+  'becauseYouWatch',
+  'becauseYouLiked',
+  'forYou',
+  'newlyAdded',
+  'popular',
+  'top10movies',
+  'top10series',
+  'randomMovie',
+  'randomSeries'
+] = [
   'myList',
   'continueWatching',
   'watchAged',

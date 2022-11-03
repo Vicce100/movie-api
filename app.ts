@@ -1,7 +1,9 @@
-// https://stackoverflow.com/questions/15809611/bcrypt-invalid-elf-header-when-running-node-app
-// to get bcrypt to work on windows just install it like "npm i bcrypt"
-// to get bcrypt to work on linux you need to run the
-// following command as root "npm i bcrypt --unsafe-perm=true --allow-root --save"
+/*
+https://stackoverflow.com/questions/15809611/bcrypt-invalid-elf-header-when-running-node-app
+to get bcrypt to work on windows just install it like "npm i bcrypt"
+to get bcrypt to work on linux (tested on ubuntu 20.04) you need to run the
+following command as root "npm i bcrypt --unsafe-perm=true --allow-root --save"
+*/
 
 import express from 'express';
 import mongoose from 'mongoose';
@@ -17,6 +19,8 @@ import videoRoutes from './src/routes/video.js';
 import indexRouter from './src/routes/index.js';
 import corsOptions from './src/config/corsOptions.js';
 
+import { port } from './src/utilities/types.js';
+
 dotenv.config();
 const app = express();
 
@@ -31,10 +35,15 @@ app.use('/user', userRoutes);
 app.use('/video', videoRoutes);
 app.use(indexRouter);
 
-const dbConnectionString =
-  process.env.DB_connectionLocal || 'mongodb://localhost/MovieDB';
+const DataBaseString =
+  process.env.NODE_ENV === 'production' && process.env.DB_PRODUCTION
+    ? process.env.DB_PRODUCTION
+    : process.env.NODE_ENV === 'develop' && process.env.DB_LOCAL
+    ? process.env.DB_LOCAL
+    : 'mongodb://localhost/MovieDB';
+
 mongoose
-  .connect(dbConnectionString)
+  .connect(DataBaseString)
   .then(() => console.log('Connected to DB...'))
   .catch((err) => console.log(err));
 
@@ -72,5 +81,4 @@ const videoCheck = () => {
   if (!fs.existsSync(`${images}/ffmpeg`)) fs.mkdirSync(`${images}/ffmpeg`);
 })();
 
-const port = process.env.PORT || 5001;
 app.listen(port, () => console.log(`it's alive on http://localhost:${port}`));
