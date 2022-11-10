@@ -1,10 +1,10 @@
 import { Model, Types } from 'mongoose';
+import { url } from '../../../app.js';
 import {
   AvatarSchemaType,
   CurrentUserType,
   ProfileType,
   UserType,
-  url,
   MovieSchemaType,
   EpisodeSchemaType,
   ReturnedVideoData,
@@ -113,7 +113,7 @@ const getAllFranchises = () => franchiseSchema.find();
 
 /* ----------------------- avatar ----------------------- */
 
-const getSingleAvatarById = (avatarId: Types.ObjectId | string) =>
+const findAvatarById = (avatarId: Types.ObjectId | string) =>
   avatarSchema.findOne({ _id: avatarId });
 
 const getAllAvatars = () => avatarSchema.find();
@@ -782,7 +782,7 @@ export default {
   getSingleFranchiseBayId,
   getSingleFranchiseBayName,
   getAllFranchises,
-  getSingleAvatarById,
+  findAvatarById,
   getAllAvatars,
   findMovieById,
   findSeriesById,

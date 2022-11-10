@@ -194,7 +194,8 @@ export const uploadMovie = async (req: Request, res: Response) => {
 
       const previewImageArray = await generatePreviewImages({
         videoUrl: videoUrl,
-        outputPathAndFileName: `uploads/images/ffmpeg/${cleanString(title)}`, // no increment or extension
+        outputPath: `uploads/images/ffmpeg/`,
+        fileName: cleanString(title), // no increment or extension
         fps: 1 / 10,
         resolution: '1920x1080',
       });
@@ -321,9 +322,8 @@ export const addEpisodesTOSeries = async (req: Request, res: Response) => {
 
     const previewImageArray = await generatePreviewImages({
       videoUrl: episode.videoUrl,
-      outputPathAndFileName: `uploads/images/ffmpeg/${cleanString(
-        episode.episodeTitle
-      )}`, // no increment or extension
+      outputPath: `uploads/images/ffmpeg/`,
+      fileName: cleanString(episode.episodeTitle), // no increment or extension
       fps: 1 / 10,
       resolution: '1920x1080',
     });
@@ -1039,11 +1039,10 @@ export const generateFFmpegToMovie = async (req: Request, res: Response) => {
     const video = await db.findMovieById(movieId);
     assertNonNullish(video, errorCode.VALUE_MISSING);
 
-    const cleanedString = cleanString(video.title);
-
     const previewImageArray = await generatePreviewImages({
       videoUrl: video.videoUrl,
-      outputPathAndFileName: `uploads/images/ffmpeg/${Date.now()}-${cleanedString}`, // no increment or extension
+      outputPath: `uploads/images/ffmpeg/`,
+      fileName: cleanString(video.title), // no increment or extension
       fps: 1 / 10,
       resolution: '1080x720',
     });
@@ -1068,13 +1067,10 @@ export const generateFFmpegToEpisode = async (req: Request, res: Response) => {
     const video = await db.findEpisodeById(episodeId);
     assertNonNullish(video, errorCode.VALUE_MISSING);
 
-    const cleanedString = cleanString(
-      `${video.seriesTitle}${video.episodeTitle}`
-    );
-
     const previewImageArray = await generatePreviewImages({
       videoUrl: video.videoUrl,
-      outputPathAndFileName: `uploads/images/ffmpeg/${Date.now()}-${cleanedString}`, // no increment or extension
+      outputPath: `uploads/images/ffmpeg/`,
+      fileName: cleanString(`${video.seriesTitle}${video.episodeTitle}`), // no increment or extension
       fps: 1 / 10,
       resolution: '1080x720',
     });

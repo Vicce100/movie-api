@@ -100,26 +100,28 @@ export const cleanFFmpegEndString = (string: string) =>
 
 export const generatePreviewImages = ({
   videoUrl,
-  outputPathAndFileName, // no increment or extension
+  outputPath,
+  fileName, // no increment or extension
   fps = 1,
   resolution = '1080x720',
 }: {
   videoUrl: string;
-  outputPathAndFileName: string;
+  outputPath: string;
+  fileName: string;
   fps: number;
   resolution: string;
 }) => {
-  if (!videoUrl || !outputPathAndFileName)
+  if (!videoUrl || !outputPath || !fileName)
     throw new Error(errorCode.VALUE_MISSING);
 
   return new Promise<string[]>((resolve, reject) => {
     const cmd = ffmpeg(videoUrl);
-    const fileName = `${new Date().toISOString()}-${outputPathAndFileName}`;
+    const filePathAndName = `${outputPath}${new Date().toISOString()}-${fileName}`;
 
     cmd
       .FPS(fps)
       .size(resolution)
-      .output(`${fileName}-%d.jpg`)
+      .output(`${filePathAndName}-%d.jpg`)
       // .on('start', (cmd) => console.log({ cmd }))
       .on('error', (error) => reject(new Error(error.message)))
       // .on('codecData', (data) => console.log(JSON.stringify(data, undefined, 2)))
@@ -129,8 +131,8 @@ export const generatePreviewImages = ({
         const tempPreviewImageArray: string[] = [];
 
         one: for (let index = 0; index <= imagesNr; index++) {
-          if (!fs.existsSync(`${fileName}-${index}.jpg`)) continue one;
-          tempPreviewImageArray.push(`${fileName}-${index}.jpg`);
+          if (!fs.existsSync(`${filePathAndName}-${index}.jpg`)) continue one;
+          tempPreviewImageArray.push(`${filePathAndName}-${index}.jpg`);
         }
         resolve(tempPreviewImageArray);
       })
@@ -140,12 +142,14 @@ export const generatePreviewImages = ({
 
 export const convertToMp4 = ({
   videoUrl,
-  outputPathAndFileName, // no increment or extension
+  outputPath,
+  fileName, // no increment or extension
 }: {
   videoUrl: string;
-  outputPathAndFileName: string;
+  outputPath: string;
+  fileName: string;
 }) => {
-  if (!videoUrl || !outputPathAndFileName)
+  if (!videoUrl || !outputPath || !fileName)
     throw new Error(errorCode.VALUE_MISSING);
 
   return new Promise<{ success: boolean }>((resolve, reject) => {
@@ -153,7 +157,7 @@ export const convertToMp4 = ({
 
     cmd
       .format('mp4')
-      .input(`${outputPathAndFileName}--converted.mp4`)
+      .input(`${outputPath}${fileName}--converted.mp4`)
       .on('error', (error) => reject(new Error(error.message)))
       .on('end', (error) =>
         error ? resolve({ success: false }) : resolve({ success: true })

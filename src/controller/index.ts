@@ -161,7 +161,7 @@ export const addMultipleAvatars = (req: Request, res: Response) => {
 export const sendSingleAvatar = async (req: Request, res: Response) => {
   const { categoryId } = req.params;
   try {
-    const data = await db.getSingleAvatarById(categoryId);
+    const data = await db.findAvatarById(categoryId);
     assertNonNullish(data, errorCode.VALUE_MISSING);
     res.status(200).json(db.returnAvatar(data));
   } catch (error) {
