@@ -7,8 +7,16 @@ import db from '../utilities/db/index.js';
 import userSchema from '../schemas/UserSchema.js';
 import { generateAccessToken, emailIsValid } from '../utilities/index.js';
 import { checkAuth, errorHandler } from '../utilities/middleware.js';
-import { UserAsCookie, userRoles, UsersRolesType } from '../utilities/types.js';
-import { assertsValueToType } from '../utilities/assertions.js';
+import {
+  errorCode,
+  UserAsCookie,
+  userRoles,
+  UsersRolesType,
+} from '../utilities/types.js';
+import {
+  assertNonNullish,
+  assertsValueToType,
+} from '../utilities/assertions.js';
 
 dotenv.config();
 const userNotAuthObject = db.returnErrorData('user not authenticated.', 401);
@@ -85,11 +93,12 @@ export const login = async (req: Request, res: Response) => {
       };
       console.log(generateAccessToken(userAsCookie));
       res.cookie('SSID', generateAccessToken(userAsCookie), {
-        sameSite: 'strict', // lax, none
+        sameSite: 'strict', // lax, none, strict
         path: '/',
         expires: date,
         httpOnly: true,
-        secure: true,
+        secure: false, // Only Use False For HTTPS And True For HTTPS
+        domain: '192.168.0.3',
       });
       return res.status(200).json(db.returnCurrentUser(latestUser));
     }
@@ -140,11 +149,11 @@ export const refreshToken = async (req: Request, res: Response) => {
       };
 
       res.cookie('SSID', generateAccessToken(userAsCookie), {
-        sameSite: 'strict', // lax, none
+        sameSite: 'strict', // lax, none, strict
         path: '/',
         expires: date,
         httpOnly: true,
-        secure: true,
+        secure: false, // Only Use False For HTTP And True For HTTPS
       });
       return res.status(200).json(db.returnCurrentUser(tempUser));
     });
@@ -178,21 +187,23 @@ export const deleteUser = async (req: Request, res: Response) => {
 
 export const addProfile = async (req: Request, res: Response) => {
   if (!req.user) return res.status(401).json(userNotAuthObject);
-  const { profileName, avatarURL }: { profileName: string; avatarURL: string } =
+  const { profileName, avatarId }: { profileName: string; avatarId: string } =
     req.body;
-  if (!profileName || !avatarURL) {
+  if (!profileName || !avatarId) {
     return res
       .status(400)
       .json(db.returnErrorData('no empty data in field', 400));
   }
   try {
+    const avatar = await db.findAvatarById(avatarId);
+    assertNonNullish(avatar, errorCode.VALUE_MISSING);
     await userSchema.updateOne(
       { id: req.user._id },
       {
         $push: {
           profiles: {
             profileName: profileName,
-            avatarURL: avatarURL,
+            avatarURL: avatar.url,
           },
         },
       }

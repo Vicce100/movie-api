@@ -11,6 +11,10 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 import fs from 'fs';
+import ffmpegPath from '@ffmpeg-installer/ffmpeg';
+import ffmpeg from 'fluent-ffmpeg';
+
+ffmpeg.setFfmpegPath(ffmpegPath.path);
 
 import { resetMonthlyViews } from './src/utilities/cron.js';
 
@@ -19,7 +23,18 @@ import videoRoutes from './src/routes/video.js';
 import indexRouter from './src/routes/index.js';
 import corsOptions from './src/config/corsOptions.js';
 
-import { port } from './src/utilities/types.js';
+export const [protocol, port, ip, url] = [
+  process.env.NODE_ENV === 'production' ? 'http' : 'http',
+  process.env.PORT || '17053', // should always use '17053' as the standard port
+  process.env.NODE_ENV === 'production'
+    ? process.env.IP_ADDR
+    : process.env.IP_LOCAL,
+  `http://${
+    process.env.NODE_ENV === 'production'
+      ? process.env.IP_ADDR
+      : process.env.IP_LOCAL
+  }:${process.env.PORT}`,
+];
 
 dotenv.config();
 const app = express();
@@ -81,4 +96,4 @@ const videoCheck = () => {
   if (!fs.existsSync(`${images}/ffmpeg`)) fs.mkdirSync(`${images}/ffmpeg`);
 })();
 
-app.listen(port, () => console.log(`it's alive on http://localhost:${port}`));
+app.listen(port, () => console.log(`It's alive on ${url}`));
