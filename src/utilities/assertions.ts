@@ -28,6 +28,10 @@ export const queryPathsArray: [
 
 export function assertsValueToType<T>(value: unknown): asserts value is T {}
 
+export function assertsToNonNullable<T>(
+  value: unknown
+): asserts value is NonNullable<T> {}
+
 export function assertNonNullish<T>(
   value: T,
   msg: string

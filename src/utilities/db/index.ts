@@ -304,14 +304,11 @@ const removeMovieWatched = (
   userSchema.updateOne(
     { _id: userId },
     {
-      $unset: { 'profiles.$[tempProfile].isWatchingMovie$[watchingMovie]': '' },
+      $pull: {
+        'profiles.$[tempProfile].isWatchingMovie': { movieId: movieId },
+      },
     },
-    {
-      arrayFilters: [
-        { 'tempProfile._id': profileId },
-        { 'watchingMovie.movieId': movieId },
-      ],
-    }
+    { arrayFilters: [{ 'tempProfile._id': profileId }] }
   );
 
 const addToSeriesWatched = (
@@ -341,6 +338,21 @@ const addToSeriesWatched = (
     { $push: { 'profiles.$.isWatchingSeries': data } }
   );
 
+const removeSeriesWatched = (
+  userId: string | Types.ObjectId,
+  profileId: string | Types.ObjectId,
+  seriesId: string | Types.ObjectId
+) =>
+  userSchema.updateOne(
+    { _id: userId },
+    {
+      $pull: {
+        'profiles.$[tempProfile].isWatchingSeries': { seriesId: seriesId },
+      },
+    },
+    { arrayFilters: [{ 'tempProfile._id': profileId }] }
+  );
+
 const removeEpisodeWatched = (
   userId: string | Types.ObjectId,
   profileId: string | Types.ObjectId,
@@ -350,14 +362,13 @@ const removeEpisodeWatched = (
     { _id: userId },
     {
       $unset: {
-        'profiles.$[tempProfile].isWatchingSeries.$[watchingMovie].activeEpisode':
-          '',
+        'profiles.$[tempProfile].isWatchingSeries.$[series].activeEpisode': '',
       },
     },
     {
       arrayFilters: [
         { 'tempProfile._id': profileId },
-        { 'watchingMovie.seriesId': seriesId },
+        { 'series.seriesId': seriesId },
       ],
     }
   );
@@ -459,16 +470,22 @@ const updateSeriesWatchedEpisode = (
   );
 
 // https://www.mongodb.com/docs/upcoming/reference/operator/aggregation/sample/#pipe._S_sample
-const getMyListInMovie = (MyListIds: Types.ObjectId[] | string[]) =>
+const getMovieByIds = (movieIds: Types.ObjectId[] | string[]) =>
   movieSchema.aggregate<MovieSchemaType>([
-    { $match: { _id: { $in: [...MyListIds] } } },
-    { $sample: { size: MyListIds.length } },
+    { $match: { _id: { $in: [...movieIds] } } },
+    { $sample: { size: movieIds.length } },
   ]);
 
-const getMyListInSeries = (MyListIds: Types.ObjectId[] | string[]) =>
+const getSeriesByIds = (seriesIds: Types.ObjectId[] | string[]) =>
   seriesSchema.aggregate<SeriesSchemaType>([
-    { $match: { _id: { $in: [...MyListIds] } } },
-    { $sample: { size: MyListIds.length } },
+    { $match: { _id: { $in: [...seriesIds] } } },
+    { $sample: { size: seriesIds.length } },
+  ]);
+
+const getEpisodesByIds = (episodeIds: Types.ObjectId[] | string[]) =>
+  episodeSchema.aggregate<EpisodeSchemaType>([
+    { $match: { _id: { $in: [...episodeIds] } } },
+    { $sample: { size: episodeIds.length } },
   ]);
 
 const getWatchAgedInMovies = (hasWatchIds: Types.ObjectId[] | string[]) =>
@@ -812,14 +829,16 @@ export default {
   addToMoviesWatched,
   addToSeriesWatched,
   removeEpisodeWatched,
+  removeSeriesWatched,
   setSeriesWatchedActiveEpisode,
   updateSeriesWatchedActiveEpisode,
   addToSeriesWatchedEpisodes,
   updateSeriesWatchedEpisode,
   updateMoviesWatched,
   removeMovieWatched,
-  getMyListInMovie,
-  getMyListInSeries,
+  getMovieByIds,
+  getSeriesByIds,
+  getEpisodesByIds,
   getWatchAgedInMovies,
   getWatchAgedInSeries,
   getLikedListIdsMovies,
