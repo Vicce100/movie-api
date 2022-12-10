@@ -70,6 +70,7 @@ export type queryPathsString =
 export const isWatchingPaths = Object.freeze({
   addToMoviesWatched: 'addToMoviesWatched',
   addToSeriesWatched: 'addToSeriesWatched',
+  removeSeriesWatched: 'removeSeriesWatched',
   removeEpisodeWatched: 'removeEpisodeWatched',
   setSeriesWatchedActiveEpisode: 'setSeriesWatchedActiveEpisode',
   updateSeriesWatchedActiveEpisode: 'updateSeriesWatchedActiveEpisode',
@@ -81,6 +82,20 @@ export const isWatchingPaths = Object.freeze({
 
 export type UsersRolesType = 'user' | 'moderator' | 'admin' | 'superAdmin';
 export type UserStatusType = 'active' | 'disabled';
+
+export type continueWatchingType = {
+  _id: Types.ObjectId;
+  episodeId: Types.ObjectId | null;
+  title: string;
+  episodeTitle: string | null;
+  sessionNr: number | null;
+  episodeNr: number | null;
+  trackId: number;
+  duration: number;
+  isMovie: boolean;
+  displayPicture: string;
+  episodeDisplayPicture: string | null;
+};
 
 export type returnVideosArray = {
   _id: Types.ObjectId;

@@ -41,6 +41,7 @@ import {
   getSearchSeresData,
   addIdToSavedList,
   removeIdFromSavedList,
+  removeSeriesWatched,
   // fix,
 } from '../controller/video.js';
 import { cleanString, routesString as rs } from '../utilities/index.js';
@@ -115,6 +116,8 @@ router.post(`/${rs.movie}/${iw.updateMoviesWatched}`, updateMoviesWatched);
 router.post(`/${rs.movie}/${iw.removeMovieWatched}`, removeMovieWatched);
 
 router.post(`/${rs.series}/${iw.addToSeriesWatched}`, addToSeriesWatched);
+
+router.post(`/${rs.series}/${iw.removeSeriesWatched}`, removeSeriesWatched);
 
 router.post(`/${rs.series}/${iw.removeEpisodeWatched}`, removeEpisodeWatched);
 

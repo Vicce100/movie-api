@@ -7,6 +7,8 @@ import seriesSchema from '../schemas/seriesSchema.js';
 import episodesSchema from '../schemas/episodeSchema.js';
 import db from '../utilities/db/index.js';
 import {
+  continueWatchingType,
+  EpisodeSchemaType,
   errorCode,
   mp4,
   queryPaths,
@@ -21,6 +23,7 @@ import {
   assertsIsString,
   assertNullish,
   assertUndefined,
+  assertsToNonNullable,
 } from '../utilities/assertions.js';
 import { errorHandler } from '../utilities/middleware.js';
 import {
@@ -30,6 +33,7 @@ import {
   shuffleArray,
 } from '../utilities/index.js';
 import { Types } from 'mongoose';
+import { url } from '../../app.js';
 
 export const getMovie = async (req: Request, res: Response) => {
   const { range } = req.headers;
@@ -504,14 +508,102 @@ const getMyList = async (
     assertNonNullish(activeProfile, errorCode.VALUE_MISSING);
     if (!activeProfile.savedList) throw new Error(errorCode.VALUE_NOT_EXISTING);
 
-    const movieList = await db.getMyListInMovie(activeProfile.savedList);
-    const seriesList = await db.getMyListInSeries(activeProfile.savedList);
+    const [movieList, seriesList] = await Promise.all([
+      db.getMovieByIds(activeProfile.savedList),
+      db.getSeriesByIds(activeProfile.savedList),
+    ]);
+
     let videoArray: returnVideosArray = [];
-    const movieArray = db.returnMoviesArray(movieList) || [];
-    if (movieArray.length) videoArray = videoArray.concat(movieArray);
-    const seriesArray = db.returnSeriesArray(seriesList) || [];
-    if (seriesArray.length) videoArray = videoArray.concat(seriesArray);
+
+    videoArray = videoArray.concat(db.returnMoviesArray(movieList));
+    videoArray = videoArray.concat(db.returnSeriesArray(seriesList));
+
     return videoArray;
+  } catch (error: any) {
+    if (error) throw new Error(error.message || error);
+  }
+};
+
+const getContinueWatching = async (
+  profileId: string,
+  userId: string | Types.ObjectId
+) => {
+  try {
+    const user = await db.findUserById(userId);
+    assertNonNullish(user, errorCode.VALUE_MISSING);
+    const activeProfile = user.profiles?.find(
+      ({ _id }) => String(_id) === profileId
+    );
+    assertNonNullish(activeProfile, errorCode.VALUE_MISSING);
+    if (!activeProfile.isWatchingMovie || !activeProfile.isWatchingSeries)
+      throw new Error(errorCode.VALUE_NOT_EXISTING);
+
+    let videoArray: continueWatchingType[] = [];
+
+    const promiseMoviesArray = activeProfile.isWatchingMovie
+      .map(async ({ movieId, trackId }) => {
+        const activeMovie = await db.findMovieById(movieId);
+        if (!activeMovie) return;
+        return {
+          _id: movieId,
+          title: activeMovie.title,
+          episodeTitle: null,
+          episodeId: null,
+          sessionNr: null,
+          episodeNr: null,
+          trackId: trackId,
+          duration: activeMovie.durationInMs,
+          isMovie: true,
+          displayPicture: `${url}/${activeMovie.displayPicture}`,
+          episodeDisplayPicture: null,
+        };
+      })
+      .flatMap((val) => (typeof val !== 'undefined' ? val : []));
+
+    for (let index = 0; index < promiseMoviesArray.length; index++) {
+      const element = await promiseMoviesArray[index];
+      if (element) videoArray.push(element);
+    }
+
+    const promiseSeriesArray = activeProfile.isWatchingSeries
+      .map(
+        async ({
+          seriesId,
+          activeEpisode,
+        }): Promise<continueWatchingType | undefined> => {
+          const [activeSeries, currentEpisode] = await Promise.all([
+            db.findSeriesById(seriesId),
+            db.findEpisodeById(activeEpisode.episodeId),
+          ]);
+
+          if (!activeSeries || !currentEpisode) return undefined;
+
+          return {
+            _id: seriesId,
+            episodeId: currentEpisode._id,
+            title: activeSeries.title,
+            episodeTitle: currentEpisode.episodeTitle,
+            sessionNr: currentEpisode.seasonNr,
+            episodeNr: currentEpisode.episodeNr,
+            trackId: activeEpisode.trackId,
+            duration: currentEpisode.durationInMs,
+            isMovie: false,
+            displayPicture: `${url}/${activeSeries.displayPicture}`,
+            episodeDisplayPicture: `${url}/${currentEpisode.displayPicture}`,
+          };
+        }
+      )
+      .flatMap((val) => (typeof val !== 'undefined' ? val : []));
+
+    for (let index = 0; index < promiseSeriesArray.length; index++) {
+      const element = await promiseSeriesArray[index];
+      if (element) videoArray.push(element);
+    }
+
+    return videoArray
+      .map((value) => ({ value, sort: Math.random() }))
+      .sort((a, b) => a.sort - b.sort)
+      .map(({ value }) => value);
   } catch (error: any) {
     if (error) throw new Error(error.message || error);
   }
@@ -530,8 +622,11 @@ const getWatchAged = async (
     assertNonNullish(activeProfile, errorCode.VALUE_MISSING);
     if (!activeProfile.hasWatch) throw new Error(errorCode.VALUE_NOT_EXISTING);
 
-    const movieList = await db.getWatchAgedInMovies(activeProfile.hasWatch);
-    const seriesList = await db.getWatchAgedInSeries(activeProfile.hasWatch);
+    const [movieList, seriesList] = await Promise.all([
+      db.getWatchAgedInMovies(activeProfile.hasWatch),
+      db.getWatchAgedInSeries(activeProfile.hasWatch),
+    ]);
+
     return {
       movieList: db.returnMoviesArray(movieList) || [],
       seriesList: db.returnSeriesArray(seriesList) || [],
@@ -615,11 +710,12 @@ export const getVideosData = async (req: Request, res: Response) => {
 
   const failedMsg = { message: 'route dose not exist', success: false };
   let resultData: unknown = null;
+
   try {
     if (queryName === myList && profileId)
       resultData = await getMyList(profileId, req.user._id);
-    // if (queryName === continueWatching && profileId)
-    //   resultData = await getContinueWatching(profileId, req.user);
+    else if (queryName === continueWatching && profileId)
+      resultData = await getContinueWatching(profileId, req.user._id);
     else if (queryName === watchAged && profileId)
       resultData = await getWatchAged(profileId, req.user._id);
     else if (queryName === top10movies) resultData = await getTop10Movies();
@@ -726,6 +822,25 @@ export const addToSeriesWatched = async (req: Request, res: Response) => {
   } = req.body;
   try {
     const response = await db.addToSeriesWatched(userId, profileId, data);
+    return res.status(200).send({ success: response.acknowledged });
+  } catch (error: any) {
+    const errorResponse = errorHandler(error);
+    return res.status(Number(errorResponse.status)).json(errorResponse);
+  }
+};
+
+export const removeSeriesWatched = async (req: Request, res: Response) => {
+  const {
+    userId,
+    profileId,
+    seriesId,
+  }: {
+    userId: string | Types.ObjectId;
+    profileId: string | Types.ObjectId;
+    seriesId: Types.ObjectId | string;
+  } = req.body;
+  try {
+    const response = await db.removeSeriesWatched(userId, profileId, seriesId);
     return res.status(200).send({ success: response.acknowledged });
   } catch (error: any) {
     const errorResponse = errorHandler(error);
