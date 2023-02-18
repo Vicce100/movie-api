@@ -474,18 +474,21 @@ const getMovieByIds = (movieIds: Types.ObjectId[] | string[]) =>
   movieSchema.aggregate<MovieSchemaType>([
     { $match: { _id: { $in: [...movieIds] } } },
     { $sample: { size: movieIds.length } },
+    { $sort: { title: 1 } },
   ]);
 
 const getSeriesByIds = (seriesIds: Types.ObjectId[] | string[]) =>
   seriesSchema.aggregate<SeriesSchemaType>([
     { $match: { _id: { $in: [...seriesIds] } } },
     { $sample: { size: seriesIds.length } },
+    { $sort: { title: 1 } },
   ]);
 
 const getEpisodesByIds = (episodeIds: Types.ObjectId[] | string[]) =>
   episodeSchema.aggregate<EpisodeSchemaType>([
     { $match: { _id: { $in: [...episodeIds] } } },
     { $sample: { size: episodeIds.length } },
+    { $sort: { seriesTitle: 1 } },
   ]);
 
 const getWatchAgedInMovies = (hasWatchIds: Types.ObjectId[] | string[]) =>
@@ -675,6 +678,7 @@ const returnMovie = (movie: MovieSchemaType): MovieSchemaType => ({
   title: movie.title,
   videoUrl: movie.videoUrl,
   displayPicture: `${url}/${movie.displayPicture}`,
+  backdropPath: `${url}/${movie.backdropPath}`,
   previewImagesUrl: movie.previewImagesUrl.map((image) => `${url}/${image}`),
   public: movie.public,
   durationInMs: movie.durationInMs,

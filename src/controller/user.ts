@@ -17,6 +17,7 @@ import {
   assertNonNullish,
   assertsValueToType,
 } from '../utilities/assertions.js';
+import { ip } from '../../app.js';
 
 dotenv.config();
 const userNotAuthObject = db.returnErrorData('user not authenticated.', 401);
@@ -91,14 +92,14 @@ export const login = async (req: Request, res: Response) => {
         _id: latestUser._id,
         role: latestUser.role,
       };
-      console.log(generateAccessToken(userAsCookie));
+
       res.cookie('SSID', generateAccessToken(userAsCookie), {
         sameSite: 'strict', // lax, none, strict
         path: '/',
         expires: date,
         httpOnly: true,
         secure: false, // Only Use False For HTTPS And True For HTTPS
-        domain: '192.168.0.3',
+        domain: ip,
       });
       return res.status(200).json(db.returnCurrentUser(latestUser));
     }
@@ -154,6 +155,7 @@ export const refreshToken = async (req: Request, res: Response) => {
         expires: date,
         httpOnly: true,
         secure: false, // Only Use False For HTTP And True For HTTPS
+        domain: ip,
       });
       return res.status(200).json(db.returnCurrentUser(tempUser));
     });
@@ -247,15 +249,16 @@ export const checkAuthRole = (req: Request, res: Response) => {
   ) {
     assertsValueToType<UsersRolesType>(roleType);
     const user = checkAuth(req.cookies);
+    const usersRole = user.role.toLocaleLowerCase();
 
     if (!user) return res.status(401).json({ access: false });
 
-    if (roleType === user.role) return res.status(200).json({ access: true });
-    else if (roleType === userRoles.admin && user.role === userRoles.superAdmin)
+    if (roleType === usersRole) return res.status(200).json({ access: true });
+    else if (roleType === userRoles.admin && usersRole === userRoles.superAdmin)
       return res.status(200).json({ access: true });
     else if (
       roleType === userRoles.moderator &&
-      (user.role === userRoles.superAdmin || userRoles.admin)
+      (usersRole === userRoles.superAdmin || userRoles.admin)
     )
       return res.status(200).json({ access: true });
     else return res.status(401).json({ access: false });

@@ -2,6 +2,8 @@ import jwt from 'jsonwebtoken';
 import fs from 'fs';
 import ffmpeg from 'fluent-ffmpeg';
 import * as validate from 'email-validator';
+import axios from 'axios';
+import * as urlModule from 'url';
 
 import { assertsIsString, assertNonNullish } from './assertions.js';
 import { UserAsCookie, errorCode } from './types.js';
@@ -21,6 +23,7 @@ export const routesString = Object.freeze({
   single: 'single',
   multiple: 'multiple',
   data: 'data',
+  update: 'update',
   search: 'search',
   searchId: 'searchId',
   searchText: 'searchText',
@@ -116,7 +119,10 @@ export const generatePreviewImages = ({
 
   return new Promise<string[]>((resolve, reject) => {
     const cmd = ffmpeg(videoUrl);
-    const filePathAndName = `${outputPath}${new Date().toISOString()}-${fileName}`;
+    const filePathAndName = `${outputPath}${new Date()
+      .toISOString()
+      .replaceAll(':', '')
+      .replaceAll('.', '')}-${fileName}`;
 
     cmd
       .FPS(fps)
@@ -177,4 +183,46 @@ export const deleteFile = (filePath: string) => {
     throw new Error(errorCode.VALUE_MISSING);
   fs.rmSync(filePath);
   return true;
+};
+
+export const downloadFile = async (data: {
+  url: string;
+  filepath: string;
+}): Promise<{
+  fullPath: string;
+  filepath: string;
+  filename: string;
+  filetype: string;
+}> => {
+  const { url, filepath } = data;
+  const { pathname } = urlModule.parse(url);
+
+  const [filetype, incompleteFilename] = [
+    `.${pathname?.split('.')[pathname?.split('.').length - 1]}`,
+    pathname?.split('/')[pathname?.split('/').length - 1].split('.')[0],
+  ];
+
+  assertsIsString(incompleteFilename);
+  const filename = `${Date.now()}-${cleanString(incompleteFilename)}`;
+
+  const fullPath = `${filepath}${filename}${filetype}`;
+
+  try {
+    const response = await axios({
+      url,
+      method: 'GET',
+      responseType: 'stream',
+    });
+
+    return new Promise((resolve, reject) => {
+      response.data
+        .pipe(fs.createWriteStream(fullPath))
+        .on('error', (err: any) => reject(err))
+        .once('close', () =>
+          resolve({ fullPath, filepath, filename, filetype })
+        );
+    });
+  } catch (error: any) {
+    throw new Error(error.message);
+  }
 };
