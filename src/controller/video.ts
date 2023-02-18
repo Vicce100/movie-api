@@ -31,6 +31,7 @@ import {
   deleteFile,
   generatePreviewImages,
   shuffleArray,
+  downloadFile,
 } from '../utilities/index.js';
 import { Types } from 'mongoose';
 import { url } from '../../app.js';
@@ -150,6 +151,8 @@ export const uploadMovie = async (req: Request, res: Response) => {
     franchise,
     releaseDate,
     isPublic,
+    displayPictureUrl,
+    backdropPath,
   }: {
     title: string;
     description: string;
@@ -157,6 +160,8 @@ export const uploadMovie = async (req: Request, res: Response) => {
     franchise: string[] | string;
     releaseDate: string;
     isPublic?: boolean;
+    displayPictureUrl: string;
+    backdropPath: string;
   } = req.body;
 
   if (!files || !categories || !title)
@@ -174,11 +179,21 @@ export const uploadMovie = async (req: Request, res: Response) => {
 
     const duration = await getVideoDurationInSeconds(files.videoFile[0].path);
 
+    const displayPictureValue = await downloadFile({
+      filepath: 'uploads/images/public/',
+      url: displayPictureUrl,
+    });
+    const backdropPathValue = await downloadFile({
+      filepath: 'uploads/images/public/',
+      url: backdropPath,
+    });
+
     try {
       const newMovie = new movieSchema({
         title,
         videoUrl: files.videoFile[0].path,
-        displayPicture: files.displayPicture[0].path,
+        displayPicture: displayPictureValue.fullPath,
+        backdropPath: backdropPathValue.filepath,
         previewImagesUrl: [],
         durationInMs: duration * 1000,
         categories: tempCategory,
@@ -443,6 +458,59 @@ export const getMovieData = async (req: Request, res: Response) => {
   }
 };
 
+export const updateMovie = async (req: Request, res: Response) => {
+  const {
+    title,
+    displayPicture,
+    backdropPath,
+    description,
+    releaseDate,
+    videoId,
+  } = req.body;
+
+  try {
+    if (title)
+      await movieSchema.updateOne({ _id: videoId }, { $set: { title: title } });
+    if (description)
+      await movieSchema.updateOne(
+        { _id: videoId },
+        { $set: { description: description } }
+      );
+    if (releaseDate)
+      await movieSchema.updateOne(
+        { _id: videoId },
+        { $set: { releaseDate: releaseDate } }
+      );
+    if (displayPicture) {
+      const displayPictureValue = await downloadFile({
+        filepath: 'uploads/images/public/',
+        url: displayPicture,
+      });
+      await movieSchema.updateOne(
+        { _id: videoId },
+        { $set: { displayPicture: displayPictureValue.fullPath } }
+      );
+    }
+    if (backdropPath) {
+      const backdropPathValue = await downloadFile({
+        filepath: 'uploads/images/public/',
+        url: backdropPath,
+      });
+      await movieSchema.updateOne(
+        { _id: videoId },
+        { $set: { backdropPath: backdropPathValue.fullPath } }
+      );
+    }
+
+    res.status(204).json({ success: true });
+  } catch (error) {
+    if (error instanceof Error) {
+      const errorResponse = errorHandler(error);
+      return res.status(Number(errorResponse.status)).json(errorResponse);
+    }
+  }
+};
+
 export const getSeriesData = async (req: Request, res: Response) => {
   const { seriesId } = req.params;
 
@@ -502,6 +570,7 @@ const getMyList = async (
   try {
     const user = await db.findUserById(userId);
     assertNonNullish(user, errorCode.VALUE_MISSING);
+
     const activeProfile = user.profiles?.find(
       ({ _id }) => String(_id) === profileId
     );
@@ -513,10 +582,15 @@ const getMyList = async (
       db.getSeriesByIds(activeProfile.savedList),
     ]);
 
-    let videoArray: returnVideosArray = [];
+    let tempVideoArray: returnVideosArray = [];
+    tempVideoArray = tempVideoArray.concat(db.returnMoviesArray(movieList));
+    tempVideoArray = tempVideoArray.concat(db.returnSeriesArray(seriesList));
 
-    videoArray = videoArray.concat(db.returnMoviesArray(movieList));
-    videoArray = videoArray.concat(db.returnSeriesArray(seriesList));
+    const videoArray: returnVideosArray = activeProfile.savedList
+      .map((saved) =>
+        tempVideoArray.find(({ _id }) => String(_id) === String(saved))
+      )
+      .flatMap((val) => (typeof val !== 'undefined' ? val : []));
 
     return videoArray;
   } catch (error: any) {
@@ -600,10 +674,7 @@ const getContinueWatching = async (
       if (element) videoArray.push(element);
     }
 
-    return videoArray
-      .map((value) => ({ value, sort: Math.random() }))
-      .sort((a, b) => a.sort - b.sort)
-      .map(({ value }) => value);
+    return videoArray;
   } catch (error: any) {
     if (error) throw new Error(error.message || error);
   }
@@ -730,6 +801,38 @@ export const getVideosData = async (req: Request, res: Response) => {
     }
   }
   res.status(200).json(resultData);
+};
+
+export const nuke = async (req: Request, res: Response) => {
+  try {
+    const allMovies = await movieSchema.find();
+    const allSeries = await seriesSchema.find();
+    const allEpisodes = await episodesSchema.find();
+
+    for (let index = 0; index < allMovies.length; index++) {
+      const { videoUrl, displayPicture, backdropPath } = allMovies[index];
+
+      if (fs.existsSync(videoUrl)) fs.rmSync(videoUrl);
+      if (fs.existsSync(displayPicture)) fs.rmSync(displayPicture);
+      if (fs.existsSync(backdropPath)) fs.rmSync(backdropPath);
+    }
+
+    for (let index = 0; index < allSeries.length; index++) {
+      const { displayPicture } = allSeries[index];
+
+      if (fs.existsSync(displayPicture)) fs.rmSync(displayPicture);
+    }
+
+    for (let index = 0; index < allEpisodes.length; index++) {
+      const { videoUrl, displayPicture } = allEpisodes[index];
+
+      if (fs.existsSync(videoUrl)) fs.rmSync(videoUrl);
+      if (fs.existsSync(displayPicture)) fs.rmSync(displayPicture);
+    }
+  } catch (error: any) {
+    console.log(error);
+    return res.status(400 || error.status).json(error.message);
+  }
 };
 
 // videos watched -->

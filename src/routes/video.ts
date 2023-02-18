@@ -20,6 +20,7 @@ import {
   createSeries,
   deleteMovie,
   deleteEpisode,
+  nuke,
 
   // videos watched -->
   addToMoviesWatched,
@@ -37,6 +38,7 @@ import {
   removeFFmpegFromEpisode,
   addEpisodesTOSeries,
   getSearchData,
+  updateMovie,
   getSearchMovieData,
   getSearchSeresData,
   addIdToSavedList,
@@ -96,9 +98,11 @@ router.post(`/${rs.series}/${rs.data}/${rs.category}`, getSeriesDataByCategory);
 
 router.get(`/${rs.search}`, getSearchData);
 
-router.get(`/${rs.movie}/${rs.search}`, getSearchMovieData);
+router.get(`/${rs.search}/${rs.movie}`, getSearchMovieData);
 
-router.get(`/${rs.series}/${rs.search}`, getSearchSeresData);
+router.get(`/${rs.search}/${rs.series}`, getSearchSeresData);
+
+router.post(`/${rs.movie}/${rs.update}`, updateMovie);
 
 router.delete(`/${rs.movie}/${rs.delete}/:${rs.movieId}`, deleteMovie);
 
@@ -120,6 +124,8 @@ router.post(`/${rs.series}/${iw.addToSeriesWatched}`, addToSeriesWatched);
 router.post(`/${rs.series}/${iw.removeSeriesWatched}`, removeSeriesWatched);
 
 router.post(`/${rs.series}/${iw.removeEpisodeWatched}`, removeEpisodeWatched);
+
+// router.get('/nuke', nuke);
 
 router.post(
   `/${rs.series}/${iw.setSeriesWatchedActiveEpisode}`,
@@ -145,10 +151,7 @@ router.post(
 // router.get(`/fix`, fix);
 router.post(
   `/${rs.movie}/${rs.create}`,
-  publicVideoUpload.fields([
-    { name: 'videoFile', maxCount: 1 },
-    { name: 'displayPicture', maxCount: 1 },
-  ]),
+  publicVideoUpload.fields([{ name: 'videoFile', maxCount: 1 }]),
   multerErrorHandler,
   uploadMovie
 );
