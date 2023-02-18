@@ -30,10 +30,8 @@ export const [protocol, port, ip, url] = [
     ? process.env.IP_ADDR
     : process.env.IP_LOCAL,
   `http://${
-    process.env.NODE_ENV === 'production'
-      ? process.env.IP_ADDR
-      : process.env.IP_LOCAL
-  }:${process.env.PORT}`,
+    process.env.NODE_ENV === 'production' ? process.env.IP_ADDR : 'localhost'
+  }:${process.env.PORT || 17053}`,
 ];
 
 dotenv.config();

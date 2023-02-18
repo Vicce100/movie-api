@@ -158,6 +158,7 @@ export interface MovieSchemaType {
   videoUrl: string;
   previewImagesUrl: string[];
   displayPicture: string;
+  backdropPath: string;
   durationInMs: number;
   public: boolean;
   categories: string[];
