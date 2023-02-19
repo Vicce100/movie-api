@@ -193,7 +193,7 @@ export const uploadMovie = async (req: Request, res: Response) => {
         title,
         videoUrl: files.videoFile[0].path,
         displayPicture: displayPictureValue.fullPath,
-        backdropPath: backdropPathValue.filepath,
+        backdropPath: backdropPathValue.fullPath,
         previewImagesUrl: [],
         durationInMs: duration * 1000,
         categories: tempCategory,

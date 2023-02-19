@@ -25,7 +25,7 @@ import corsOptions from './src/config/corsOptions.js';
 
 export const [protocol, port, ip, url] = [
   process.env.NODE_ENV === 'production' ? 'http' : 'http',
-  process.env.PORT || '17053', // should always use '17053' as the standard port
+  process.env.PORT || 17053, // should always use '17053' as the standard port
   process.env.NODE_ENV === 'production'
     ? process.env.IP_ADDR
     : process.env.IP_LOCAL,
