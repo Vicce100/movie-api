@@ -18,6 +18,7 @@ import {
   assertsValueToType,
 } from '../utilities/assertions.js';
 import { ip } from '../../app.js';
+import profilesSchema from '../schemas/profilesSchema.js';
 
 dotenv.config();
 const userNotAuthObject = db.returnErrorData('user not authenticated.', 401);
@@ -40,22 +41,27 @@ export const signUp = async (
       .status(400)
       .json(db.returnErrorData('no empty data in field', 400));
 
-  if (await userSchema.findOne({ email }))
+  if (await db.findUserByEmail(email))
     return res
       .status(400)
-      .json(db.returnErrorData('username already taken', 404));
+      .json(db.returnErrorData('username already taken', 400));
 
   try {
-    await emailIsValid(email);
+    emailIsValid(email);
     await new userSchema({
       firstName,
       lastName,
       email,
       password: await bcrypt.hash(password, 10),
-    }).save();
+      moviesUploaded: [],
+      seriesUploaded: [],
+    })
+      .save()
+      .catch((err) => console.log(err));
     next();
   } catch (error: any) {
     if (error instanceof Error) {
+      console.log(error);
       const errorResponse = errorHandler(error);
       return res.status(Number(errorResponse.status)).json(errorResponse);
     }
@@ -68,9 +74,13 @@ export const signUp = async (
 export const login = async (req: Request, res: Response) => {
   if (!process.env.SECRET_REFRESH_TOKEN) return;
   const user = await db.findUserByEmail(req.body.email);
+  console.log(user);
   if (!user)
     return res.status(404).json(db.returnErrorData('cannot find user', 404));
 
+  const activeProfile = await db
+    .findProfileByUserId(user._id)
+    .catch((err) => console.log(err));
   try {
     if (await bcrypt.compare(req.body.password, user.password)) {
       const refreshToken = jwt.sign(
@@ -83,6 +93,7 @@ export const login = async (req: Request, res: Response) => {
 
       await db.updateRefreshToken(user._id, refreshToken);
       const latestUser = await db.findUserByRefreshToken(refreshToken);
+
       if (!latestUser)
         return res
           .status(404)
@@ -101,7 +112,9 @@ export const login = async (req: Request, res: Response) => {
         secure: false, // Only Use False For HTTPS And True For HTTPS
         domain: ip,
       });
-      return res.status(200).json(db.returnCurrentUser(latestUser));
+      return res
+        .status(200)
+        .json(db.returnCurrentUser(latestUser, activeProfile || null));
     }
     return res.status(403).json({
       ...db.returnErrorData('Wrong Password. Please try again', 403),
@@ -131,7 +144,11 @@ export const refreshToken = async (req: Request, res: Response) => {
       .json(db.returnErrorData('no refreshToken provided', 401));
 
   const tempUser = await db.findUserByRefreshToken(refreshToken);
-  if (tempUser === null)
+  const activeProfiles = await db.findProfileByUserId(
+    tempUser?._id as unknown as string
+  );
+
+  if (tempUser === null || !activeProfiles)
     return res
       .status(403)
       .json(db.returnErrorData('no refreshToken exist', 401));
@@ -157,7 +174,9 @@ export const refreshToken = async (req: Request, res: Response) => {
         secure: false, // Only Use False For HTTP And True For HTTPS
         domain: ip,
       });
-      return res.status(200).json(db.returnCurrentUser(tempUser));
+      return res
+        .status(200)
+        .json(db.returnCurrentUser(tempUser, activeProfiles));
     });
   } else return res.status(500).json('internal server error');
 };
@@ -191,25 +210,29 @@ export const addProfile = async (req: Request, res: Response) => {
   if (!req.user) return res.status(401).json(userNotAuthObject);
   const { profileName, avatarId }: { profileName: string; avatarId: string } =
     req.body;
-  if (!profileName || !avatarId) {
+
+  if (!profileName || !avatarId)
     return res
       .status(400)
       .json(db.returnErrorData('no empty data in field', 400));
-  }
+
   try {
     const avatar = await db.findAvatarById(avatarId);
     assertNonNullish(avatar, errorCode.VALUE_MISSING);
-    await userSchema.updateOne(
-      { id: req.user._id },
-      {
-        $push: {
-          profiles: {
-            profileName: profileName,
-            avatarURL: avatar.url,
-          },
-        },
-      }
-    );
+
+    new profilesSchema({
+      usersId: req.user._id,
+      profileName: profileName,
+      avatarURL: avatar.url,
+      savedList: [],
+      likedList: [],
+      hasWatch: [],
+      isWatchingMovie: [],
+      isWatchingSeries: [],
+    })
+      .save()
+      .catch((err) => console.log(err));
+
     res.status(204).json({ message: 'profile added' });
   } catch (error) {
     return res
@@ -222,10 +245,12 @@ export const getCurrentUser = async (req: Request, res: Response) => {
   if (!req.user) return res.status(401).json(userNotAuthObject);
   try {
     const user = await db.findUserById(req.user._id);
-    if (!user)
+    const activeProfile = await db.findProfileByUserId(req.user._id);
+
+    if (!user || !activeProfile)
       return res.status(404).json(db.returnErrorData('cannot find user', 404));
 
-    return res.status(200).json(db.returnCurrentUser(user));
+    return res.status(200).json(db.returnCurrentUser(user, activeProfile));
   } catch (error: any) {
     return res
       .status(500)

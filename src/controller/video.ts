@@ -11,6 +11,7 @@ import {
   EpisodeSchemaType,
   errorCode,
   mp4,
+  ProfileType,
   queryPaths,
   queryPathsString,
   returnVideosArray,
@@ -226,6 +227,120 @@ export const uploadMovie = async (req: Request, res: Response) => {
   } else {
     const message = 'number of files dose not match number of titles';
     return res.status(400).json(db.returnErrorData(message, 400));
+  }
+};
+
+export const uploadMovieFile = async (req: Request, res: Response) => {
+  const { name, currentChunkIndex, totalChunks, movieId } = req.query;
+
+  const firstChunk = parseInt(currentChunkIndex as string) === 0;
+  const lastChunk =
+    parseInt(currentChunkIndex as string) ===
+    parseInt(totalChunks as string) - 1;
+
+  assertsIsString(name);
+
+  const ext = name.split('.').pop();
+  const [data, tmpFilename, finalFilename, path] = [
+    req.body.toString().split(',')[1] as string,
+    `Temp_${cleanString(name)}.${ext}`,
+    `${Date.now()}-${cleanString(name)}.${ext}`,
+    'uploads/videos/public/',
+  ];
+
+  const buffer = Buffer.from(data, 'base64');
+
+  if (firstChunk && fs.existsSync(path + tmpFilename))
+    fs.unlinkSync(path + tmpFilename);
+  fs.appendFileSync(path + tmpFilename, buffer);
+
+  if (!lastChunk) res.status(202).send('ok');
+  else {
+    fs.renameSync(path + tmpFilename, path + finalFilename);
+
+    const duration = await getVideoDurationInSeconds(path + finalFilename);
+
+    console.log(movieId);
+
+    movieSchema
+      .updateOne(
+        { _id: movieId },
+        {
+          $set: {
+            videoUrl: path + finalFilename,
+            durationInMs: duration * 1000,
+          },
+        }
+      )
+      .catch((err) => console.log(err));
+    res.status(200).send({ success: true, movieId });
+  }
+};
+
+export const uploadMovieObject = async (req: Request, res: Response) => {
+  const {
+    title,
+    description,
+    categories,
+    franchise,
+    releaseDate,
+    isPublic,
+    displayPictureUrl,
+    backdropPath,
+  }: {
+    title: string;
+    description: string;
+    categories: string[] | string;
+    franchise: string[] | string;
+    releaseDate: string;
+    isPublic?: boolean;
+    displayPictureUrl: string;
+    backdropPath: string;
+  } = req.body;
+
+  if (!categories || !title)
+    return res.status(404).json('wrong filled value was uploaded!');
+
+  let tempCategory: string[] | null = null;
+  let tempFranchises: string[] | null = null;
+
+  if (!Array.isArray(categories)) tempCategory = [categories];
+  else tempCategory = categories.map((tempCategory) => tempCategory);
+  if (!Array.isArray(franchise)) tempFranchises = [franchise];
+  else tempFranchises = franchise.map((tempFranchise) => tempFranchise);
+
+  const displayPictureValue = await downloadFile({
+    filepath: 'uploads/images/public/',
+    url: displayPictureUrl,
+  });
+  const backdropPathValue = await downloadFile({
+    filepath: 'uploads/images/public/',
+    url: backdropPath,
+  });
+
+  try {
+    const newMovie = new movieSchema({
+      title,
+      videoUrl: '',
+      displayPicture: displayPictureValue.fullPath,
+      backdropPath: backdropPathValue.fullPath,
+      previewImagesUrl: [],
+      durationInMs: 0,
+      categories: tempCategory,
+      franchise: tempFranchises,
+      description,
+      creatorsId: req.user._id,
+      releaseDate,
+      public: isPublic || true,
+      views: 0,
+    });
+    const { _id } = newMovie;
+    await newMovie.save();
+    await db.addUsersMovie(req.user._id, _id);
+
+    res.status(201).json({ success: true, movieId: _id });
+  } catch (error) {
+    console.log(error);
   }
 };
 
@@ -563,18 +678,11 @@ export const getEpisodeData = async (req: Request, res: Response) => {
   }
 };
 
-const getMyList = async (
-  profileId: string,
-  userId: string | Types.ObjectId
-) => {
+const getMyList = async (profileId: string) => {
   try {
-    const user = await db.findUserById(userId);
-    assertNonNullish(user, errorCode.VALUE_MISSING);
-
-    const activeProfile = user.profiles?.find(
-      ({ _id }) => String(_id) === profileId
-    );
+    const activeProfile = await db.findProfileById(profileId);
     assertNonNullish(activeProfile, errorCode.VALUE_MISSING);
+
     if (!activeProfile.savedList) throw new Error(errorCode.VALUE_NOT_EXISTING);
 
     const [movieList, seriesList] = await Promise.all([
@@ -598,17 +706,11 @@ const getMyList = async (
   }
 };
 
-const getContinueWatching = async (
-  profileId: string,
-  userId: string | Types.ObjectId
-) => {
+const getContinueWatching = async (profileId: string) => {
   try {
-    const user = await db.findUserById(userId);
-    assertNonNullish(user, errorCode.VALUE_MISSING);
-    const activeProfile = user.profiles?.find(
-      ({ _id }) => String(_id) === profileId
-    );
+    const activeProfile = await db.findProfileById(profileId);
     assertNonNullish(activeProfile, errorCode.VALUE_MISSING);
+
     if (!activeProfile.isWatchingMovie || !activeProfile.isWatchingSeries)
       throw new Error(errorCode.VALUE_NOT_EXISTING);
 
@@ -680,17 +782,11 @@ const getContinueWatching = async (
   }
 };
 
-const getWatchAged = async (
-  profileId: string,
-  userId: string | Types.ObjectId
-) => {
+const getWatchAged = async (profileId: string) => {
   try {
-    const user = await db.findUserById(userId);
-    assertNonNullish(user, errorCode.VALUE_MISSING);
-    const activeProfile = user.profiles?.find(
-      ({ _id }) => String(_id) === profileId
-    );
+    const activeProfile = await db.findProfileById(profileId);
     assertNonNullish(activeProfile, errorCode.VALUE_MISSING);
+
     if (!activeProfile.hasWatch) throw new Error(errorCode.VALUE_NOT_EXISTING);
 
     const [movieList, seriesList] = await Promise.all([
@@ -784,11 +880,11 @@ export const getVideosData = async (req: Request, res: Response) => {
 
   try {
     if (queryName === myList && profileId)
-      resultData = await getMyList(profileId, req.user._id);
+      resultData = await getMyList(profileId);
     else if (queryName === continueWatching && profileId)
-      resultData = await getContinueWatching(profileId, req.user._id);
+      resultData = await getContinueWatching(profileId);
     else if (queryName === watchAged && profileId)
-      resultData = await getWatchAged(profileId, req.user._id);
+      resultData = await getWatchAged(profileId);
     else if (queryName === top10movies) resultData = await getTop10Movies();
     else if (queryName === top10series) resultData = await getTop10Series();
     else if (queryName === randomMovie) resultData = await getRandomMovie();
@@ -850,7 +946,7 @@ export const addToMoviesWatched = async (req: Request, res: Response) => {
     };
   } = req.body;
   try {
-    const response = await db.addToMoviesWatched(userId, profileId, data);
+    const response = await db.addToMoviesWatched(profileId, data);
     return res.status(200).send({ success: response.acknowledged });
   } catch (error: any) {
     const errorResponse = errorHandler(error);
@@ -860,23 +956,16 @@ export const addToMoviesWatched = async (req: Request, res: Response) => {
 
 export const updateMoviesWatched = async (req: Request, res: Response) => {
   const {
-    userId,
     profileId,
     movieId,
     trackId,
   }: {
-    userId: string | Types.ObjectId;
     profileId: string | Types.ObjectId;
     movieId: string | Types.ObjectId;
     trackId: number;
   } = req.body;
   try {
-    const response = await db.updateMoviesWatched(
-      userId,
-      profileId,
-      movieId,
-      trackId
-    );
+    const response = await db.updateMoviesWatched(profileId, movieId, trackId);
     return res.status(200).send({ success: response.acknowledged });
   } catch (error: any) {
     const errorResponse = errorHandler(error);
@@ -886,16 +975,14 @@ export const updateMoviesWatched = async (req: Request, res: Response) => {
 
 export const removeMovieWatched = async (req: Request, res: Response) => {
   const {
-    userId,
     profileId,
     movieId,
   }: {
-    userId: string | Types.ObjectId;
     profileId: string | Types.ObjectId;
     movieId: string | Types.ObjectId;
   } = req.body;
   try {
-    const response = await db.removeMovieWatched(userId, profileId, movieId);
+    const response = await db.removeMovieWatched(profileId, movieId);
     return res.status(200).send({ success: response.acknowledged });
   } catch (error: any) {
     const errorResponse = errorHandler(error);
@@ -905,26 +992,14 @@ export const removeMovieWatched = async (req: Request, res: Response) => {
 
 export const addToSeriesWatched = async (req: Request, res: Response) => {
   const {
-    userId,
     profileId,
     data,
   }: {
-    userId: string | Types.ObjectId;
     profileId: string | Types.ObjectId;
-    data: {
-      seriesId: Types.ObjectId | string;
-      activeEpisode: {
-        episodeId: Types.ObjectId | string;
-        trackId: number;
-      };
-      watchedEpisodes: {
-        episodeId: Types.ObjectId | string;
-        trackId: number;
-      }[];
-    };
+    data: ProfileType;
   } = req.body;
   try {
-    const response = await db.addToSeriesWatched(userId, profileId, data);
+    const response = await db.addToSeriesWatched(profileId, data);
     return res.status(200).send({ success: response.acknowledged });
   } catch (error: any) {
     const errorResponse = errorHandler(error);
@@ -934,16 +1009,14 @@ export const addToSeriesWatched = async (req: Request, res: Response) => {
 
 export const removeSeriesWatched = async (req: Request, res: Response) => {
   const {
-    userId,
     profileId,
     seriesId,
   }: {
-    userId: string | Types.ObjectId;
     profileId: string | Types.ObjectId;
     seriesId: Types.ObjectId | string;
   } = req.body;
   try {
-    const response = await db.removeSeriesWatched(userId, profileId, seriesId);
+    const response = await db.removeSeriesWatched(profileId, seriesId);
     return res.status(200).send({ success: response.acknowledged });
   } catch (error: any) {
     const errorResponse = errorHandler(error);
@@ -953,16 +1026,14 @@ export const removeSeriesWatched = async (req: Request, res: Response) => {
 
 export const removeEpisodeWatched = async (req: Request, res: Response) => {
   const {
-    userId,
     profileId,
     seriesId,
   }: {
-    userId: string | Types.ObjectId;
     profileId: string | Types.ObjectId;
     seriesId: Types.ObjectId | string;
   } = req.body;
   try {
-    const response = await db.removeEpisodeWatched(userId, profileId, seriesId);
+    const response = await db.removeEpisodeWatched(profileId, seriesId);
     return res.status(200).send({ success: response.acknowledged });
   } catch (error: any) {
     const errorResponse = errorHandler(error);
@@ -975,12 +1046,10 @@ export const setSeriesWatchedActiveEpisode = async (
   res: Response
 ) => {
   const {
-    userId,
     profileId,
     seriesId,
     activeEpisode,
   }: {
-    userId: string | Types.ObjectId;
     profileId: string | Types.ObjectId;
     seriesId: Types.ObjectId | string;
     activeEpisode: {
@@ -990,7 +1059,6 @@ export const setSeriesWatchedActiveEpisode = async (
   } = req.body;
   try {
     const response = await db.setSeriesWatchedActiveEpisode(
-      userId,
       profileId,
       seriesId,
       activeEpisode
@@ -1007,19 +1075,16 @@ export const updateSeriesWatchedActiveEpisode = async (
   res: Response
 ) => {
   const {
-    userId,
     profileId,
     seriesId,
     trackId,
   }: {
-    userId: string | Types.ObjectId;
     profileId: string | Types.ObjectId;
     seriesId: Types.ObjectId | string;
     trackId: number;
   } = req.body;
   try {
     const response = await db.updateSeriesWatchedActiveEpisode(
-      userId,
       profileId,
       seriesId,
       trackId
@@ -1036,12 +1101,10 @@ export const addToSeriesWatchedEpisodes = async (
   res: Response
 ) => {
   const {
-    userId,
     profileId,
     seriesId,
     data,
   }: {
-    userId: string | Types.ObjectId;
     profileId: string | Types.ObjectId;
     seriesId: Types.ObjectId | string;
     data: {
@@ -1051,7 +1114,6 @@ export const addToSeriesWatchedEpisodes = async (
   } = req.body;
   try {
     const response = await db.addToSeriesWatchedEpisodes(
-      userId,
       profileId,
       seriesId,
       data
@@ -1068,13 +1130,11 @@ export const updateSeriesWatchedEpisode = async (
   res: Response
 ) => {
   const {
-    userId,
     profileId,
     seriesId,
     episodeId,
     trackId,
   }: {
-    userId: string | Types.ObjectId;
     profileId: string | Types.ObjectId;
     seriesId: Types.ObjectId | string;
     episodeId: Types.ObjectId | string;
@@ -1082,7 +1142,6 @@ export const updateSeriesWatchedEpisode = async (
   } = req.body;
   try {
     const response = await db.updateSeriesWatchedEpisode(
-      userId,
       profileId,
       seriesId,
       episodeId,
@@ -1195,14 +1254,13 @@ export const addIdToSavedList = async (req: Request, res: Response) => {
     req.body;
 
   try {
-    const user = await db.findUserById(req.user._id);
-    assertNonNullish(user, errorCode.NOT_AUTHENTICATED);
-    const valueInList = user.profiles
-      ?.find(({ _id }) => String(_id) === profileId)
-      ?.savedList?.find((v) => String(v) === videoId);
+    const profile = await db.findProfileById(profileId);
+    assertNonNullish(profile, errorCode.VALUE_MISSING);
+
+    const valueInList = profile.savedList?.find((v) => String(v) === videoId);
     assertUndefined(valueInList, errorCode.VALUE_EXISTS);
 
-    const result = await db.addIdToSavedList(req.user._id, profileId, videoId);
+    const result = await db.addIdToSavedList(profileId, videoId);
 
     res.status(200).json({ success: result.acknowledged });
   } catch (error) {
@@ -1218,11 +1276,7 @@ export const removeIdFromSavedList = async (req: Request, res: Response) => {
     req.body;
 
   try {
-    const result = await db.removeIdFromSavedList(
-      req.user._id,
-      profileId,
-      videoId
-    );
+    const result = await db.removeIdFromSavedList(profileId, videoId);
 
     res.status(200).json({ success: result.acknowledged });
   } catch (error) {
@@ -1253,6 +1307,7 @@ export const removeIdFromSavedList = async (req: Request, res: Response) => {
 
 export const generateFFmpegToMovie = async (req: Request, res: Response) => {
   const { movieId } = req.params;
+  console.log('req.params: ', req.params);
   try {
     const video = await db.findMovieById(movieId);
     assertNonNullish(video, errorCode.VALUE_MISSING);

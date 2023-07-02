@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import multer, { FileFilterCallback, MulterError } from 'multer';
+import bodyParser from 'body-parser';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 
@@ -13,6 +14,12 @@ import { assertNonNullish } from './assertions.js';
 import db from './db/index.js';
 
 dotenv.config();
+
+export const octetStreamParser = bodyParser.raw({
+  inflate: false,
+  type: 'application/octet-stream',
+  // limit: '200mb',
+});
 
 export const checkAuth = (cookies: any) => {
   if (!cookies?.SSID) throw new Error(errorCode.NOT_AUTHENTICATED);

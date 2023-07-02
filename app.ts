@@ -22,6 +22,7 @@ import userRoutes from './src/routes/user.js';
 import videoRoutes from './src/routes/video.js';
 import indexRouter from './src/routes/index.js';
 import corsOptions from './src/config/corsOptions.js';
+import bodyParser from 'body-parser';
 
 export const [protocol, port, ip, url] = [
   process.env.NODE_ENV === 'production' ? 'http' : 'http',
@@ -38,6 +39,7 @@ dotenv.config();
 const app = express();
 
 app.use(cookieParser());
+app.use(bodyParser.raw({ type: 'application/octet-stream', limit: '200mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cors(corsOptions));

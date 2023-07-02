@@ -13,6 +13,7 @@ import {
 } from '../types.js';
 import { assertsValueToType } from '../assertions.js';
 import userSchema from '../../schemas/UserSchema.js';
+import profileSchema from '../../schemas/profilesSchema.js';
 import categorySchema from '../../schemas/categorySchema.js';
 import avatarSchema from '../../schemas/avatarSchema.js';
 import movieSchema from '../../schemas/movieSchema.js';
@@ -36,6 +37,12 @@ const findUserByEmail = (value: string | number) =>
   userSchema.findOne({ email: value });
 
 const findUserById = (id: Types.ObjectId | string) => userSchema.findById(id);
+
+const findProfileById = (id: Types.ObjectId | string) =>
+  profileSchema.findById(id);
+
+const findProfileByUserId = (id: Types.ObjectId | string) =>
+  profileSchema.find({ usersId: id });
 
 const findUserByRefreshToken = (refreshToken: string) =>
   userSchema.findOne({ refreshToken });
@@ -85,9 +92,6 @@ const removeEpisodeRef = (
     { $pullAll: { seriesUploaded: episodeId } }
   );
 
-const addProfileToUser = (userId: Types.ObjectId | string, data: ProfileType) =>
-  userSchema.updateOne({ _id: userId }, { $push: { profiles: data } });
-
 const EmailTaken = async (email: string) =>
   (await findUserByEmail(email)) ? true : false;
 
@@ -116,6 +120,9 @@ const getAllFranchises = () => franchiseSchema.find();
 const findAvatarById = (avatarId: Types.ObjectId | string) =>
   avatarSchema.findOne({ _id: avatarId });
 
+const findAvatarByUrl = (avatarUrl: Types.ObjectId | string) =>
+  avatarSchema.findOne({ url: avatarUrl });
+
 const getAllAvatars = () => avatarSchema.find();
 
 /* ----------------------- video ----------------------- */
@@ -133,13 +140,13 @@ const addUsersSeries = (
   userSchema.updateOne({ _id: userId }, { $push: { seriesUploaded: videoId } });
 
 const findMovieById = (movieId: Types.ObjectId | string) =>
-  movieSchema.findOne({ _id: movieId });
+  movieSchema.findById(movieId);
 
 const findSeriesById = (seriesId: Types.ObjectId | string) =>
-  seriesSchema.findOne({ _id: seriesId });
+  seriesSchema.findById(seriesId);
 
 const findEpisodeById = (episodeId: Types.ObjectId | string) =>
-  episodeSchema.findOne({ _id: episodeId });
+  episodeSchema.findById(episodeId);
 
 const findMovieByName = (videoTitle: string) =>
   movieSchema.findOne({ title: videoTitle });
@@ -239,142 +246,106 @@ const addEpisodeToSeriesField = (
   seriesSchema.updateOne({ _id: seriesId }, { $push: { episodes: episodeId } });
 
 const addIdToSavedList = (
-  userId: string | Types.ObjectId,
   profileId: string | Types.ObjectId,
   videoId: string | Types.ObjectId
 ) =>
-  userSchema.updateOne(
-    { _id: userId, 'profiles._id': profileId },
-    { $push: { 'profiles.$.savedList': videoId } }
+  profileSchema.updateOne(
+    { _id: profileId },
+    { $push: { savedList: videoId } }
   );
 
 const removeIdFromSavedList = (
-  userId: string | Types.ObjectId,
   profileId: string | Types.ObjectId,
   videoId: string | Types.ObjectId
 ) =>
-  userSchema.updateOne(
-    { _id: userId, 'profiles._id': profileId },
-    { $pull: { 'profiles.$.savedList': videoId } }
+  profileSchema.updateOne(
+    { _id: profileId },
+    { $pull: { savedList: videoId } }
   );
 
 const addToMoviesWatched = (
-  userId: string | Types.ObjectId,
   profileId: string | Types.ObjectId,
   data: {
     movieId: Types.ObjectId | string;
     trackId: number;
   }
 ) =>
-  userSchema.updateOne(
+  profileSchema.updateOne(
     {
-      _id: userId,
-      'profiles._id': profileId,
+      _id: profileId,
     },
-    { $push: { 'profiles.$.isWatchingMovie': data } }
+    { $push: { isWatchingMovie: data } }
   );
 
 const updateMoviesWatched = (
-  userId: string | Types.ObjectId,
   profileId: string | Types.ObjectId,
   movieId: string | Types.ObjectId,
   trackId: number
 ) =>
-  userSchema.updateOne(
-    { _id: userId },
+  profileSchema.updateOne(
+    { _id: profileId },
     {
       $set: {
-        'profiles.$[tempProfile].isWatchingMovie.$[watchingMovie].trackId':
-          trackId,
+        'isWatchingMovie.$[watchingMovie].trackId': trackId,
       },
     },
     {
-      arrayFilters: [
-        { 'tempProfile._id': profileId },
-        { 'watchingMovie.movieId': movieId },
-      ],
+      arrayFilters: [{ 'watchingMovie.movieId': movieId }],
     }
   );
 
 const removeMovieWatched = (
-  userId: string | Types.ObjectId,
   profileId: string | Types.ObjectId,
   movieId: string | Types.ObjectId
 ) =>
-  userSchema.updateOne(
-    { _id: userId },
+  profileSchema.updateOne(
+    { _id: profileId },
     {
-      $pull: {
-        'profiles.$[tempProfile].isWatchingMovie': { movieId: movieId },
-      },
-    },
-    { arrayFilters: [{ 'tempProfile._id': profileId }] }
+      $pull: { isWatchingMovie: { movieId: movieId } },
+    }
   );
 
 const addToSeriesWatched = (
-  userId: string | Types.ObjectId,
   profileId: string | Types.ObjectId,
-  data: {
-    seriesId: Types.ObjectId | string;
-    activeEpisode:
-      | {
-          episodeId: Types.ObjectId | string;
-          trackId: number;
-        }
-      | {};
-    watchedEpisodes:
-      | {
-          episodeId: Types.ObjectId | string;
-          trackId: number;
-        }[]
-      | [];
-  }
+  data: ProfileType
 ) =>
-  userSchema.updateOne(
+  profileSchema.updateOne(
     {
-      _id: userId,
-      'profiles._id': profileId,
+      _id: profileId,
     },
-    { $push: { 'profiles.$.isWatchingSeries': data } }
+    { $push: { isWatchingSeries: data } }
   );
 
 const removeSeriesWatched = (
-  userId: string | Types.ObjectId,
   profileId: string | Types.ObjectId,
   seriesId: string | Types.ObjectId
 ) =>
-  userSchema.updateOne(
-    { _id: userId },
+  profileSchema.updateOne(
+    { _id: profileId },
     {
       $pull: {
-        'profiles.$[tempProfile].isWatchingSeries': { seriesId: seriesId },
+        isWatchingSeries: { seriesId: seriesId },
       },
-    },
-    { arrayFilters: [{ 'tempProfile._id': profileId }] }
+    }
   );
 
 const removeEpisodeWatched = (
-  userId: string | Types.ObjectId,
   profileId: string | Types.ObjectId,
   seriesId: Types.ObjectId | string
 ) =>
-  userSchema.updateOne(
-    { _id: userId },
+  profileSchema.updateOne(
+    { _id: profileId },
     {
       $unset: {
-        'profiles.$[tempProfile].isWatchingSeries.$[series].activeEpisode': '',
+        'isWatchingSeries.$[series].activeEpisode': '',
       },
     },
     {
-      arrayFilters: [
-        { 'tempProfile._id': profileId },
-        { 'series.seriesId': seriesId },
-      ],
+      arrayFilters: [{ 'series.seriesId': seriesId }],
     }
   );
 
 const setSeriesWatchedActiveEpisode = (
-  userId: string | Types.ObjectId,
   profileId: string | Types.ObjectId,
   seriesId: Types.ObjectId | string,
   activeEpisode: {
@@ -382,46 +353,36 @@ const setSeriesWatchedActiveEpisode = (
     trackId: number;
   }
 ) =>
-  userSchema.updateOne(
-    { _id: userId },
+  profileSchema.updateOne(
+    { _id: profileId },
     {
       $set: {
-        'profiles.$[tempProfile].isWatchingSeries.$[watchingSeries].activeEpisode':
-          activeEpisode,
+        'isWatchingSeries.$[watchingSeries].activeEpisode': activeEpisode,
       },
     },
     {
-      arrayFilters: [
-        { 'tempProfile._id': profileId },
-        { 'watchingSeries.seriesId': seriesId },
-      ],
+      arrayFilters: [{ 'watchingSeries.seriesId': seriesId }],
     }
   );
 
 const updateSeriesWatchedActiveEpisode = (
-  userId: string | Types.ObjectId,
   profileId: string | Types.ObjectId,
   seriesId: Types.ObjectId | string,
   trackId: number
 ) =>
-  userSchema.updateOne(
-    { _id: userId },
+  profileSchema.updateOne(
+    { _id: profileId },
     {
       $set: {
-        'profiles.$[tempProfile].isWatchingSeries.$[watchingSeries].activeEpisode.trackId':
-          trackId,
+        'isWatchingSeries.$[watchingSeries].activeEpisode.trackId': trackId,
       },
     },
     {
-      arrayFilters: [
-        { 'tempProfile._id': profileId },
-        { 'watchingSeries.seriesId': seriesId },
-      ],
+      arrayFilters: [{ 'watchingSeries.seriesId': seriesId }],
     }
   );
 
 const addToSeriesWatchedEpisodes = (
-  userId: string | Types.ObjectId,
   profileId: string | Types.ObjectId,
   seriesId: Types.ObjectId | string,
   data: {
@@ -429,40 +390,32 @@ const addToSeriesWatchedEpisodes = (
     trackId: number;
   }
 ) =>
-  userSchema.updateOne(
-    { _id: userId },
+  profileSchema.updateOne(
+    { _id: profileId },
     {
-      $push: {
-        'profiles.$[tempProfile].isWatchingSeries.$[watchingMovie].watchedEpisodes':
-          data,
-      },
+      $push: { 'isWatchingSeries.$[watchingMovie].watchedEpisodes': data },
     },
     {
-      arrayFilters: [
-        { 'tempProfile._id': profileId },
-        { 'watchingMovie.seriesId': seriesId },
-      ],
+      arrayFilters: [{ 'watchingMovie.seriesId': seriesId }],
     }
   );
 
 const updateSeriesWatchedEpisode = (
-  userId: string | Types.ObjectId,
   profileId: string | Types.ObjectId,
   seriesId: Types.ObjectId | string,
   episodeId: Types.ObjectId | string,
   trackId: number
 ) =>
-  userSchema.updateOne(
-    { _id: userId },
+  profileSchema.updateOne(
+    { _id: profileId },
     {
       $set: {
-        'profiles.$[tempProfile].isWatchingSeries.$[watchingMovie].watchedEpisodes.$[watchEpisode].trackId':
+        'isWatchingSeries.$[watchingMovie].watchedEpisodes.$[watchEpisode].trackId':
           trackId,
       },
     },
     {
       arrayFilters: [
-        { 'tempProfile._id': profileId },
         { 'watchingMovie.seriesId': seriesId },
         { 'watchEpisode.episodeId': episodeId },
       ],
@@ -613,7 +566,8 @@ const returnErrorData = (message: string, status: string | number) => ({
 });
 
 const returnCurrentUser = (
-  user: UserType
+  user: UserType,
+  profiles: ProfileType[] | null
 ): { currentUser: CurrentUserType } => ({
   currentUser: {
     id: user._id,
@@ -623,16 +577,19 @@ const returnCurrentUser = (
     firstName: user.firstName,
     lastName: user.lastName,
     profiles:
-      user?.profiles?.map((profile) => ({
-        _id: profile._id,
-        profileName: profile.profileName,
-        avatarURL: `${url}/${profile.avatarURL}`,
-        savedList: profile.savedList || [],
-        likedList: profile.likedList || [],
-        hasWatch: profile.hasWatch || [],
-        isWatchingMovie: profile.isWatchingMovie || [],
-        isWatchingSeries: profile.isWatchingSeries || [],
-      })) || undefined,
+      profiles?.map((profile) => {
+        return {
+          _id: profile._id,
+          usersId: profile.usersId,
+          profileName: profile.profileName,
+          savedList: profile.savedList,
+          likedList: profile.likedList,
+          hasWatch: profile.hasWatch,
+          isWatchingMovie: profile.isWatchingMovie,
+          isWatchingSeries: profile.isWatchingSeries,
+          avatarURL: `${url}/${profile.avatarURL}`,
+        };
+      }) || null,
     role: user.role,
     userStatus: user.userStatus,
     moviesUploaded: user.moviesUploaded,
@@ -786,9 +743,10 @@ const returnSeriesArray = (series: SeriesSchemaType[]): returnVideosArray =>
 export default {
   findUserByEmail,
   findUserById,
+  findProfileById,
+  findProfileByUserId,
   findUserByRefreshToken,
   removeUser,
-  addProfileToUser,
   updatePassword,
   addUsersMovie,
   addUsersSeries,
@@ -804,6 +762,7 @@ export default {
   getSingleFranchiseBayName,
   getAllFranchises,
   findAvatarById,
+  findAvatarByUrl,
   getAllAvatars,
   findMovieById,
   findSeriesById,
