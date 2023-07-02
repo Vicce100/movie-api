@@ -4,11 +4,11 @@ import dayjs from 'dayjs';
 import { UserType } from '../utilities/types.js';
 
 const idRefs = { type: mongoose.SchemaTypes.ObjectId };
-const reqMongoId = { ...idRefs, require: true };
 const reqString = { type: String, require: true };
 const requiredShortString = { ...reqString, minLength: 1, maxLength: 255 };
 
 const userSchema = new mongoose.Schema({
+  username: { type: String, default: '', required: false, unique: false },
   email: {
     ...reqString,
     unique: true,
@@ -18,42 +18,12 @@ const userSchema = new mongoose.Schema({
   },
   firstName: requiredShortString,
   lastName: requiredShortString,
-  profiles: [
-    {
-      profileName: requiredShortString,
-      avatarURL: reqString,
-      savedList: [{ ...idRefs }],
-      likedList: [{ ...idRefs }],
-      hasWatch: [{ ...idRefs }],
-      isWatchingMovie: [
-        {
-          movieId: { ...reqMongoId, ref: 'movie' },
-          trackId: { type: Number, require: true },
-        },
-      ],
-      isWatchingSeries: [
-        {
-          seriesId: { ...reqMongoId },
-          activeEpisode: {
-            episodeId: { ...reqMongoId, ref: 'episode' },
-            trackId: { type: Number, require: true },
-          },
-          watchedEpisodes: [
-            {
-              episodeId: { ...reqMongoId, ref: 'episode' },
-              trackId: { type: Number, require: true },
-            },
-          ],
-        },
-      ],
-    },
-  ],
-  role: { ...reqString, default: 'user' },
-  userStatus: { ...reqString, default: 'active' },
+  role: { type: String, default: 'user' },
+  userStatus: { type: String, default: 'active' },
   password: reqString,
   refreshToken: { type: String || null, require: false },
   createdAt: {
-    ...reqString,
+    type: String,
     default: () => dayjs().format(),
     imitable: true,
   },

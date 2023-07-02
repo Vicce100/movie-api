@@ -188,34 +188,33 @@ export interface AvatarSchemaType {
   url: string;
 }
 
-export type ProfileType =
-  | {
+export interface ProfileType {
+  _id: Types.ObjectId;
+  usersId: Types.ObjectId;
+  profileName: string;
+  avatarURL: string;
+  savedList?: Types.ObjectId[];
+  likedList?: Types.ObjectId[];
+  hasWatch?: Types.ObjectId[];
+  isWatchingMovie?: {
+    _id: Types.ObjectId;
+    movieId: Types.ObjectId;
+    trackId: number;
+  }[];
+  isWatchingSeries?: {
+    _id: Types.ObjectId;
+    seriesId: Types.ObjectId;
+    activeEpisode: {
+      episodeId: Types.ObjectId;
+      trackId: number;
+    };
+    watchedEpisodes: {
+      episodeId: Types.ObjectId;
+      trackId: number;
       _id: Types.ObjectId;
-      profileName: string;
-      avatarURL: string;
-      savedList?: Types.ObjectId[];
-      likedList?: Types.ObjectId[];
-      hasWatch?: Types.ObjectId[];
-      isWatchingMovie?: {
-        _id: Types.ObjectId;
-        movieId: Types.ObjectId;
-        trackId: number;
-      }[];
-      isWatchingSeries?: {
-        _id: Types.ObjectId;
-        seriesId: Types.ObjectId;
-        activeEpisode: {
-          episodeId: Types.ObjectId;
-          trackId: number;
-        };
-        watchedEpisodes: {
-          episodeId: Types.ObjectId;
-          trackId: number;
-          _id: Types.ObjectId;
-        }[];
-      }[];
-    }[]
-  | undefined;
+    }[];
+  }[];
+}
 
 export interface UserAsCookie {
   _id: Types.ObjectId;
@@ -224,12 +223,12 @@ export interface UserAsCookie {
 
 export interface UserType {
   _id: Types.ObjectId;
+  username: string;
   email: string;
   refreshToken: string;
   password: string;
   firstName: string;
   lastName: string;
-  profiles?: ProfileType; // never
   role: UsersRolesType;
   userStatus: UserStatusType;
   createdAt: string;
@@ -243,7 +242,7 @@ export type CurrentUserType = {
   refreshToken: string;
   firstName: string;
   lastName: string;
-  profiles: ProfileType;
+  profiles: ProfileType[] | null;
   role: UsersRolesType;
   userStatus: UserStatusType;
   createdAt: string;

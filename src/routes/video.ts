@@ -44,6 +44,8 @@ import {
   addIdToSavedList,
   removeIdFromSavedList,
   removeSeriesWatched,
+  uploadMovieObject,
+  uploadMovieFile,
   // fix,
 } from '../controller/video.js';
 import { cleanString, routesString as rs } from '../utilities/index.js';
@@ -155,6 +157,10 @@ router.post(
   multerErrorHandler,
   uploadMovie
 );
+
+router.post(`/${rs.movie}/${rs.upload}/object`, uploadMovieObject);
+
+router.post(`/${rs.movie}/${rs.upload}/file`, uploadMovieFile);
 
 router.post(
   `/${rs.series}/${rs.create}`,
