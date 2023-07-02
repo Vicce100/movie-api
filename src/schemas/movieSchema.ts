@@ -16,7 +16,7 @@ const date = {
 
 const MovieSchema = new mongoose.Schema({
   title: requiredShortString,
-  videoUrl: { ...reqString, unique: true },
+  videoUrl: { ...reqString },
   displayPicture: { ...reqString },
   previewImagesUrl: [{ type: String, require: true }],
   backdropPath: [{ type: String, require: true }],
