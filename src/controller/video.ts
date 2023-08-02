@@ -121,6 +121,53 @@ export const getEpisode = async (req: Request, res: Response) => {
   }
 };
 
+export const getVideo = async (req: Request, res: Response) => {
+  const { range } = req.headers;
+  const { id } = req.params;
+  const { T } = req.query;
+
+  // on Ubuntu 20.04 the if statement will get trigger on the first request even
+  // if range header is set to "bytes=0-"
+  // if (!range) return res.status(404).send('Missing Requires Range header! ');
+
+  try {
+    let tempVideo: any = null;
+
+    if (T === 'M') tempVideo = await db.findMovieById(id);
+    else if (T === 'E') tempVideo = await db.findEpisodeById(id);
+
+    assertNonNullish(tempVideo, errorCode.VALUE_MISSING);
+
+    const videoPath = tempVideo.videoUrl;
+    const videoSize = fs.statSync(videoPath).size;
+    // const chunkSize = 1 * 1e6; // 1MB
+
+    const CHUNK_SIZE = 10 ** 6; // 1MB
+    const start = Number(range?.replace(/\D/g, '') || 'bytes=0-');
+    const end = Math.min(start + CHUNK_SIZE, videoSize - 1);
+
+    res.writeHead(206, {
+      'Content-Range': `bytes ${start}-${end}/${videoSize}`,
+      'Accept-Ranges': 'bytes',
+      'Content-Length': end - start + 1, // contentLength
+      'Content-Type': mp4,
+    });
+
+    const stream = fs.createReadStream(videoPath, { start, end });
+    stream.pipe(res);
+    stream.on('connection', (connect) => {
+      connect.on('close', (close: any) => {
+        console.log(close);
+      });
+    });
+  } catch (error) {
+    if (error instanceof Error) {
+      const errorResponse = errorHandler(error);
+      return res.status(Number(errorResponse.status)).json(errorResponse);
+    }
+  }
+};
+
 export const addView = async (req: Request, res: Response) => {
   const { videoId, isMovie }: { videoId: string; isMovie: boolean } = req.body;
   try {
@@ -1307,7 +1354,6 @@ export const removeIdFromSavedList = async (req: Request, res: Response) => {
 
 export const generateFFmpegToMovie = async (req: Request, res: Response) => {
   const { movieId } = req.params;
-  console.log('req.params: ', req.params);
   try {
     const video = await db.findMovieById(movieId);
     assertNonNullish(video, errorCode.VALUE_MISSING);
