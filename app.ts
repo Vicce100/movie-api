@@ -39,7 +39,7 @@ dotenv.config();
 const app = express();
 
 app.use(cookieParser());
-app.use(bodyParser.raw({ type: 'application/octet-stream', limit: '200mb' }));
+app.use(bodyParser.raw({ type: 'application/octet-stream', limit: '300mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cors(corsOptions));

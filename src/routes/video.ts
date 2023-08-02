@@ -46,6 +46,7 @@ import {
   removeSeriesWatched,
   uploadMovieObject,
   uploadMovieFile,
+  getVideo,
   // fix,
 } from '../controller/video.js';
 import { cleanString, routesString as rs } from '../utilities/index.js';
@@ -81,6 +82,8 @@ const privateVideoUpload = multer({ storage: privateVideoStorage, fileFilter });
 router.get(`/${rs.movie}/:${rs.movieId}`, getMovie);
 
 router.get(`/${rs.episode}/:${rs.episodeId}`, getEpisode);
+
+router.get(`/${rs.play}/:${rs.id}`, getVideo);
 
 router.post(`/${rs.addView}`, addView);
 
@@ -127,7 +130,7 @@ router.post(`/${rs.series}/${iw.removeSeriesWatched}`, removeSeriesWatched);
 
 router.post(`/${rs.series}/${iw.removeEpisodeWatched}`, removeEpisodeWatched);
 
-// router.get('/nuke', nuke);
+// router.get('/nuke', isAuthenticate, isSuperAdmin, nuke);
 
 router.post(
   `/${rs.series}/${iw.setSeriesWatchedActiveEpisode}`,
