@@ -7,7 +7,7 @@ import axios from 'axios';
 import * as urlModule from 'url';
 
 import { assertsIsString, assertNonNullish } from './assertions.js';
-import { UserAsCookie, errorCode } from './types.js';
+import { MovieSchemaType, UserAsCookie, errorCode } from './types.js';
 import db from './db/index.js';
 
 export const routesString = Object.freeze({
@@ -113,6 +113,30 @@ export const cleanFFmpegEndString = (string: string) =>
       .trim()
       .replaceAll(' ', '')
   );
+
+/**
+ * Make Array of Movies Unique.
+ *
+ * @param   array  Array of Type MovieSchemaType[].
+ * @returns Unique Array Based of the Parameter Array.
+ */
+export const getUniqueArray = (array: MovieSchemaType[]) => {
+  const [flags, output]: [flags: string[], output: MovieSchemaType[]] = [
+    [],
+    [],
+  ];
+
+  for (let index = 0; index < array.length; index++) {
+    const element = array[index];
+    if (flags.includes(String(element._id))) continue;
+    else {
+      flags.push(String(element._id));
+      output.push(element);
+    }
+  }
+
+  return output;
+};
 
 /**
  * Take a path and return a string with slashes or backslashes based on Operation system.

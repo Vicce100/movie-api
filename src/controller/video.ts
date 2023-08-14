@@ -38,6 +38,7 @@ import {
   shuffleArray,
   downloadFile,
   slashesForOs,
+  getUniqueArray,
 } from '../utilities/index.js';
 import { Types } from 'mongoose';
 import { url } from '../../app.js';
@@ -927,9 +928,7 @@ const getForYou = async (profileId: string) => {
       videosFromCategory.forEach((movie) => queryResult.push(movie));
     }
 
-    return db.returnMoviesArray([
-      ...new Map(queryResult.map((movie) => [movie._id, movie])).values(),
-    ]);
+    return db.returnMoviesArray(getUniqueArray(queryResult));
   } catch (error) {
     if (error instanceof Error) {
       return error;
