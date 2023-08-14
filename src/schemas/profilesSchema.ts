@@ -14,6 +14,17 @@ const profileSchema = new mongoose.Schema({
   savedList: [{ ...idRefs }],
   likedList: [{ ...idRefs }],
   hasWatch: [{ ...idRefs }],
+  forYouCategoryList: [
+    {
+      categoryName: requiredShortString,
+      amount: {
+        type: Number,
+        required: true,
+        default: () => 0,
+        imitable: false,
+      },
+    },
+  ],
   isWatchingMovie: [
     {
       movieId: { ...reqMongoId, ref: 'movie' },

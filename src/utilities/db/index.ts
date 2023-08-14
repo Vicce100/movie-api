@@ -21,17 +21,19 @@ import seriesSchema from '../../schemas/seriesSchema.js';
 import episodeSchema from '../../schemas/episodeSchema.js';
 import franchiseSchema from '../../schemas/franchiseSchema.js';
 
-/* ----------------------- local ----------------------- */
+/* ----------------------- Local Start ----------------------- */
 
-const querySize = 30;
+export const querySize = 54;
 
 const setFieldWithId = <T>(
   dataPoint: Model<T>,
-  userId: Types.ObjectId | string,
+  id: Types.ObjectId | string,
   valueToUpdate: unknown
-) => dataPoint.updateOne({ _id: userId }, { $set: { valueToUpdate } });
+) => dataPoint.updateOne({ _id: id }, { $set: { valueToUpdate } });
 
-/* ----------------------- user ----------------------- */
+/* ----------------------- Local End ----------------------- */
+
+/* ----------------------- User Start ----------------------- */
 
 const findUserByEmail = (value: string | number) =>
   userSchema.findOne({ email: value });
@@ -95,7 +97,9 @@ const removeEpisodeRef = (
 const EmailTaken = async (email: string) =>
   (await findUserByEmail(email)) ? true : false;
 
-/* ----------------------- category ----------------------- */
+/* ----------------------- User End ----------------------- */
+
+/* ----------------------- Category Start ----------------------- */
 
 const getSingleCategoryBayId = (categoryId: Types.ObjectId | string) =>
   categorySchema.findOne({ _id: categoryId });
@@ -105,7 +109,9 @@ const getSingleCategoryBayName = (categoryName: string) =>
 
 const getAllCategories = () => categorySchema.find();
 
-/* ----------------------- franchise ----------------------- */
+/* ----------------------- Category End ----------------------- */
+
+/* ----------------------- Franchise Start ----------------------- */
 
 const getSingleFranchiseBayId = (categoryId: Types.ObjectId | string) =>
   franchiseSchema.findOne({ _id: categoryId });
@@ -115,7 +121,9 @@ const getSingleFranchiseBayName = (categoryName: string) =>
 
 const getAllFranchises = () => franchiseSchema.find();
 
-/* ----------------------- avatar ----------------------- */
+/* ----------------------- Franchise end ----------------------- */
+
+/* ----------------------- Avatar Start ----------------------- */
 
 const findAvatarById = (avatarId: Types.ObjectId | string) =>
   avatarSchema.findOne({ _id: avatarId });
@@ -125,7 +133,9 @@ const findAvatarByUrl = (avatarUrl: Types.ObjectId | string) =>
 
 const getAllAvatars = () => avatarSchema.find();
 
-/* ----------------------- video ----------------------- */
+/* ----------------------- Avatar End ----------------------- */
+
+/* ----------------------- Video Start ----------------------- */
 
 const addUsersMovie = (
   userId: Types.ObjectId | string,
@@ -263,6 +273,117 @@ const removeIdFromSavedList = (
     { $pull: { savedList: videoId } }
   );
 
+const removeAllIdFromSavedList = (videoId: string | Types.ObjectId) =>
+  profileSchema.updateMany({}, { $pull: { savedList: videoId } });
+
+const addIdToLikedList = (
+  profileId: string | Types.ObjectId,
+  videoId: string | Types.ObjectId
+) =>
+  profileSchema.updateOne(
+    { _id: profileId },
+    { $push: { likedList: videoId } }
+  );
+
+const removeIdFromLikedList = (
+  profileId: string | Types.ObjectId,
+  videoId: string | Types.ObjectId
+) =>
+  profileSchema.updateOne(
+    { _id: profileId },
+    { $pull: { likedList: videoId } }
+  );
+
+const removeAllIdFromLikedList = (videoId: string | Types.ObjectId) =>
+  profileSchema.updateMany({}, { $pull: { likedList: videoId } });
+
+const addToForYouCategoryList = (
+  profileId: string | Types.ObjectId,
+  categoryName: string | Types.ObjectId
+) =>
+  profileSchema.updateOne(
+    { _id: profileId },
+    {
+      $inc: {
+        'forYouCategoryList.$[name].amount': 1,
+      },
+    },
+    {
+      arrayFilters: [{ 'name.categoryName': categoryName }],
+    }
+  );
+
+const removeFromForYouCategoryList = (
+  profileId: string | Types.ObjectId,
+  categoryName: string | Types.ObjectId
+) =>
+  profileSchema.updateOne(
+    { _id: profileId },
+    {
+      $inc: {
+        'forYouCategoryList.$[name].amount': -1,
+      },
+    },
+    {
+      arrayFilters: [{ 'name.categoryName': categoryName }],
+    }
+  );
+
+const removeAllFromForYouCategoryList = (
+  categoryName: string | Types.ObjectId
+) =>
+  profileSchema.updateMany(
+    {},
+    {
+      $inc: {
+        'forYouCategoryList.$[name].amount': -1,
+      },
+    },
+    {
+      arrayFilters: [{ 'name.categoryName': categoryName }],
+    }
+  );
+
+const getMoviesInfinityScroll = (skip: number, limit?: number) =>
+  movieSchema
+    .find()
+    .sort('title')
+    .select({ _id: 1, title: 1, isMovie: 1, displayPicture: 1 })
+    .skip(skip)
+    .limit(limit ? limit : querySize);
+
+const getSeriesInfinityScroll = (skip: number, limit?: number) =>
+  seriesSchema
+    .find()
+    .sort('title')
+    .select({ _id: 1, title: 1, isMovie: 1, displayPicture: 1 })
+    .skip(skip)
+    .limit(limit ? limit : querySize);
+
+const searchMoviesInfinityScroll = (
+  text: string,
+  skip: number,
+  limit?: number
+) =>
+  movieSchema
+    .find({ title: { $regex: text, $options: '$i' } })
+    .sort('title')
+    .select({ _id: 1, title: 1, isMovie: 1, displayPicture: 1 })
+    .skip(skip)
+    .limit(limit ? limit : querySize);
+
+const searchSeriesInfinityScroll = (
+  text: string,
+  skip: number,
+  limit?: number
+) =>
+  seriesSchema
+    .find({ title: { $regex: text, $options: '$i' } })
+    .sort('title')
+    .select({ _id: 1, title: 1, isMovie: 1, displayPicture: 1 })
+    .skip(skip)
+    .limit(limit ? limit : querySize);
+
 const addToMoviesWatched = (
   profileId: string | Types.ObjectId,
   data: {
@@ -286,11 +407,11 @@ const updateMoviesWatched = (
     { _id: profileId },
     {
       $set: {
-        'isWatchingMovie.$[watchingMovie].trackId': trackId,
+        'isWatchingMovie.$[watchingMovieId].trackId': trackId,
       },
     },
     {
-      arrayFilters: [{ 'watchingMovie.movieId': movieId }],
+      arrayFilters: [{ 'watchingMovieId.movieId': movieId }],
     }
   );
 
@@ -337,11 +458,11 @@ const removeEpisodeWatched = (
     { _id: profileId },
     {
       $unset: {
-        'isWatchingSeries.$[series].activeEpisode': '',
+        'isWatchingSeries.$[watchingSeriesId].activeEpisode': '',
       },
     },
     {
-      arrayFilters: [{ 'series.seriesId': seriesId }],
+      arrayFilters: [{ 'watchingSeriesId.seriesId': seriesId }],
     }
   );
 
@@ -357,11 +478,11 @@ const setSeriesWatchedActiveEpisode = (
     { _id: profileId },
     {
       $set: {
-        'isWatchingSeries.$[watchingSeries].activeEpisode': activeEpisode,
+        'isWatchingSeries.$[watchingSeriesId].activeEpisode': activeEpisode,
       },
     },
     {
-      arrayFilters: [{ 'watchingSeries.seriesId': seriesId }],
+      arrayFilters: [{ 'watchingSeriesId.seriesId': seriesId }],
     }
   );
 
@@ -374,11 +495,11 @@ const updateSeriesWatchedActiveEpisode = (
     { _id: profileId },
     {
       $set: {
-        'isWatchingSeries.$[watchingSeries].activeEpisode.trackId': trackId,
+        'isWatchingSeries.$[watchingSeriesId].activeEpisode.trackId': trackId,
       },
     },
     {
-      arrayFilters: [{ 'watchingSeries.seriesId': seriesId }],
+      arrayFilters: [{ 'watchingSeriesId.seriesId': seriesId }],
     }
   );
 
@@ -393,10 +514,10 @@ const addToSeriesWatchedEpisodes = (
   profileSchema.updateOne(
     { _id: profileId },
     {
-      $push: { 'isWatchingSeries.$[watchingMovie].watchedEpisodes': data },
+      $push: { 'isWatchingSeries.$[watchingSeriesID].watchedEpisodes': data },
     },
     {
-      arrayFilters: [{ 'watchingMovie.seriesId': seriesId }],
+      arrayFilters: [{ 'watchingSeriesID.seriesId': seriesId }],
     }
   );
 
@@ -410,13 +531,13 @@ const updateSeriesWatchedEpisode = (
     { _id: profileId },
     {
       $set: {
-        'isWatchingSeries.$[watchingMovie].watchedEpisodes.$[watchEpisode].trackId':
+        'isWatchingSeries.$[watchingSeriesID].watchedEpisodes.$[watchEpisode].trackId':
           trackId,
       },
     },
     {
       arrayFilters: [
-        { 'watchingMovie.seriesId': seriesId },
+        { 'watchingSeriesID.seriesId': seriesId },
         { 'watchEpisode.episodeId': episodeId },
       ],
     }
@@ -456,6 +577,12 @@ const getWatchAgedInSeries = (hasWatchIds: Types.ObjectId[] | string[]) =>
     { $sample: { size: hasWatchIds.length } },
   ]);
 
+const getNewlyAddedMovies = () =>
+  movieSchema.find().sort({ uploadDate: -1 }).limit(54);
+
+const getNewlyAddedSeries = () =>
+  seriesSchema.find().sort({ uploadDate: -1 }).limit(54);
+
 const getLikedListIdsMovies = (likedListIds: Types.ObjectId[] | string[]) =>
   movieSchema.aggregate<MovieSchemaType>([
     { $match: { _id: { $in: [...likedListIds] } } },
@@ -468,11 +595,11 @@ const getLikedListSeries = (likedListIds: Types.ObjectId[] | string[]) =>
     { $sample: { size: likedListIds.length } },
   ]);
 
-const getTop10Movies = () =>
-  movieSchema.find().sort({ monthlyViews: -1 }).limit(10);
+const getTop54Movies = () =>
+  movieSchema.find().sort({ monthlyViews: -1 }).limit(54);
 
-const getTop10Series = () =>
-  seriesSchema.find().sort({ monthlyViews: -1 }).limit(10);
+const getTop54Series = () =>
+  seriesSchema.find().sort({ monthlyViews: -1 }).limit(54);
 
 const randomMovie = (_movieId?: Types.ObjectId[] | string[]) =>
   movieSchema
@@ -494,7 +621,8 @@ const randomSeries = (_seriesId?: Types.ObjectId[] | string[]) =>
 
 const randomMovieByCategory = (
   categoryNames: string[],
-  exudeArray?: string[]
+  excludeArray?: string[],
+  limit?: number
 ) =>
   movieSchema
     .aggregate<MovieSchemaType>([
@@ -502,28 +630,29 @@ const randomMovieByCategory = (
         $match: {
           $and: [
             { categories: { $all: [...categoryNames] } },
-            { categories: { $nin: exudeArray || [] } },
+            { categories: { $nin: excludeArray || [] } },
           ],
         },
       },
-      { $sample: { size: querySize } },
+      { $sample: { size: limit ? limit : querySize } },
     ])
-    .limit(querySize);
+    .limit(limit ? limit : querySize);
 
 const randomSeriesByCategory = (
   categoryNames: string[],
-  exudeArray?: string[]
+  excludeArray?: string[],
+  limit?: number
 ) =>
   seriesSchema
     .aggregate<SeriesSchemaType>([
       {
         $match: {
-          categories: { $all: [...categoryNames], $nin: exudeArray || [] },
+          categories: { $all: [...categoryNames], $nin: excludeArray || [] },
         },
       },
-      { $sample: { size: querySize } },
+      { $sample: { size: limit ? limit : querySize } },
     ])
-    .limit(querySize);
+    .limit(limit ? limit : querySize);
 
 const randomMovieByFranchise = (franchise: string) =>
   movieSchema
@@ -551,7 +680,9 @@ const searchForSeries = (text: string) =>
     .find({ title: { $regex: text, $options: '$i' } })
     .limit(querySize);
 
-/* ----------------------- returned values ----------------------- */
+/* ----------------------- Video End ----------------------- */
+
+/* ----------------------- Returned Values Start ----------------------- */
 
 const returnAvatar = (data: AvatarSchemaType) => ({
   _id: data._id,
@@ -585,6 +716,7 @@ const returnCurrentUser = (
           savedList: profile.savedList,
           likedList: profile.likedList,
           hasWatch: profile.hasWatch,
+          forYouCategoryList: profile.forYouCategoryList,
           isWatchingMovie: profile.isWatchingMovie,
           isWatchingSeries: profile.isWatchingSeries,
           avatarURL: `${url}/${profile.avatarURL}`,
@@ -639,6 +771,7 @@ const returnMovie = (movie: MovieSchemaType): MovieSchemaType => ({
   previewImagesUrl: movie.previewImagesUrl.map((image) => `${url}/${image}`),
   public: movie.public,
   durationInMs: movie.durationInMs,
+  creditsDurationInMs: movie.creditsDurationInMs,
   categories: movie.categories,
   franchise: movie.franchise,
   description: movie.description,
@@ -740,6 +873,8 @@ const returnSeriesArray = (series: SeriesSchemaType[]): returnVideosArray =>
     displayPicture: `${url}/${displayPicture}`,
   }));
 
+/* ----------------------- Returned Values End ----------------------- */
+
 export default {
   findUserByEmail,
   findUserById,
@@ -789,6 +924,17 @@ export default {
   addEpisodeToSeriesField,
   addIdToSavedList,
   removeIdFromSavedList,
+  removeAllIdFromSavedList,
+  addIdToLikedList,
+  removeIdFromLikedList,
+  removeAllIdFromLikedList,
+  addToForYouCategoryList,
+  removeFromForYouCategoryList,
+  removeAllFromForYouCategoryList,
+  getMoviesInfinityScroll,
+  getSeriesInfinityScroll,
+  searchMoviesInfinityScroll,
+  searchSeriesInfinityScroll,
   addToMoviesWatched,
   addToSeriesWatched,
   removeEpisodeWatched,
@@ -804,10 +950,12 @@ export default {
   getEpisodesByIds,
   getWatchAgedInMovies,
   getWatchAgedInSeries,
+  getNewlyAddedMovies,
+  getNewlyAddedSeries,
   getLikedListIdsMovies,
   getLikedListSeries,
-  getTop10Movies,
-  getTop10Series,
+  getTop54Movies,
+  getTop54Series,
   randomMovie,
   randomSeries,
   randomMovieByCategory,

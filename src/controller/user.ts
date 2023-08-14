@@ -220,6 +220,9 @@ export const addProfile = async (req: Request, res: Response) => {
     const avatar = await db.findAvatarById(avatarId);
     assertNonNullish(avatar, errorCode.VALUE_MISSING);
 
+    const allCategories = await db.getAllCategories();
+    assertNonNullish(allCategories, errorCode.VALUE_MISSING);
+
     new profilesSchema({
       usersId: req.user._id,
       profileName: profileName,
@@ -227,6 +230,10 @@ export const addProfile = async (req: Request, res: Response) => {
       savedList: [],
       likedList: [],
       hasWatch: [],
+      forYouCategoryList: allCategories.map((category) => ({
+        categoryName: category.name,
+        amount: 0,
+      })),
       isWatchingMovie: [],
       isWatchingSeries: [],
     })

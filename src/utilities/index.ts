@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
 import fs from 'fs';
+import path from 'path';
 import ffmpeg from 'fluent-ffmpeg';
 import * as validate from 'email-validator';
 import axios from 'axios';
@@ -32,6 +33,8 @@ export const routesString = Object.freeze({
   get: 'get',
   getCurrentUser: 'getCurrentUser',
   id: 'id',
+  infinity: 'infinity',
+  likedList: 'likedList',
   login: 'login',
   logout: 'logout',
   movie: 'movie',
@@ -55,6 +58,12 @@ export const routesString = Object.freeze({
   videoId: 'videoId',
 });
 
+/**
+ * Generate Access Token for User Authentication
+ *
+ * @param  user  The User to be Authenticated.
+ * @returns Returns a JWT Binned to the User.
+ */
 export const generateAccessToken = (user: UserAsCookie) => {
   try {
     assertNonNullish(
@@ -91,7 +100,9 @@ export const emailIsValid = (email: string) => {
   if (!validate.validate(email)) throw new Error(errorCode.INVALID_EMAIL);
 };
 
-// return last index of created file
+/**
+ * Return the Last Index of a Created File
+ */
 export const cleanFFmpegEndString = (string: string) =>
   Number(
     string
@@ -103,6 +114,35 @@ export const cleanFFmpegEndString = (string: string) =>
       .replaceAll(' ', '')
   );
 
+/**
+ * Take a path and return a string with slashes or backslashes based on Operation system.
+ *
+ * @param   folderPath  The path to the folder.
+ * @returns The folder with slashes or backslashes.
+ */
+export const slashesForOs = (folderPath: string) => {
+  if (folderPath.includes('/') && process.platform === 'win32')
+    return folderPath.replaceAll('/', '\\');
+  else if (folderPath.includes('\\') && process.platform === 'win32')
+    return folderPath.replaceAll('\\', '\\');
+  else if (folderPath.includes('/') && process.platform === 'linux')
+    return folderPath.replaceAll('/', '/');
+  else if (folderPath.includes('\\') && process.platform === 'linux')
+    return folderPath.replaceAll('\\', '/');
+
+  return folderPath;
+};
+
+/**
+ * Function to Generate Preview Images From a Video File.
+ *
+ * @param  {string} videoUrl  URL of the Video to Extract Images From.
+ * @param  outputPath Path for the Output Files.
+ * @param  fileName Name of File | Exclude increments or Extensions.
+ * @param  fps Frames Per Secund | Standard value as 1 Frame every Secund.
+ * @param  resolution Resolution | Standard Value as 1080x720P.
+ * @returns Returns an Array of String Values aka Return an Array of Preview Image URL's
+ */
 export const generatePreviewImages = ({
   videoUrl,
   outputPath,
@@ -121,17 +161,22 @@ export const generatePreviewImages = ({
 
   return new Promise<string[]>((resolve, reject) => {
     const cmd = ffmpeg(videoUrl);
-    const filePathAndName = `${outputPath}${new Date()
-      .toISOString()
-      .replaceAll(':', '')
-      .replaceAll('.', '')}-${fileName}`;
+    const filePathAndName = slashesForOs(
+      `${outputPath}${new Date()
+        .toISOString()
+        .replaceAll(':', '')
+        .replaceAll('.', '')}-${fileName}`
+    );
 
     cmd
       .FPS(fps)
       .size(resolution)
       .output(`${filePathAndName}-%d.jpg`)
       // .on('start', (cmd) => console.log({ cmd }))
-      .on('error', (error) => reject(new Error(error.message)))
+      .on('error', (error) => {
+        console.log(error);
+        reject(new Error(error.message));
+      })
       // .on('codecData', (data) => console.log(JSON.stringify(data, undefined, 2)))
       // .on('progress', (progress) => console.log(progress.percent))
       .on('end', (_error, file: string) => {
@@ -174,19 +219,37 @@ export const convertToMp4 = ({
   });
 };
 
+/**
+ * Return an Array in Random Order.
+ *
+ * @param   array Array to Return in Random Order.
+ * @returns Returns the Array in Random Order
+ */
 export const shuffleArray = <T>(array: T[]): T[] =>
   array
     .map((value) => ({ value, sort: Math.random() }))
     .sort((a, b) => a.sort - b.sort)
     .map(({ value }) => value);
 
+/**
+ * Deleting a File
+ *
+ * @param   filePath  The Path of the File.
+ * @returns Returns True if deletions was Successfully.
+ */
 export const deleteFile = (filePath: string) => {
   if (!filePath || !fs.existsSync(filePath))
-    throw new Error(errorCode.VALUE_MISSING);
+    throw new Error(`${errorCode.VALUE_MISSING} at path ${filePath}`);
   fs.rmSync(filePath);
   return true;
 };
 
+/**
+ * Take a url of a file and downloads it.
+ *
+ * @param   folderPath  The path to the folder.
+ * @returns Returns the downloaded file.
+ */
 export const downloadFile = async (data: {
   url: string;
   filepath: string;

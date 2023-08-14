@@ -9,6 +9,7 @@ import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
+import bodyParser from 'body-parser';
 import dotenv from 'dotenv';
 import fs from 'fs';
 import ffmpegPath from '@ffmpeg-installer/ffmpeg';
@@ -22,7 +23,6 @@ import userRoutes from './src/routes/user.js';
 import videoRoutes from './src/routes/video.js';
 import indexRouter from './src/routes/index.js';
 import corsOptions from './src/config/corsOptions.js';
-import bodyParser from 'body-parser';
 
 export const [protocol, port, ip, url] = [
   process.env.NODE_ENV === 'production' ? 'http' : 'http',
