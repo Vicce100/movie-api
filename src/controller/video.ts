@@ -687,7 +687,7 @@ export const updateMovie = async (req: Request, res: Response) => {
     assertNonNullish(movie, errorCode.EMPTY_VALUE);
 
     if (displayPictureUrl) {
-      deleteFile(displayPictureUrl);
+      if (movie && movie.displayPicture) deleteFile(movie.displayPicture);
 
       const displayPictureValue = await downloadFile({
         filepath: 'uploads/images/public/',
@@ -696,7 +696,7 @@ export const updateMovie = async (req: Request, res: Response) => {
       fieldsTOUpdate.displayPicture = displayPictureValue.fullPath;
     }
     if (backdropPath) {
-      deleteFile(backdropPath);
+      if (movie && movie.backdropPath) deleteFile(movie.backdropPath);
 
       const backdropPathValue = await downloadFile({
         filepath: 'uploads/images/public/',
