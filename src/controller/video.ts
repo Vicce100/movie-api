@@ -1,3 +1,5 @@
+'use strict';
+
 import { Request, Response } from 'express';
 import fs from 'fs';
 import { getVideoDurationInSeconds } from 'get-video-duration';
@@ -5,11 +7,12 @@ import { getVideoDurationInSeconds } from 'get-video-duration';
 import movieSchema from '../schemas/movieSchema.js';
 import seriesSchema from '../schemas/seriesSchema.js';
 import episodesSchema from '../schemas/episodeSchema.js';
-import db from '../utilities/db/index.js';
+import db, { querySize } from '../utilities/db/index.js';
 import {
   continueWatchingType,
   EpisodeSchemaType,
   errorCode,
+  MovieSchemaType,
   mp4,
   ProfileType,
   queryPaths,
@@ -25,6 +28,7 @@ import {
   assertNullish,
   assertUndefined,
   assertsToNonNullable,
+  assertsIsNumber,
 } from '../utilities/assertions.js';
 import { errorHandler } from '../utilities/middleware.js';
 import {
@@ -33,9 +37,11 @@ import {
   generatePreviewImages,
   shuffleArray,
   downloadFile,
+  slashesForOs,
 } from '../utilities/index.js';
 import { Types } from 'mongoose';
 import { url } from '../../app.js';
+import profilesSchema from '../schemas/profilesSchema.js';
 
 export const getMovie = async (req: Request, res: Response) => {
   const { range } = req.headers;
@@ -198,6 +204,7 @@ export const uploadMovie = async (req: Request, res: Response) => {
     categories,
     franchise,
     releaseDate,
+    creditsDurationInMs,
     isPublic,
     displayPictureUrl,
     backdropPath,
@@ -207,6 +214,7 @@ export const uploadMovie = async (req: Request, res: Response) => {
     categories: string[] | string;
     franchise: string[] | string;
     releaseDate: string;
+    creditsDurationInMs: number;
     isPublic?: boolean;
     displayPictureUrl: string;
     backdropPath: string;
@@ -244,6 +252,7 @@ export const uploadMovie = async (req: Request, res: Response) => {
         backdropPath: backdropPathValue.fullPath,
         previewImagesUrl: [],
         durationInMs: duration * 1000,
+        creditsDurationInMs: creditsDurationInMs ? creditsDurationInMs : 480000, // 480.000 ms = 8 min
         categories: tempCategory,
         franchise: tempFranchises,
         description,
@@ -287,12 +296,14 @@ export const uploadMovieFile = async (req: Request, res: Response) => {
 
   assertsIsString(name);
 
+  const filepath = slashesForOs('uploads/videos/public/');
+
   const ext = name.split('.').pop();
   const [data, tmpFilename, finalFilename, path] = [
     req.body.toString().split(',')[1] as string,
     `Temp_${cleanString(name)}.${ext}`,
     `${Date.now()}-${cleanString(name)}.${ext}`,
-    'uploads/videos/public/',
+    filepath || 'uploads/videos/public/',
   ];
 
   const buffer = Buffer.from(data, 'base64');
@@ -307,23 +318,25 @@ export const uploadMovieFile = async (req: Request, res: Response) => {
 
     const duration = await getVideoDurationInSeconds(path + finalFilename);
 
-    console.log(movieId);
-
     movieSchema
       .updateOne(
         { _id: movieId },
         {
           $set: {
-            videoUrl: path + finalFilename,
+            videoUrl: slashesForOs(path + finalFilename),
             durationInMs: duration * 1000,
           },
         }
       )
       .catch((err) => console.log(err));
+
     res.status(200).send({ success: true, movieId });
   }
 };
 
+/**
+ * Main Upload Function (Using Chunks "uploadMovieFile" After Creating Movie Object)
+ */
 export const uploadMovieObject = async (req: Request, res: Response) => {
   const {
     title,
@@ -331,6 +344,7 @@ export const uploadMovieObject = async (req: Request, res: Response) => {
     categories,
     franchise,
     releaseDate,
+    creditsDurationInMs,
     isPublic,
     displayPictureUrl,
     backdropPath,
@@ -340,6 +354,7 @@ export const uploadMovieObject = async (req: Request, res: Response) => {
     categories: string[] | string;
     franchise: string[] | string;
     releaseDate: string;
+    creditsDurationInMs: number;
     isPublic?: boolean;
     displayPictureUrl: string;
     backdropPath: string;
@@ -369,10 +384,11 @@ export const uploadMovieObject = async (req: Request, res: Response) => {
     const newMovie = new movieSchema({
       title,
       videoUrl: '',
-      displayPicture: displayPictureValue.fullPath,
-      backdropPath: backdropPathValue.fullPath,
+      displayPicture: slashesForOs(displayPictureValue.fullPath),
+      backdropPath: slashesForOs(backdropPathValue.fullPath),
       previewImagesUrl: [],
       durationInMs: 0,
+      creditsDurationInMs: creditsDurationInMs ? creditsDurationInMs : 480000, // 480.000 ms = 8 min
       categories: tempCategory,
       franchise: tempFranchises,
       description,
@@ -520,23 +536,33 @@ export const addEpisodesTOSeries = async (req: Request, res: Response) => {
 
 export const deleteMovie = async (req: Request, res: Response) => {
   const { movieId } = req.params;
-  const { _id: userId } = req.user;
 
   try {
-    const movie = await db.findMovieById(movieId);
+    const movie = await movieSchema.findOne({ _id: movieId }).exec();
     assertNonNullish(movie, errorCode.VALUE_MISSING);
-    if (userId !== movie.creatorsId)
-      throw new Error(errorCode.PERMISSION_DENIED);
 
-    deleteFile(movie.videoUrl);
-    deleteFile(movie.displayPicture);
+    if (movie.videoUrl) deleteFile(movie.videoUrl);
+    if (movie.displayPicture) deleteFile(movie.displayPicture);
+    if (movie.backdropPath) deleteFile(movie.backdropPath);
 
     for (let index = 0; index < movie.previewImagesUrl.length; index++) {
       deleteFile(movie.previewImagesUrl[index]);
     }
 
     (await movie.remove()).save();
-    await db.removeUsersVideoRef(req.user._id, movieId);
+    // await db.removeUsersVideoRef(req.user._id, movieId);
+
+    await db.removeAllIdFromLikedList(movieId);
+    await db.removeAllIdFromSavedList(movieId);
+
+    const video = await db.findMovieById(movieId);
+    if (video)
+      video.categories.forEach(
+        async (categoryName) =>
+          await db.removeAllFromForYouCategoryList(categoryName)
+      );
+
+    res.status(204).json({ success: true });
   } catch (error) {
     if (error instanceof Error) {
       const errorResponse = errorHandler(error);
@@ -623,46 +649,67 @@ export const getMovieData = async (req: Request, res: Response) => {
 export const updateMovie = async (req: Request, res: Response) => {
   const {
     title,
-    displayPicture,
-    backdropPath,
+    creditsDurationInMs,
+    isPublic,
+    categories,
+    franchise,
     description,
     releaseDate,
+    displayPictureUrl,
+    backdropPath,
     videoId,
+  }: {
+    title: String;
+    creditsDurationInMs: number;
+    isPublic: boolean;
+    categories: String[];
+    franchise: String[];
+    description: String;
+    releaseDate: String;
+    displayPictureUrl: string;
+    backdropPath: string;
+    videoId: string;
   } = req.body;
 
+  const fieldsTOUpdate: any = {};
+
+  if (title) fieldsTOUpdate.title = title;
+  if (creditsDurationInMs)
+    fieldsTOUpdate.creditsDurationInMs = creditsDurationInMs;
+  fieldsTOUpdate.isPublic = isPublic;
+  if (categories && categories.length) fieldsTOUpdate.categories = categories;
+  if (franchise && franchise.length) fieldsTOUpdate.franchise = franchise;
+  if (description) fieldsTOUpdate.description = description;
+  if (releaseDate) fieldsTOUpdate.releaseDate = releaseDate;
+
   try {
-    if (title)
-      await movieSchema.updateOne({ _id: videoId }, { $set: { title: title } });
-    if (description)
-      await movieSchema.updateOne(
-        { _id: videoId },
-        { $set: { description: description } }
-      );
-    if (releaseDate)
-      await movieSchema.updateOne(
-        { _id: videoId },
-        { $set: { releaseDate: releaseDate } }
-      );
-    if (displayPicture) {
+    const movie = await db.findMovieById(videoId);
+    assertNonNullish(movie, errorCode.EMPTY_VALUE);
+
+    if (displayPictureUrl) {
+      deleteFile(displayPictureUrl);
+
       const displayPictureValue = await downloadFile({
         filepath: 'uploads/images/public/',
-        url: displayPicture,
+        url: displayPictureUrl,
       });
-      await movieSchema.updateOne(
-        { _id: videoId },
-        { $set: { displayPicture: displayPictureValue.fullPath } }
-      );
+      fieldsTOUpdate.displayPicture = displayPictureValue.fullPath;
     }
     if (backdropPath) {
+      deleteFile(backdropPath);
+
       const backdropPathValue = await downloadFile({
         filepath: 'uploads/images/public/',
         url: backdropPath,
       });
-      await movieSchema.updateOne(
-        { _id: videoId },
-        { $set: { backdropPath: backdropPathValue.fullPath } }
-      );
+      fieldsTOUpdate.backdropPath = backdropPathValue.fullPath;
     }
+
+    await movieSchema.findOneAndUpdate(
+      { _id: videoId },
+      { $set: fieldsTOUpdate },
+      { new: true }
+    );
 
     res.status(204).json({ success: true });
   } catch (error) {
@@ -850,9 +897,66 @@ const getWatchAged = async (profileId: string) => {
   }
 };
 
-const getTop10Movies = async () => {
+const getForYou = async (profileId: string) => {
   try {
-    const result = await db.getTop10Movies();
+    const activeProfile = await db.findProfileById(profileId);
+    assertNonNullish(activeProfile, errorCode.VALUE_MISSING);
+    const { forYouCategoryList } = activeProfile;
+
+    let totalCategoriesAmount: number = 0;
+    forYouCategoryList.map(
+      ({ amount }) => (totalCategoriesAmount = totalCategoriesAmount + amount)
+    );
+
+    assertsIsNumber(totalCategoriesAmount);
+
+    const ArrayToQuery = forYouCategoryList.map(({ amount, categoryName }) => ({
+      categoryName,
+      amount: Math.round((amount / totalCategoriesAmount) * querySize),
+    }));
+
+    const queryResult: MovieSchemaType[] = [];
+
+    for (let index = 0; index < ArrayToQuery.length; index++) {
+      const { amount, categoryName } = ArrayToQuery[index];
+      const videosFromCategory = await db.randomMovieByCategory(
+        [categoryName], // search array
+        undefined, // excludeArray or undefined if no exclusions
+        amount
+      );
+      videosFromCategory.forEach((movie) => queryResult.push(movie));
+    }
+
+    return db.returnMoviesArray([
+      ...new Map(queryResult.map((movie) => [movie._id, movie])).values(),
+    ]);
+  } catch (error) {
+    if (error instanceof Error) {
+      return error;
+    }
+  }
+};
+
+const getNewlyAdded = async () => {
+  try {
+    const [movieList, seriesList] = await Promise.all([
+      db.getNewlyAddedMovies(),
+      db.getNewlyAddedSeries(),
+    ]);
+
+    let videoArray: returnVideosArray = db
+      .returnMoviesArray(movieList)
+      .concat(db.returnSeriesArray(seriesList));
+
+    return videoArray;
+  } catch (error: any) {
+    if (error) throw new Error(error.message || error);
+  }
+};
+
+const getTop54Movies = async () => {
+  try {
+    const result = await db.getTop54Movies();
     assertNonNullish(result, errorCode.VALUE_MISSING);
     if (!result.length) throw new Error(errorCode.VALUE_NOT_EXISTING);
     return db.returnMoviesArray(result);
@@ -861,9 +965,9 @@ const getTop10Movies = async () => {
   }
 };
 
-const getTop10Series = async () => {
+const getTop54Series = async () => {
   try {
-    const result = await db.getTop10Series();
+    const result = await db.getTop54Series();
     assertNonNullish(result, errorCode.VALUE_MISSING);
     if (!result.length) throw new Error(errorCode.VALUE_NOT_EXISTING);
     return db.returnSeriesArray(result);
@@ -915,14 +1019,17 @@ export const getVideosData = async (req: Request, res: Response) => {
     forYou,
     newlyAdded,
     popular,
-    top10movies,
-    top10series,
+    top54movies,
+    top54series,
     randomMovie,
     randomSeries,
   } = queryPaths;
   // after this query combined categories
 
-  const failedMsg = { message: 'route dose not exist', success: false };
+  const failedMsg = {
+    message: `route dose not exist at path ${queryName}`,
+    success: false,
+  };
   let resultData: unknown = null;
 
   try {
@@ -932,8 +1039,11 @@ export const getVideosData = async (req: Request, res: Response) => {
       resultData = await getContinueWatching(profileId);
     else if (queryName === watchAged && profileId)
       resultData = await getWatchAged(profileId);
-    else if (queryName === top10movies) resultData = await getTop10Movies();
-    else if (queryName === top10series) resultData = await getTop10Series();
+    else if (queryName === forYou && profileId)
+      resultData = await getForYou(profileId);
+    else if (queryName === newlyAdded) resultData = await getNewlyAdded();
+    else if (queryName === top54movies) resultData = await getTop54Movies();
+    else if (queryName === top54series) resultData = await getTop54Series();
     else if (queryName === randomMovie) resultData = await getRandomMovie();
     else if (queryName === randomSeries) resultData = await getRandomSeries();
     else return res.status(404).json(failedMsg);
@@ -1206,12 +1316,15 @@ export const getMoviesDataByCategory = async (req: Request, res: Response) => {
   const {
     categoryNames,
     exudeArray,
-  }: { categoryNames: string[]; exudeArray?: string[] } = req.body;
+    limit,
+  }: { categoryNames: string[]; exudeArray?: string[]; limit?: number } =
+    req.body;
 
   try {
     const videosFromCategory = await db.randomMovieByCategory(
       categoryNames,
-      exudeArray ? exudeArray : undefined
+      exudeArray,
+      limit
     );
     assertIsNonEmptyArray(videosFromCategory, errorCode.VALUE_MISSING);
 
@@ -1228,12 +1341,15 @@ export const getSeriesDataByCategory = async (req: Request, res: Response) => {
   const {
     categoryNames,
     exudeArray,
-  }: { categoryNames: string[]; exudeArray: string[] } = req.body;
+    limit,
+  }: { categoryNames: string[]; exudeArray: string[]; limit?: number } =
+    req.body;
 
   try {
     const videosFromCategory = await db.randomSeriesByCategory(
       categoryNames,
-      exudeArray
+      exudeArray,
+      limit
     );
     assertIsNonEmptyArray(videosFromCategory, errorCode.VALUE_MISSING);
 
@@ -1334,23 +1450,200 @@ export const removeIdFromSavedList = async (req: Request, res: Response) => {
   }
 };
 
+const ForYouCategoryList = async (
+  profileId: string,
+  videoId: string,
+  action: 'increment' | 'decrement'
+) => {
+  try {
+    const video = await db.findMovieById(videoId);
+    assertNonNullish(video, errorCode.VALUE_MISSING);
+
+    video.categories.forEach(async (categoryName) => {
+      if (action === 'increment')
+        await db.addToForYouCategoryList(profileId, categoryName);
+      if (action === 'decrement')
+        await db.removeFromForYouCategoryList(profileId, categoryName);
+    });
+
+    return { message: 'success', status: '200' };
+  } catch (error) {
+    if (error instanceof Error) {
+      return errorHandler(error);
+    }
+  }
+};
+
+export const addIdToLikedList = async (req: Request, res: Response) => {
+  const { profileId, videoId }: { profileId: string; videoId: string } =
+    req.body;
+
+  try {
+    const profile = await db.findProfileById(profileId);
+    assertNonNullish(profile, errorCode.VALUE_MISSING);
+
+    const valueInList = profile.likedList?.find((v) => String(v) === videoId);
+    assertUndefined(valueInList, errorCode.VALUE_EXISTS);
+
+    const result = await db.addIdToLikedList(profileId, videoId);
+    await ForYouCategoryList(profileId, videoId, 'increment');
+
+    res.status(200).json({ success: result.acknowledged });
+  } catch (error) {
+    if (error instanceof Error) {
+      const errorResponse = errorHandler(error);
+      return res.status(Number(errorResponse.status)).json(errorResponse);
+    }
+  }
+};
+
+export const removeIdFromLikedList = async (req: Request, res: Response) => {
+  const { profileId, videoId }: { profileId: string; videoId: string } =
+    req.body;
+
+  try {
+    const result = await db.removeIdFromLikedList(profileId, videoId);
+    await ForYouCategoryList(profileId, videoId, 'decrement');
+
+    res.status(200).json({ success: result.acknowledged });
+  } catch (error) {
+    if (error instanceof Error) {
+      const errorResponse = errorHandler(error);
+      return res.status(Number(errorResponse.status)).json(errorResponse);
+    }
+  }
+};
+
+export const getMoviesInfinityScroll = async (req: Request, res: Response) => {
+  const { skip, limit } = req.query;
+
+  try {
+    assertNonNullish(Number(skip), errorCode.VALUE_MISSING);
+
+    const movies = await db.getMoviesInfinityScroll(
+      Number(skip) * Number(limit),
+      limit !== null ? Number(limit) : undefined
+    );
+    assertNonNullish(movies, errorCode.VALUE_MISSING);
+
+    return res.status(200).json(db.returnMoviesArray(movies));
+  } catch (error) {
+    console.log(error);
+    if (error instanceof Error) {
+      return errorHandler(error);
+    }
+  }
+};
+
+export const getSeriesInfinityScroll = async (req: Request, res: Response) => {
+  const { skip, limit } = req.query;
+
+  try {
+    assertNonNullish(skip, errorCode.VALUE_MISSING);
+
+    const series = await db.getSeriesInfinityScroll(
+      Number(skip) * Number(limit),
+      limit !== null ? Number(limit) : undefined
+    );
+    assertNonNullish(series, errorCode.VALUE_MISSING);
+
+    return res.status(200).json(db.returnSeriesArray(series));
+  } catch (error) {
+    if (error instanceof Error) {
+      return errorHandler(error);
+    }
+  }
+};
+
+export const searchMoviesInfinityScroll = async (
+  req: Request,
+  res: Response
+) => {
+  const { skip, limit } = req.query;
+  const { searchId } = req.params;
+
+  try {
+    assertNonNullish(skip, errorCode.VALUE_MISSING);
+
+    const movies = await db.searchMoviesInfinityScroll(
+      searchId,
+      Number(skip) * Number(limit),
+      limit !== null ? Number(limit) : undefined
+    );
+    assertNonNullish(movies, errorCode.VALUE_MISSING);
+
+    return res.status(200).json(db.returnMoviesArray(movies));
+  } catch (error) {
+    if (error instanceof Error) {
+      return errorHandler(error);
+    }
+  }
+};
+
+export const searchSeriesInfinityScroll = async (
+  req: Request,
+  res: Response
+) => {
+  const { skip, limit } = req.query;
+  const { searchId } = req.params;
+
+  try {
+    assertNonNullish(skip, errorCode.VALUE_MISSING);
+
+    const series = await db.searchSeriesInfinityScroll(
+      searchId,
+      Number(skip) * Number(limit),
+      limit !== null ? Number(limit) : undefined
+    );
+    assertNonNullish(series, errorCode.VALUE_MISSING);
+
+    return res.status(200).json(db.returnSeriesArray(series));
+  } catch (error) {
+    if (error instanceof Error) {
+      return errorHandler(error);
+    }
+  }
+};
+
 // genera purpose for fixing things
-// export const fix = async (_req: Request, res: Response) => {
-//   const episodes = await episodesSchema.find();
-//   assertIsNonEmptyArray(episodes, 'error in this thing');
+export const fix = async (_req: Request, res: Response) => {
+  try {
+    const profiles = await profilesSchema.find();
+    assertIsNonEmptyArray(profiles, 'error in this thing');
+    const categories = await db.getAllCategories();
 
-//   for (let index = 0; index < episodes.length; index++) {
-//     const episode = episodes[index];
+    for (let index = 0; index < profiles.length; index++) {
+      const profile = profiles[index];
+      const response = await profile
+        .updateOne({
+          $set: {
+            forYouCategoryList: categories.map(({ name }) => ({
+              categoryName: name,
+              amount: 0,
+            })),
+          },
+        })
+        .catch((e) => console.error(e));
+      console.log(response);
+    }
 
-//     const duration = await getVideoDurationInSeconds(episode.videoUrl);
-//     const response = await episode.updateOne({
-//       $set: { durationInMs: duration },
-//     });
-//     console.log(response);
-//   }
+    const movies = await movieSchema.find();
+    assertIsNonEmptyArray(movies, 'error in this thing');
 
-//   res.status(200).json({ success: true });
-// };
+    // creditsDurationInMs: 480000
+    for (let index = 0; index < movies.length; index++) {
+      const movie = movies[index];
+      const response = await movie
+        .updateOne({ $set: { creditsDurationInMs: 480000 } })
+        .catch((e) => console.error(e));
+      console.log(response);
+    }
+
+    return res.status(200).json({ success: true });
+  } catch (error) {
+    console.error(error);
+  }
+};
 
 export const generateFFmpegToMovie = async (req: Request, res: Response) => {
   const { movieId } = req.params;
@@ -1358,9 +1651,11 @@ export const generateFFmpegToMovie = async (req: Request, res: Response) => {
     const video = await db.findMovieById(movieId);
     assertNonNullish(video, errorCode.VALUE_MISSING);
 
+    // const outputPath = slashesForOs('uploads/images/ffmpeg/');
+
     const previewImageArray = await generatePreviewImages({
       videoUrl: video.videoUrl,
-      outputPath: `uploads/images/ffmpeg/`,
+      outputPath: 'uploads/images/ffmpeg/',
       fileName: cleanString(video.title), // no increment or extension
       fps: 1 / 10,
       resolution: '1080x720',
@@ -1374,6 +1669,7 @@ export const generateFFmpegToMovie = async (req: Request, res: Response) => {
     res.status(200).json({ success: response.acknowledged });
   } catch (error) {
     if (error instanceof Error) {
+      console.log(error);
       const errorResponse = errorHandler(error);
       return res.status(Number(errorResponse.status)).json(errorResponse);
     } else console.log(error);
@@ -1388,7 +1684,7 @@ export const generateFFmpegToEpisode = async (req: Request, res: Response) => {
 
     const previewImageArray = await generatePreviewImages({
       videoUrl: video.videoUrl,
-      outputPath: `uploads/images/ffmpeg/`,
+      outputPath: 'uploads/images/ffmpeg/',
       fileName: cleanString(`${video.seriesTitle}${video.episodeTitle}`), // no increment or extension
       fps: 1 / 10,
       resolution: '1080x720',

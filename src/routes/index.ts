@@ -20,10 +20,11 @@ import {
   sendMultipleAvatars,
 } from '../controller/index.js';
 import { cleanString, routesString as rs } from '../utilities/index.js';
+import { fix } from '../controller/video.js';
 
 const router = express.Router();
 
-router.use(isAuthenticate);
+// router.use(isAuthenticate);
 
 const imageStorage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, 'uploads/images/public/'),
@@ -35,44 +36,79 @@ const uploadPublicImage = multer({ fileFilter, storage: imageStorage });
 
 // `/${routesString.checkAuth}`
 
-router.post(`/${rs.category}/${rs.upload}/${rs.single}`, addSingleCategory);
+router.post(
+  `/${rs.category}/${rs.upload}/${rs.single}`,
+  addSingleCategory,
+  isAuthenticate
+);
 
 router.post(
   `/${rs.category}/${rs.upload}/${rs.multiple}`,
-  addMultipleCategories
+  addMultipleCategories,
+  isAuthenticate
 );
 
-router.get(`/${rs.category}/:${rs.categoryId}`, sendSingleCategory);
+router.get(
+  `/${rs.category}/:${rs.categoryId}`,
+  sendSingleCategory,
+  isAuthenticate
+);
 
-router.get(`/${rs.category}/${rs.get}/${rs.multiple}`, sendMultipleCategories);
+router.get(
+  `/${rs.category}/${rs.get}/${rs.multiple}`,
+  sendMultipleCategories,
+  isAuthenticate
+);
 
-router.post(`/${rs.franchise}/${rs.upload}/${rs.single}`, addSingleFranchise);
+router.post(
+  `/${rs.franchise}/${rs.upload}/${rs.single}`,
+  addSingleFranchise,
+  isAuthenticate
+);
 
 router.post(
   `/${rs.franchise}/${rs.upload}/${rs.multiple}`,
-  addMultipleFranchises
+  addMultipleFranchises,
+  isAuthenticate
 );
 
-router.get(`/${rs.franchise}/:${rs.franchiseId}`, sendSingleFranchise);
+router.get(
+  `/${rs.franchise}/:${rs.franchiseId}`,
+  sendSingleFranchise,
+  isAuthenticate
+);
 
-router.get(`/${rs.franchise}/${rs.get}/${rs.multiple}`, sendMultipleFranchise);
+router.get(
+  `/${rs.franchise}/${rs.get}/${rs.multiple}`,
+  sendMultipleFranchise,
+  isAuthenticate
+);
 
 router.post(
   `/${rs.avatar}/${rs.upload}/${rs.single}`,
   uploadPublicImage.single('avatarImage'),
   multerErrorHandler,
-  addSingleAvatar
+  addSingleAvatar,
+  isAuthenticate
 );
 
 router.post(
   `/${rs.avatar}/${rs.upload}/${rs.multiple}`,
   uploadPublicImage.array('avatarImage'),
   multerErrorHandler,
-  addMultipleAvatars
+  addMultipleAvatars,
+  isAuthenticate
 );
 
-router.get(`/${rs.avatar}/:${rs.avatarId}`, sendSingleAvatar);
+router.get(`/${rs.avatar}/:${rs.avatarId}`, sendSingleAvatar, isAuthenticate);
 
-router.get(`/${rs.avatar}/${rs.get}/${rs.multiple}`, sendMultipleAvatars);
+router.get(
+  `/${rs.avatar}/${rs.get}/${rs.multiple}`,
+  sendMultipleAvatars,
+  isAuthenticate
+);
+
+// genera purpose for fixing things
+router.get(`/fix`, fix);
 
 export default router;

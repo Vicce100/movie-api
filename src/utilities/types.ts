@@ -47,8 +47,8 @@ export const queryPaths = Object.freeze({
   forYou: 'forYou',
   newlyAdded: 'newlyAdded',
   popular: 'popular',
-  top10movies: 'top10movies',
-  top10series: 'top10series',
+  top54movies: 'top54movies',
+  top54series: 'top54series',
   randomMovie: 'randomMovie',
   randomSeries: 'randomSeries',
 });
@@ -62,8 +62,8 @@ export type queryPathsString =
   | 'forYou'
   | 'newlyAdded'
   | 'popular'
-  | 'top10movies'
-  | 'top10series'
+  | 'top54movies'
+  | 'top54series'
   | 'randomMovie'
   | 'randomSeries';
 
@@ -160,6 +160,7 @@ export interface MovieSchemaType {
   displayPicture: string;
   backdropPath: string;
   durationInMs: number;
+  creditsDurationInMs: number;
   public: boolean;
   categories: string[];
   franchise: string[];
@@ -196,6 +197,10 @@ export interface ProfileType {
   savedList?: Types.ObjectId[];
   likedList?: Types.ObjectId[];
   hasWatch?: Types.ObjectId[];
+  forYouCategoryList: {
+    categoryName: string;
+    amount: number;
+  }[];
   isWatchingMovie?: {
     _id: Types.ObjectId;
     movieId: Types.ObjectId;

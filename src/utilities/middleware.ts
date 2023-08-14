@@ -103,7 +103,7 @@ export const isModerator = async (
     const user = checkAuth(req.cookies);
     assertNonNullish(user, errorCode.NOT_AUTHENTICATED);
 
-    if (user.role !== userRoles.moderator)
+    if (user.role === userRoles.user)
       return res.status(403).json({ message: 'You are not an moderator' });
 
     const importedUser = await db.findUserById(user._id);
@@ -124,14 +124,13 @@ export const isAdmin = async (req: any, res: Response, next: NextFunction) => {
     const user = checkAuth(req.cookies);
     assertNonNullish(user, errorCode.NOT_AUTHENTICATED);
 
-    if (user.role !== userRoles.admin)
-      return res.status(403).json({ message: 'You are not an admin' });
+    if (user.role === userRoles.admin || user.role === userRoles.superAdmin) {
+      const importedUser = await db.findUserById(user._id);
+      assertNonNullish(importedUser, errorCode.NOT_AUTHENTICATED);
 
-    const importedUser = await db.findUserById(user._id);
-    assertNonNullish(importedUser, errorCode.NOT_AUTHENTICATED);
-
-    req.user = importedUser;
-    next();
+      req.user = importedUser;
+      next();
+    } else return res.status(403).json({ message: 'You are not an admin' });
   } catch (error) {
     if (error instanceof Error) {
       const errorResponse = errorHandler(error);

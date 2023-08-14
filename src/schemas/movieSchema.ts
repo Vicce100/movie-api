@@ -19,8 +19,9 @@ const MovieSchema = new mongoose.Schema({
   videoUrl: { ...reqString },
   displayPicture: { ...reqString },
   previewImagesUrl: [{ type: String, require: true }],
-  backdropPath: [{ type: String, require: true }],
+  backdropPath: { type: String, require: true },
   durationInMs: { type: Number, require: true },
+  creditsDurationInMs: { type: Number, require: true, default: () => 480000 }, // 480.000 ms = 8 min
   public: { type: Boolean, default: () => false, require: true },
   categories: [{ ...reqString }],
   franchise: [{ ...reqString }],

@@ -3,6 +3,7 @@ import {
   isAuthenticate,
   multerErrorHandler,
   fileFilterAll as fileFilter,
+  isAdmin,
 } from '../utilities/middleware.js';
 import multer, { diskStorage } from 'multer';
 import {
@@ -47,7 +48,12 @@ import {
   uploadMovieObject,
   uploadMovieFile,
   getVideo,
-  // fix,
+  addIdToLikedList,
+  removeIdFromLikedList,
+  getMoviesInfinityScroll,
+  getSeriesInfinityScroll,
+  searchMoviesInfinityScroll,
+  searchSeriesInfinityScroll,
 } from '../controller/video.js';
 import { cleanString, routesString as rs } from '../utilities/index.js';
 import { isWatchingPaths as iw } from '../utilities/types.js';
@@ -107,15 +113,37 @@ router.get(`/${rs.search}/${rs.movie}`, getSearchMovieData);
 
 router.get(`/${rs.search}/${rs.series}`, getSearchSeresData);
 
-router.post(`/${rs.movie}/${rs.update}`, updateMovie);
+router.post(`/${rs.movie}/${rs.update}`, isAdmin, updateMovie);
 
-router.delete(`/${rs.movie}/${rs.delete}/:${rs.movieId}`, deleteMovie);
+router.delete(`/${rs.movie}/${rs.delete}/:${rs.movieId}`, isAdmin, deleteMovie);
 
-router.delete(`/${rs.episode}/${rs.delete}/:${rs.episodeId}`, deleteEpisode);
+router.delete(
+  `/${rs.episode}/${rs.delete}/:${rs.episodeId}`,
+  isAdmin,
+  deleteEpisode
+);
 
 router.post(`/${rs.add}/${rs.savedList}`, addIdToSavedList);
 
 router.post(`/${rs.remove}/${rs.savedList}`, removeIdFromSavedList);
+
+router.post(`/${rs.add}/${rs.likedList}`, addIdToLikedList);
+
+router.post(`/${rs.remove}/${rs.likedList}`, removeIdFromLikedList);
+
+router.get(`/${rs.data}/${rs.movie}/${rs.infinity}`, getMoviesInfinityScroll);
+
+router.get(`/${rs.data}/${rs.series}/${rs.infinity}`, getSeriesInfinityScroll);
+
+router.get(
+  `/${rs.data}/${rs.movie}/${rs.infinity}/:${rs.searchId}`,
+  searchMoviesInfinityScroll
+);
+
+router.get(
+  `/${rs.data}/${rs.series}/${rs.infinity}/:${rs.searchId}`,
+  searchSeriesInfinityScroll
+);
 
 // videos watched -->
 router.post(`/${rs.movie}/${iw.addToMoviesWatched}`, addToMoviesWatched);
@@ -152,21 +180,21 @@ router.post(
   updateSeriesWatchedEpisode
 );
 
-// genera purpose for fixing things
-// router.get(`/fix`, fix);
 router.post(
   `/${rs.movie}/${rs.create}`,
+  isAdmin,
   publicVideoUpload.fields([{ name: 'videoFile', maxCount: 1 }]),
   multerErrorHandler,
   uploadMovie
 );
 
-router.post(`/${rs.movie}/${rs.upload}/object`, uploadMovieObject);
+router.post(`/${rs.movie}/${rs.upload}/object`, isAdmin, uploadMovieObject);
 
-router.post(`/${rs.movie}/${rs.upload}/file`, uploadMovieFile);
+router.post(`/${rs.movie}/${rs.upload}/file`, isAdmin, uploadMovieFile);
 
 router.post(
   `/${rs.series}/${rs.create}`,
+  isAdmin,
   publicVideoUpload.single('displayPicture'),
   multerErrorHandler,
   createSeries
@@ -174,6 +202,7 @@ router.post(
 
 router.post(
   `/${rs.episode}/${rs.add}`,
+  isAdmin,
   publicVideoUpload.fields([
     { name: 'videoFile', maxCount: 1 },
     { name: 'displayPicture', maxCount: 1 },
@@ -182,20 +211,27 @@ router.post(
   addEpisodesTOSeries
 );
 
-router.get(`/${rs.movie}/${rs.ffmpeg}/:${rs.movieId}`, generateFFmpegToMovie);
+router.get(
+  `/${rs.movie}/${rs.ffmpeg}/:${rs.movieId}`,
+  isAdmin,
+  generateFFmpegToMovie
+);
 
 router.get(
   `/${rs.episode}/${rs.ffmpeg}/:${rs.episodeId}`,
+  isAdmin,
   generateFFmpegToEpisode
 );
 
 router.get(
   `/${rs.movie}/${rs.ffmpeg}/${rs.remove}/:${rs.movieId}`,
+  isAdmin,
   removeFFmpegFromMovie
 );
 
 router.get(
   `/${rs.episode}/${rs.ffmpeg}/${rs.remove}/:${rs.episodeId}`,
+  isAdmin,
   removeFFmpegFromEpisode
 );
 
